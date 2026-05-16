@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Env
+.env
+.env.local
+.docker-data
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code local settings (personal preferences, not team config)
+.claude/settings.local.json
+
+# Other
+.DS_Store

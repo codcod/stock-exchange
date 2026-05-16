@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest*)",
+      "Bash(python*)",
+      "Bash(pip*)",
+      "Bash(docker-compose*)",
+      "Bash(cat*)",
+      "Bash(ls*)",
+      "Bash(find*)",
+      "Bash(grep*)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(curl*)",
+      "Bash(wget*)"
+    ]
+  },
+  "env": {
+    "EXCHANGE_ENV": "development",
+    "LOG_LEVEL": "DEBUG"
+  }
+}
