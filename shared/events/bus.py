@@ -12,10 +12,10 @@ so it's easy to swap out later.
 from __future__ import annotations
 
 import logging
+import typing as tp
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Callable, Coroutine, Dict, List, Type
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Event:
     event_id: str = field(default_factory=lambda: __import__('uuid').uuid4().hex)
-    occurred_at: datetime = field(default_factory=datetime.utcnow)
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -92,7 +92,7 @@ class MarketDataUpdate(Event):
 # Bus implementation
 # ---------------------------------------------------------------------------
 
-Handler = Callable[[Event], Coroutine[Any, Any, None]]
+Handler = tp.Callable[[Event], tp.Coroutine[tp.Any, tp.Any, None]]
 
 
 class EventBus:
@@ -103,9 +103,9 @@ class EventBus:
     """
 
     def __init__(self) -> None:
-        self._subscribers: Dict[Type[Event], List[Handler]] = defaultdict(list)
+        self._subscribers: tp.Dict[tp.Type[Event], tp.List[Handler]] = defaultdict(list)
 
-    def subscribe(self, event_type: Type[Event], handler: Handler) -> None:
+    def subscribe(self, event_type: tp.Type[Event], handler: Handler) -> None:
         self._subscribers[event_type].append(handler)
         logger.debug('Subscribed %s to %s', handler.__qualname__, event_type.__name__)
 

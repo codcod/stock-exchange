@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from exchange.main import Exchange
 from services.gateway.auth import require_api_key
-from services.gateway.dependencies import get_exchange
+from services.gateway.dependencies import ServiceClients, get_clients
 from services.gateway.schemas import (
     CancelledResponse,
     OrderResponse,
@@ -16,7 +15,7 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 
 @router.post('', response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def submit_order(
-    req: SubmitOrderRequest, exchange: Exchange = Depends(get_exchange)
+    req: SubmitOrderRequest, clients: ServiceClients = Depends(get_clients)
 ):
     order = Order(
         account_id=req.account_id,
@@ -26,12 +25,12 @@ async def submit_order(
         quantity=req.quantity,
         price=req.price,
     )
-    return order_to_response(await exchange.submit_order(order))
+    return order_to_response(await clients.oms.submit_order(order))
 
 
 @router.get('/{order_id}', response_model=OrderResponse)
-async def get_order(order_id: str, exchange: Exchange = Depends(get_exchange)):
-    order = exchange.get_order(order_id)
+async def get_order(order_id: str, clients: ServiceClients = Depends(get_clients)):
+    order = await clients.oms.get_order(order_id)
     if order is None:
         raise HTTPException(status_code=404, detail='Order not found')
     return order_to_response(order)
@@ -41,8 +40,8 @@ async def get_order(order_id: str, exchange: Exchange = Depends(get_exchange)):
 async def cancel_order(
     order_id: str,
     account_id: str = Query(...),
-    exchange: Exchange = Depends(get_exchange),
+    clients: ServiceClients = Depends(get_clients),
 ):
     return CancelledResponse(
-        cancelled=await exchange.cancel_order(order_id, account_id)
+        cancelled=await clients.oms.cancel_order(order_id, account_id)
     )

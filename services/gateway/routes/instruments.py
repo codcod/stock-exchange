@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, status
 
-from exchange.main import Exchange
 from services.gateway.auth import require_api_key
-from services.gateway.dependencies import get_exchange
+from services.gateway.dependencies import ServiceClients, get_clients
 from services.gateway.schemas import RegisterInstrumentRequest
 from shared.models.domain import Instrument
 
@@ -11,7 +10,7 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 
 @router.post('', status_code=status.HTTP_201_CREATED)
 async def register_instrument(
-    req: RegisterInstrumentRequest, exchange: Exchange = Depends(get_exchange)
+    req: RegisterInstrumentRequest, clients: ServiceClients = Depends(get_clients)
 ):
     instrument = Instrument(
         ticker=req.ticker,
@@ -20,5 +19,5 @@ async def register_instrument(
         max_order_size=req.max_order_size,
         last_price=req.last_price,
     )
-    await exchange.register_instrument(instrument)
+    await clients.risk.register_instrument(instrument)
     return {'ticker': instrument.ticker, 'name': instrument.name}

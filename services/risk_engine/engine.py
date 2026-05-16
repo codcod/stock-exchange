@@ -10,16 +10,10 @@ If any check fails, the order is rejected with a reason.
 from __future__ import annotations
 
 import logging
+import typing as tp
 from dataclasses import dataclass
-from typing import Dict, Optional
 
-from shared.models.domain import (
-    Account,
-    Instrument,
-    Order,
-    OrderType,
-    Side,
-)
+from shared.models.domain import Account, Instrument, Order, OrderType, Side
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +26,7 @@ MIN_CASH_BUFFER = 0.0  # no naked positions
 @dataclass
 class RiskResult:
     passed: bool
-    reason: Optional[str] = None
+    reason: tp.Optional[str] = None
 
 
 class RiskEngine:
@@ -42,8 +36,8 @@ class RiskEngine:
     """
 
     def __init__(self) -> None:
-        self._accounts: Dict[str, Account] = {}
-        self._instruments: Dict[str, Instrument] = {}
+        self._accounts: tp.Dict[str, Account] = {}
+        self._instruments: tp.Dict[str, Instrument] = {}
         self._halted_tickers: set = set()
 
     # ------------------------------------------------------------------

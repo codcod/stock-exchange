@@ -12,10 +12,8 @@ Owns the lifecycle of every order:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional
+import typing as tp
 
-from services.matching_engine.engine import MatchingEngine
-from services.risk_engine.engine import RiskEngine
 from shared.events.bus import (
     EventBus,
     OrderAccepted,
@@ -26,7 +24,7 @@ from shared.events.bus import (
 )
 from shared.models.domain import Order, OrderStatus, OrderType, Side
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from shared.db.repositories import OrderRepository
 
 logger = logging.getLogger(__name__)
@@ -39,18 +37,18 @@ class OrderManagementService:
 
     def __init__(
         self,
-        risk_engine: RiskEngine,
-        matching_engine: MatchingEngine,
+        risk_engine: tp.Any,
+        matching_engine: tp.Any,
         event_bus: EventBus,
-        order_repo: Optional['OrderRepository'] = None,
+        order_repo: tp.Optional['OrderRepository'] = None,
     ) -> None:
         self._risk = risk_engine
         self._matching = matching_engine
         self._bus = event_bus
-        self._orders: Dict[str, Order] = {}
+        self._orders: tp.Dict[str, Order] = {}
         self._order_repo = order_repo
 
-        self._bus.subscribe(OrderFilled, self._on_order_filled)
+        self._bus.subscribe(OrderFilled, self.on_order_filled)
 
     # ------------------------------------------------------------------
     # Public API
@@ -125,17 +123,17 @@ class OrderManagementService:
             await self._bus.publish(OrderCancelled(order_id=order_id))
         return cancelled
 
-    def get_order(self, order_id: str) -> Optional[Order]:
+    def get_order(self, order_id: str) -> tp.Optional[Order]:
         return self._orders.get(order_id)
 
-    def get_orders_for_account(self, account_id: str) -> List[Order]:
+    def get_orders_for_account(self, account_id: str) -> tp.List[Order]:
         return [o for o in self._orders.values() if o.account_id == account_id]
 
     # ------------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------------
 
-    async def _on_order_filled(self, event: OrderFilled) -> None:
+    async def on_order_filled(self, event: OrderFilled) -> None:
         order = self._orders.get(event.order_id)
         if not order:
             return

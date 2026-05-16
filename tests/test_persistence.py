@@ -6,7 +6,7 @@ Requires a running Postgres instance (DATABASE_URL env var or default).
 Skipped automatically when the DB is not reachable.
 """
 
-from typing import Optional
+import typing as tp
 
 import pytest
 from sqlalchemy import text
@@ -33,7 +33,7 @@ from shared.models.domain import (
 DB_URL = 'postgresql+asyncpg://exchange:exchange@localhost:5432/exchange'
 
 
-async def _try_engine() -> Optional[AsyncEngine]:
+async def _try_engine() -> tp.Optional[AsyncEngine]:
     try:
         engine = create_async_engine(DB_URL)
         async with engine.connect() as conn:

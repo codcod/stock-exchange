@@ -7,11 +7,11 @@ These are plain dataclasses — no business logic lives here.
 
 from __future__ import annotations
 
+import typing as tp
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Enumerations
@@ -49,15 +49,15 @@ class Order:
     side: Side
     order_type: OrderType
     quantity: int  # number of shares
-    price: Optional[float]  # None for market orders
+    price: tp.Optional[float]  # None for market orders
 
     order_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     status: OrderStatus = OrderStatus.PENDING
     filled_quantity: int = 0
-    average_fill_price: Optional[float] = None
-    reject_reason: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    average_fill_price: tp.Optional[float] = None
+    reject_reason: tp.Optional[str] = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @property
     def remaining_quantity(self) -> int:
@@ -80,7 +80,7 @@ class Trade:
     seller_account_id: str = ''
     quantity: int = 0
     price: float = 0.0
-    executed_at: datetime = field(default_factory=datetime.utcnow)
+    executed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -94,7 +94,7 @@ class Account:
     reserved_cash: float = 0.0
     # ticker -> quantity reserved by open sell orders
     reserved_shares: dict = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def available_cash(self) -> float:
         return self.cash_balance - self.reserved_cash
@@ -112,4 +112,4 @@ class Instrument:
     lot_size: int = 1  # minimum tradeable quantity
     max_order_size: int = 10_000
     is_tradeable: bool = True
-    last_price: Optional[float] = None
+    last_price: tp.Optional[float] = None

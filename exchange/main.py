@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import List, Optional
+import typing as tp
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -24,7 +24,7 @@ from shared.db.repositories import (
     OrderRepository,
     TradeRepository,
 )
-from shared.db.tables import metadata
+from shared.db.tables import ensure_tables
 from shared.events.bus import TradeExecuted, bus
 from shared.models.domain import Account, Instrument, Order, OrderType, Side
 
@@ -51,16 +51,16 @@ class Exchange:
     factory classmethod handles DDL and state loading before returning.
     """
 
-    def __init__(self, db_engine: Optional[AsyncEngine] = None) -> None:
+    def __init__(self, db_engine: tp.Optional[AsyncEngine] = None) -> None:
         self._engine = db_engine
 
         if db_engine is not None:
-            order_repo: Optional[OrderRepository] = OrderRepository(db_engine)
-            account_repo: Optional[AccountRepository] = AccountRepository(db_engine)
-            instrument_repo: Optional[InstrumentRepository] = InstrumentRepository(
+            order_repo: tp.Optional[OrderRepository] = OrderRepository(db_engine)
+            account_repo: tp.Optional[AccountRepository] = AccountRepository(db_engine)
+            instrument_repo: tp.Optional[InstrumentRepository] = InstrumentRepository(
                 db_engine
             )
-            trade_repo: Optional[TradeRepository] = TradeRepository(db_engine)
+            trade_repo: tp.Optional[TradeRepository] = TradeRepository(db_engine)
         else:
             order_repo = account_repo = instrument_repo = trade_repo = None
 
@@ -83,7 +83,7 @@ class Exchange:
         self.market_data = MarketDataService(bus)
 
     @classmethod
-    async def create(cls, db_engine: Optional[AsyncEngine] = None) -> 'Exchange':
+    async def create(cls, db_engine: tp.Optional[AsyncEngine] = None) -> 'Exchange':
         instance = cls(db_engine)
         if db_engine is not None:
             await instance._setup_db()
@@ -95,8 +95,7 @@ class Exchange:
 
     async def _setup_db(self) -> None:
         assert self._engine is not None
-        async with self._engine.begin() as conn:
-            await conn.run_sync(metadata.create_all)
+        await ensure_tables(self._engine)
         await self._load_state()
         bus.subscribe(TradeExecuted, self._on_trade_executed)
 
@@ -153,19 +152,19 @@ class Exchange:
     # Queries (in-memory, no await needed)
     # ------------------------------------------------------------------
 
-    def get_order(self, order_id: str) -> Optional[Order]:
+    def get_order(self, order_id: str) -> tp.Optional[Order]:
         return self.order_management.get_order(order_id)
 
-    def get_orders(self, account_id: str) -> List[Order]:
+    def get_orders(self, account_id: str) -> tp.List[Order]:
         return self.order_management.get_orders_for_account(account_id)
 
     def get_quote(self, ticker: str):
         return self.market_data.get_quote(ticker)
 
-    def get_depth(self, ticker: str) -> Optional[dict]:
+    def get_depth(self, ticker: str) -> tp.Optional[dict]:
         return self.matching_engine.snapshot(ticker)
 
-    def get_account(self, account_id: str) -> Optional[Account]:
+    def get_account(self, account_id: str) -> tp.Optional[Account]:
         return self.clearing.get_account(account_id)
 
 

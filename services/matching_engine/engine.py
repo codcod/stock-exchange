@@ -13,9 +13,9 @@ A match occurs when the best bid >= best ask.
 from __future__ import annotations
 
 import logging
+import typing as tp
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Dict, List, Optional
 
 from shared.events.bus import EventBus, MarketDataUpdate, OrderFilled, TradeExecuted
 from shared.models.domain import Order, OrderStatus, OrderType, Side, Trade
@@ -28,7 +28,7 @@ class PriceLevel:
     """All resting orders at a single price on one side of the book."""
 
     price: float
-    orders: Deque[Order] = field(default_factory=deque)
+    orders: tp.Deque[Order] = field(default_factory=deque)
 
     def total_quantity(self) -> int:
         return sum(o.remaining_quantity for o in self.orders)
@@ -45,15 +45,15 @@ class OrderBook:
 
     def __init__(self, ticker: str) -> None:
         self.ticker = ticker
-        self.bids: List[PriceLevel] = []  # buy orders
-        self.asks: List[PriceLevel] = []  # sell orders
-        self.last_price: Optional[float] = None
+        self.bids: tp.List[PriceLevel] = []  # buy orders
+        self.asks: tp.List[PriceLevel] = []  # sell orders
+        self.last_price: tp.Optional[float] = None
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
 
-    def add_order(self, order: Order) -> List[Trade]:
+    def add_order(self, order: Order) -> tp.List[Trade]:
         """
         Add an order and attempt to match it immediately.
         Returns a list of Trades produced (may be empty).
@@ -84,10 +84,10 @@ class OrderBook:
                         return True
         return False
 
-    def best_bid(self) -> Optional[float]:
+    def best_bid(self) -> tp.Optional[float]:
         return self.bids[0].price if self.bids else None
 
-    def best_ask(self) -> Optional[float]:
+    def best_ask(self) -> tp.Optional[float]:
         return self.asks[0].price if self.asks else None
 
     def depth_snapshot(self, levels: int = 5) -> dict:
@@ -108,7 +108,7 @@ class OrderBook:
     # Internals
     # ------------------------------------------------------------------
 
-    def _match(self, incoming: Order) -> List[Trade]:  # noqa: C901
+    def _match(self, incoming: Order) -> tp.List[Trade]:  # noqa: C901
         trades = []
 
         if incoming.side == Side.BUY:
@@ -208,7 +208,7 @@ class OrderBook:
         book_side.append(new_level)
         book_side.sort(key=lambda lvl: lvl.price, reverse=reverse)
 
-    def _cleanup(self, book_side: List[PriceLevel]) -> None:
+    def _cleanup(self, book_side: tp.List[PriceLevel]) -> None:
         """Remove empty price levels."""
         book_side[:] = [lvl for lvl in book_side if lvl.orders]
 
@@ -219,7 +219,7 @@ class MatchingEngine:
     """
 
     def __init__(self, event_bus: EventBus) -> None:
-        self._books: Dict[str, OrderBook] = {}
+        self._books: tp.Dict[str, OrderBook] = {}
         self._bus = event_bus
 
     def get_or_create_book(self, ticker: str) -> OrderBook:
@@ -227,7 +227,7 @@ class MatchingEngine:
             self._books[ticker] = OrderBook(ticker)
         return self._books[ticker]
 
-    async def submit(self, order: Order) -> List[Trade]:
+    async def submit(self, order: Order) -> tp.List[Trade]:
         book = self.get_or_create_book(order.ticker)
         trades = book.add_order(order)
 
@@ -285,6 +285,6 @@ class MatchingEngine:
             return book.cancel_order(order.order_id)
         return False
 
-    def snapshot(self, ticker: str) -> Optional[dict]:
+    def snapshot(self, ticker: str) -> tp.Optional[dict]:
         book = self._books.get(ticker)
         return book.depth_snapshot() if book else None

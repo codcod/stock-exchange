@@ -1,11 +1,12 @@
 """
 services/gateway/app.py
 
-FastAPI application. Wraps the Exchange facade with an HTTP interface.
+FastAPI application. Routes HTTP requests to downstream microservices.
 """
 
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 
 from services.gateway import dependencies
@@ -14,8 +15,10 @@ from services.gateway.routes import accounts, instruments, market_data, orders
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    dependencies._exchange = await dependencies.init_exchange()
+    http = httpx.AsyncClient(timeout=10.0)
+    dependencies._clients = dependencies.init_clients(http)
     yield
+    await http.aclose()
 
 
 app = FastAPI(title='Stock Exchange API', version='0.1.0', lifespan=lifespan)

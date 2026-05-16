@@ -11,12 +11,12 @@ Here we settle instantly (T+0) for simplicity.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional
+import typing as tp
 
 from shared.events.bus import EventBus, TradeExecuted
 from shared.models.domain import Account, Trade
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from shared.db.repositories import AccountRepository, TradeRepository
 
 logger = logging.getLogger(__name__)
@@ -26,16 +26,16 @@ class ClearingService:
     def __init__(
         self,
         event_bus: EventBus,
-        account_repo: Optional['AccountRepository'] = None,
-        trade_repo: Optional['TradeRepository'] = None,
+        account_repo: tp.Optional['AccountRepository'] = None,
+        trade_repo: tp.Optional['TradeRepository'] = None,
     ) -> None:
         self._bus = event_bus
-        self._accounts: Dict[str, Account] = {}
-        self._settled_trades: List[str] = []
+        self._accounts: tp.Dict[str, Account] = {}
+        self._settled_trades: tp.List[str] = []
         self._account_repo = account_repo
         self._trade_repo = trade_repo
 
-        self._bus.subscribe(TradeExecuted, self._on_trade_executed)
+        self._bus.subscribe(TradeExecuted, self.on_trade_executed)
 
     def register_account(self, account: Account) -> None:
         self._accounts[account.account_id] = account
@@ -44,7 +44,7 @@ class ClearingService:
     # Settlement logic
     # ------------------------------------------------------------------
 
-    async def _on_trade_executed(self, event: TradeExecuted) -> None:
+    async def on_trade_executed(self, event: TradeExecuted) -> None:
         buyer = self._accounts.get(event.buyer_account_id)
         seller = self._accounts.get(event.seller_account_id)
         trade_value = event.price * event.quantity

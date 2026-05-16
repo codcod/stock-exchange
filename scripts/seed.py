@@ -28,7 +28,7 @@ logging.disable(logging.CRITICAL)  # suppress service chatter during seeding
 
 from exchange.main import Exchange  # noqa: E402
 from shared.db.connection import get_engine  # noqa: E402
-from shared.db.tables import metadata  # noqa: E402
+from shared.db.tables import create_schemas, metadata  # noqa: E402
 from shared.models.domain import (  # noqa: E402
     Account,
     Instrument,
@@ -219,9 +219,12 @@ async def seed() -> None:  # noqa: C901, PLR0912, PLR0915
 
     print('Dropping and recreating all tables...')
     async with engine.begin() as conn:
+        # Schemas must exist before drop_all can inspect schema-qualified tables.
+        # create_schemas is idempotent so safe on a fresh DB too.
+        await create_schemas(conn)
         await conn.run_sync(metadata.drop_all)
-        await conn.run_sync(metadata.create_all)
-
+    # Exchange.create() re-runs create_schemas (idempotent) then create_all,
+    # so no explicit create_all is needed here.
     exchange = await Exchange.create(db_engine=engine)
 
     # -- Instruments ---------------------------------------------------------
