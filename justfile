@@ -1,7 +1,7 @@
 set dotenv-load := true
 
 db_url := "postgresql://exchange:exchange@localhost:5432/exchange"
-compose := "docker-compose -f infra/docker/compose.yml"
+compose := "docker-compose -f infra/docker/compose.yaml"
 
 # List available recipes
 default:
