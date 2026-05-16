@@ -17,11 +17,10 @@ flowchart TD
     Simulator -->|HTTP| Gateway
     Gateway -->|POST /orders| OMS
     OMS -->|POST /orders/check| Risk
-    Risk -->|FAIL| OMS
-    OMS -->|"order.status = REJECTED\nreturn to client"| Gateway
-    Risk -->|PASS| OMS
-    OMS -->|"POST /accounts/:id/reserve/cash\nPOST /accounts/:id/reserve/shares"| Risk
-    OMS -->|POST /orders| Matching
+    Risk -->|response| OMS
+    OMS -->|FAIL: status=REJECTED| Gateway
+    OMS -->|"PASS: POST /accounts/:id/reserve/cash\nPOST /accounts/:id/reserve/shares"| Risk
+    OMS -->|PASS: POST /orders| Matching
     Matching -->|no match: order rests in book| Matching
     Matching -->|"POST /events/trade-executed"| Clearing
     Matching -->|"POST /events/order-filled"| OMS
