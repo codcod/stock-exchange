@@ -2,49 +2,36 @@
 
 ## Data flow for a single order
 
-```text
-HTTP Client                       Direct caller (tests / simulator)
-  │                                 │
-  ▼                                 │
-services/gateway (FastAPI)          │
-  │  validates request              │
-  │  builds Order dataclass         │
-  ▼                                 ▼
-Exchange.submit_order(order)  ◄─────┘
-  │
-  ▼
-OrderManagementService
-  ├── Persist order (status=PENDING)
-  ├── Publish OrderSubmitted event
-  │
-  ├── RiskEngine.check(order)
-  │     ├── FAIL → order.status = REJECTED
-  │     │          Publish OrderRejected event
-  │     │          Return to client
-  │     │
-  │     └── PASS → reserve funds/shares
-  │                Publish OrderAccepted event
-  │
-  └── MatchingEngine.submit(order)
-        │
-        ├── No match → order rests in book (status=OPEN)
-        │             DB: UPDATE orders SET status=OPEN
-        │
-        └── Match found → Trade created
-              │
-              ├── Publish TradeExecuted event
-              │     └── ClearingService (listener)
-              │           ├── Update buyer/seller cash + positions (memory)
-              │           └── DB: INSERT trade, UPDATE accounts + positions
-              │
-              ├── Publish OrderFilled events (buyer + seller)
-              │     └── OrderManagementService (listener)
-              │           ├── Update order status (FILLED / PARTIALLY_FILLED) (memory)
-              │           └── DB: UPDATE orders SET status, filled_quantity
-              │
-              └── Publish MarketDataUpdate event
-                    └── MarketDataService (listener)
-                          └── Update quote snapshot (memory only)
+```mermaid
+flowchart TD
+    HttpClient["HTTP Client"]
+    DirectCaller["Direct caller\n(tests / simulator)"]
+    Gateway["services/gateway (FastAPI)\nvalidates request · builds Order dataclass"]
+    Exchange["Exchange.submit_order(order)"]
+    OMS["OrderManagementService\nPersist order (status=PENDING)\nPublish OrderSubmitted event"]
+    Risk["RiskEngine.check(order)"]
+    Rejected["order.status = REJECTED\nPublish OrderRejected event\nReturn to client"]
+    Reserve["reserve funds/shares\nPublish OrderAccepted event"]
+    Matching["MatchingEngine.submit(order)"]
+    NoMatch["order rests in book (status=OPEN)\nDB: UPDATE orders SET status=OPEN"]
+    Trade["Trade created"]
+    Clearing["ClearingService (listener)\nUpdate buyer/seller cash + positions (memory)\nDB: INSERT trade, UPDATE accounts + positions"]
+    OMSListener["OrderManagementService (listener)\nUpdate order status FILLED / PARTIALLY_FILLED (memory)\nDB: UPDATE orders SET status, filled_quantity"]
+    MarketData["MarketDataService (listener)\nUpdate quote snapshot (memory only)"]
+
+    HttpClient --> Gateway
+    Gateway --> Exchange
+    DirectCaller --> Exchange
+    Exchange --> OMS
+    OMS --> Risk
+    Risk -->|FAIL| Rejected
+    Risk -->|PASS| Reserve
+    Reserve --> Matching
+    Matching -->|no match| NoMatch
+    Matching -->|match found| Trade
+    Trade -->|TradeExecuted event| Clearing
+    Trade -->|OrderFilled events| OMSListener
+    Trade -->|MarketDataUpdate event| MarketData
 ```
 
 ## Service responsibilities
