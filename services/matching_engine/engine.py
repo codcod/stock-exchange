@@ -241,38 +241,44 @@ class MatchingEngine:
         events: tp.List = []
 
         for trade in trades:
-            events.append(TradeExecuted(
-                trade_id=trade.trade_id,
-                buy_order_id=trade.buy_order_id,
-                sell_order_id=trade.sell_order_id,
-                buyer_account_id=trade.buyer_account_id,
-                seller_account_id=trade.seller_account_id,
-                ticker=trade.ticker,
-                quantity=trade.quantity,
-                price=trade.price,
-            ))
+            events.append(
+                TradeExecuted(
+                    trade_id=trade.trade_id,
+                    buy_order_id=trade.buy_order_id,
+                    sell_order_id=trade.sell_order_id,
+                    buyer_account_id=trade.buyer_account_id,
+                    seller_account_id=trade.seller_account_id,
+                    ticker=trade.ticker,
+                    quantity=trade.quantity,
+                    price=trade.price,
+                )
+            )
             for order_id, account_id in [
                 (trade.buy_order_id, trade.buyer_account_id),
                 (trade.sell_order_id, trade.seller_account_id),
             ]:
-                events.append(OrderFilled(
-                    order_id=order_id,
-                    account_id=account_id,
-                    fill_quantity=trade.quantity,
-                    fill_price=trade.price,
-                    is_fully_filled=False,
-                ))
+                events.append(
+                    OrderFilled(
+                        order_id=order_id,
+                        account_id=account_id,
+                        fill_quantity=trade.quantity,
+                        fill_price=trade.price,
+                        is_fully_filled=False,
+                    )
+                )
 
         bid = book.best_bid()
         ask = book.best_ask()
         if bid or ask or book.last_price:
-            events.append(MarketDataUpdate(
-                ticker=order.ticker,
-                bid=bid or 0.0,
-                ask=ask or 0.0,
-                last_price=book.last_price or 0.0,
-                volume=sum(t.quantity for t in trades),
-            ))
+            events.append(
+                MarketDataUpdate(
+                    ticker=order.ticker,
+                    bid=bid or 0.0,
+                    ask=ask or 0.0,
+                    last_price=book.last_price or 0.0,
+                    volume=sum(t.quantity for t in trades),
+                )
+            )
 
         return trades, events
 

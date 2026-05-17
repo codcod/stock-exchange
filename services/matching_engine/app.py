@@ -76,14 +76,16 @@ async def _enqueue_events(conn, events: list) -> None:
         event_type = type(event).__name__
         payload = json.dumps(asdict(event), default=str)
         for dest in _EVENT_DESTINATIONS.get(event_type, []):
-            rows.append({
-                'event_id': event.event_id,
-                'event_type': event_type,
-                'destination': dest,
-                'payload': payload,
-                'created_at': now,
-                'published_at': None,
-            })
+            rows.append(
+                {
+                    'event_id': event.event_id,
+                    'event_type': event_type,
+                    'destination': dest,
+                    'payload': payload,
+                    'created_at': now,
+                    'published_at': None,
+                }
+            )
     await write_outbox_rows(conn, rows)
 
 

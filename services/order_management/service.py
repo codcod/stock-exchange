@@ -66,10 +66,8 @@ class OrderManagementService:
             return order
 
         self._reserve(order)
+        order.status = OrderStatus.OPEN
         await self._matching.submit(order)
-
-        # Persist final state (fill/partial-fill already written via _on_order_filled;
-        # this catches the OPEN case where no fill occurred)
         await self._order_repo.update(order)
 
         return order
@@ -106,8 +104,21 @@ class OrderManagementService:
         order = self._orders.get(event.order_id)
         if not order:
             return
-        if order.status == OrderStatus.FILLED:
+
+        prev_filled = order.filled_quantity
+        order.filled_quantity += event.fill_quantity
+
+        prev_value = (order.average_fill_price or 0.0) * prev_filled
+        order.average_fill_price = (
+            prev_value + event.fill_price * event.fill_quantity
+        ) / order.filled_quantity
+
+        if order.filled_quantity >= order.quantity:
+            order.status = OrderStatus.FILLED
             self._release(order)
+        else:
+            order.status = OrderStatus.PARTIALLY_FILLED
+
         await self._order_repo.update(order)
 
     # ------------------------------------------------------------------

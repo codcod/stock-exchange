@@ -49,9 +49,7 @@ async def lifespan(app: FastAPI):
 
     risk_client = RiskEngineClient(_RISK_URL, _state.http)
     matching_client = MatchingEngineClient(_MATCHING_URL, _state.http)
-    _state.svc = OrderManagementService(
-        risk_client, matching_client, order_repo
-    )
+    _state.svc = OrderManagementService(risk_client, matching_client, order_repo)
 
     for order in await order_repo.load_all():
         _state.svc._orders[order.order_id] = order
