@@ -208,13 +208,13 @@ def _print_bar(label: str, done: int, total: int, width: int = 30) -> None:
 
 async def seed() -> None:  # noqa: C901, PLR0912, PLR0915
     async with httpx.AsyncClient(base_url=GATEWAY_URL, timeout=30.0) as http:
-
         # -- Instruments -------------------------------------------------------
         print(f'\nRegistering {len(INSTRUMENTS)} instruments...')
         instrument_prices: dict[str, float] = {}
         for ticker, name, price in INSTRUMENTS:
             resp = await http.post(
-                '/instruments', json={'ticker': ticker, 'name': name, 'last_price': price}
+                '/instruments',
+                json={'ticker': ticker, 'name': name, 'last_price': price},
             )
             resp.raise_for_status()
             instrument_prices[ticker] = price
@@ -229,7 +229,12 @@ async def seed() -> None:  # noqa: C901, PLR0912, PLR0915
             positions = {t: 200 for t in random.sample(tickers, 15)}
             resp = await http.post(
                 '/accounts',
-                json={'account_id': account_id, 'name': name, 'cash_balance': cash, 'positions': positions},
+                json={
+                    'account_id': account_id,
+                    'name': name,
+                    'cash_balance': cash,
+                    'positions': positions,
+                },
             )
             resp.raise_for_status()
             # Mirror state locally so trade generation can check availability
