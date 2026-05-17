@@ -2,7 +2,8 @@
 shared/models/domain.py
 
 Core domain types shared across all services.
-These are plain dataclasses — no business logic lives here.
+These are plain dataclasses with minimal derived properties (available cash/shares,
+remaining quantity, active status) co-located with the data they describe.
 """
 
 from __future__ import annotations

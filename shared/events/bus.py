@@ -1,7 +1,7 @@
 """
 shared/events/bus.py
 
-A minimal synchronous in-process event bus.
+A minimal async in-process event bus.
 Services publish events; other services subscribe to event types.
 
 This replaces a real message broker (Kafka, Redis Streams) for simplicity.

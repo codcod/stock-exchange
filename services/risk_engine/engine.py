@@ -2,7 +2,8 @@
 services/risk_engine/engine.py
 
 Performs pre-trade risk checks on every order before it enters the book.
-All checks are synchronous and in-memory (account state is cached here).
+Account state is cached in-memory for fast checks (no DB round-trip).
+The check() entry point is async; individual check methods are synchronous.
 
 If any check fails, the order is rejected with a reason.
 """
@@ -32,7 +33,8 @@ class RiskResult:
 class RiskEngine:
     """
     Holds a local cache of account state so checks are fast (no DB round-trip).
-    State is updated via event subscriptions (see exchange/main.py for wiring).
+    State is updated via direct method calls: register_account/register_instrument
+    at startup, and update_reserved_cash/update_reserved_shares on each order.
     """
 
     def __init__(self) -> None:

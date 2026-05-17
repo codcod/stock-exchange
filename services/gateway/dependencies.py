@@ -2,8 +2,7 @@
 services/gateway/dependencies.py
 
 FastAPI dependency providing service HTTP clients.
-In microservices mode, each client calls the relevant service over HTTP.
-The in-process Exchange facade is preserved for single-process mode (tests/demo).
+Each client calls the relevant downstream service over HTTP.
 """
 
 from __future__ import annotations

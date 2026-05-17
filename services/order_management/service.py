@@ -2,11 +2,11 @@
 services/order_management/service.py
 
 Owns the lifecycle of every order:
-  - Validates incoming order structure
-  - Assigns IDs and persists to the order store
+  - Persists incoming orders (IDs are assigned by the Order constructor)
   - Routes to the risk engine, then the matching engine
+  - Reserves cash or shares while an order is open
   - Processes cancellation requests
-  - Listens for fill events to update order status
+  - Listens for fill events to update order status and release reservations
 """
 
 from __future__ import annotations
