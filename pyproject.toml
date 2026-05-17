@@ -200,3 +200,8 @@ insecure = false
 
 [tool.pymarkdown]
 plugins.md013.enabled = false
+
+[dependency-groups]
+dev = [
+    "ty>=0.0.37",
+]
