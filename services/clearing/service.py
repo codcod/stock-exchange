@@ -26,8 +26,8 @@ class ClearingService:
     def __init__(
         self,
         event_bus: EventBus,
-        account_repo: tp.Optional['AccountRepository'] = None,
-        trade_repo: tp.Optional['TradeRepository'] = None,
+        account_repo: 'AccountRepository',
+        trade_repo: 'TradeRepository',
     ) -> None:
         self._bus = event_bus
         self._accounts: tp.Dict[str, Account] = {}
@@ -84,24 +84,22 @@ class ClearingService:
 
         self._settled_trades.append(event.trade_id)
 
-        if self._trade_repo:
-            await self._trade_repo.save(
-                Trade(
-                    trade_id=event.trade_id,
-                    ticker=event.ticker,
-                    buy_order_id=event.buy_order_id,
-                    sell_order_id=event.sell_order_id,
-                    buyer_account_id=event.buyer_account_id,
-                    seller_account_id=event.seller_account_id,
-                    quantity=event.quantity,
-                    price=event.price,
-                )
+        await self._trade_repo.save(
+            Trade(
+                trade_id=event.trade_id,
+                ticker=event.ticker,
+                buy_order_id=event.buy_order_id,
+                sell_order_id=event.sell_order_id,
+                buyer_account_id=event.buyer_account_id,
+                seller_account_id=event.seller_account_id,
+                quantity=event.quantity,
+                price=event.price,
             )
-        if self._account_repo:
-            if buyer:
-                await self._account_repo.save(buyer)
-            if seller:
-                await self._account_repo.save(seller)
+        )
+        if buyer:
+            await self._account_repo.save(buyer)
+        if seller:
+            await self._account_repo.save(seller)
 
     def get_account(self, account_id: str) -> Account | None:
         return self._accounts.get(account_id)

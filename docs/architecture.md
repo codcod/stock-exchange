@@ -80,23 +80,6 @@ All clients share a pooled `httpx.AsyncClient` (timeout 10s).
 Service base URLs are configured via environment variables (e.g. `ORDER_MANAGEMENT_URL`).
 Default values assume localhost with the standard port assignment above.
 
-## Exchange facade (`exchange/main.py`)
-
-For testing and demo purposes a monolithic `Exchange` class wires all six services in-process
-without HTTP. This is the entry point used by `python -m exchange.main` and unit tests.
-
-```python
-exchange = await Exchange.create(db_engine=engine)  # pass None for pure in-memory
-await exchange.submit_order(order)
-```
-
-`Exchange.create()` calls `_load_state()` which:
-
-1. Loads instruments → registers with RiskEngine, restores `last_price` to order book
-2. Loads accounts → registers with RiskEngine and ClearingService
-3. Loads all orders → restores to OrderManagement's in-memory dict
-4. Loads OPEN / PARTIALLY_FILLED orders → re-inserts into the matching engine book (without triggering re-matching)
-
 ## Persistence layer (`shared/db/`)
 
 All persistence uses SQLAlchemy Core (async) — no ORM. Tables are split across three Postgres schemas.
@@ -117,24 +100,22 @@ shared/db/
 | `accounts` | `clearing` | Clearing (on each trade); Exchange (on register) |
 | `positions` | `clearing` | ClearingService (on each trade, full replace per account) |
 | `reserved_shares` | `clearing` | ClearingService (on each trade, full replace per account) |
-| `instruments` | `risk_engine` | Exchange.register_instrument; Exchange (last_price on each trade) |
+| `instruments` | `risk_engine` | RiskEngine (on register); MatchingEngine (last_price on each trade) |
 | `trades` | `clearing` | ClearingService (on each trade) |
 
 **Startup DDL** uses a Postgres advisory lock (key `20260516`) to serialise `CREATE TABLE IF NOT EXISTS`
 across concurrent service instances so only one runs DDL at startup.
 
-**Persistence is opt-in.** Pass a SQLAlchemy `AsyncEngine` to `Exchange.create(db_engine=...)` to enable it.
-Without an engine the exchange runs entirely in-memory — useful for tests and the demo script.
-The connection layer (`shared/db/connection.py`) returns an `AsyncEngine` using the `postgresql+asyncpg://` URL scheme.
+**`DATABASE_URL` is required** for all stateful services (risk_engine, order_management, matching_engine, clearing). Stateless services (gateway, market_data) do not need it. The connection layer (`shared/db/connection.py`) returns an `AsyncEngine` using the `postgresql+asyncpg://` URL scheme and raises immediately if the variable is absent.
 
 **Write-through pattern.** In-memory state is authoritative at runtime; every mutation immediately writes through to Postgres so the DB is always consistent with memory.
 
 ## Event bus (`shared/events/bus.py`)
 
 The event bus is an in-process publish/subscribe mechanism.
-In the microservices deployment the bus is used **within the matching engine only** to decouple
-trade execution from HTTP fan-out. In the single-process facade (`exchange/main.py`) the bus
-connects all six services directly.
+Each service has its own local `EventBus` instance. Within the matching engine it decouples
+trade execution from HTTP fan-out: the engine publishes events to its local bus, and subscribed
+handlers translate those events into HTTP calls to downstream services.
 
 `publish()` is an async coroutine; all handlers registered via `subscribe()` must be `async def` coroutines.
 Events are delivered sequentially — each handler is awaited before the next runs, preserving causal ordering.

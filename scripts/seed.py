@@ -1,16 +1,15 @@
 """
 scripts/seed.py
 
-Seed the exchange database with realistic initial data:
+Seed the exchange with realistic initial data via the running HTTP gateway:
   - 100 instruments across 7 sectors
   - 30 accounts (institutional and retail)
-  - 100 trades generated via the exchange's normal order flow
+  - 100 trades generated via matched order pairs
 
-Drops and recreates all tables before seeding.
+Requires the full service stack to be running against a fresh database.
+Start services first (just infra-up, then start all services), then run:
 
-Usage:
-    DATABASE_URL=postgresql://exchange:exchange@localhost:5432/exchange \\
-        python scripts/seed.py
+    GATEWAY_URL=http://localhost:8000 python scripts/seed.py
 """
 
 from __future__ import annotations
@@ -21,24 +20,17 @@ import os
 import random
 import sys
 
-# Resolve package root regardless of working directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-logging.disable(logging.CRITICAL)  # suppress service chatter during seeding
+logging.disable(logging.CRITICAL)
 
-from exchange.main import Exchange  # noqa: E402
-from shared.db.connection import get_engine  # noqa: E402
-from shared.db.tables import create_schemas, metadata  # noqa: E402
-from shared.models.domain import (  # noqa: E402
-    Account,
-    Instrument,
-    Order,
-    OrderStatus,
-    OrderType,
-    Side,
-)
+import httpx  # noqa: E402
+
+from shared.models.domain import Account  # noqa: E402
 
 random.seed(42)
+
+GATEWAY_URL = os.getenv('GATEWAY_URL', 'http://localhost:8000').rstrip('/')
 
 # ---------------------------------------------------------------------------
 # 100 instruments — (ticker, name, last_price)
@@ -215,127 +207,139 @@ def _print_bar(label: str, done: int, total: int, width: int = 30) -> None:
 
 
 async def seed() -> None:  # noqa: C901, PLR0912, PLR0915
-    engine = get_engine()
+    async with httpx.AsyncClient(base_url=GATEWAY_URL, timeout=30.0) as http:
 
-    print('Dropping and recreating all tables...')
-    async with engine.begin() as conn:
-        # Schemas must exist before drop_all can inspect schema-qualified tables.
-        # create_schemas is idempotent so safe on a fresh DB too.
-        await create_schemas(conn)
-        await conn.run_sync(metadata.drop_all)
-    # Exchange.create() re-runs create_schemas (idempotent) then create_all,
-    # so no explicit create_all is needed here.
-    exchange = await Exchange.create(db_engine=engine)
-
-    # -- Instruments ---------------------------------------------------------
-    print(f'\nRegistering {len(INSTRUMENTS)} instruments...')
-    instrument_map: dict[str, Instrument] = {}
-    for ticker, name, price in INSTRUMENTS:
-        instr = Instrument(ticker, name, last_price=price)
-        await exchange.register_instrument(instr)
-        instrument_map[ticker] = instr
-    print(f'  Done — {len(instrument_map)} instruments registered.')
-
-    # -- Accounts with initial positions ------------------------------------
-    print(f'\nRegistering {len(ACCOUNTS)} accounts...')
-    tickers = list(instrument_map.keys())
-    account_map: dict[str, Account] = {}
-
-    for account_id, name, cash in ACCOUNTS:
-        acct = Account(account_id=account_id, name=name, cash_balance=cash)
-        # Give each account 200 shares of 15 randomly chosen instruments
-        for ticker in random.sample(tickers, 15):
-            acct.positions[ticker] = 200
-        await exchange.register_account(acct)
-        account_map[account_id] = acct
-
-    print(f'  Done — {len(account_map)} accounts registered.')
-
-    # -- Trades via matched order pairs -------------------------------------
-    print('\nGenerating 100 trades...')
-    account_list = list(account_map.values())
-    trades_done = 0
-    attempts = 0
-    max_attempts = 2_000
-
-    while trades_done < 100 and attempts < max_attempts:
-        attempts += 1
-
-        ticker = random.choice(tickers)
-        price = instrument_map[ticker].last_price
-        if not price:
-            continue
-
-        # Find a seller with available shares
-        sellers = [a for a in account_list if a.available_shares(ticker) >= 5]
-        if not sellers:
-            continue
-        seller = random.choice(sellers)
-
-        # Find a buyer (different account) with enough cash
-        max_qty = _safe_qty(price, seller.available_shares(ticker) // 2)
-        if max_qty < 1:
-            continue
-
-        qty = random.randint(1, min(max_qty, 20))
-        cost = price * qty
-
-        buyers = [
-            a
-            for a in account_list
-            if a.account_id != seller.account_id and a.available_cash() >= cost
-        ]
-        if not buyers:
-            continue
-        buyer = random.choice(buyers)
-
-        # Submit sell — should rest in the book
-        sell = await exchange.submit_order(
-            Order(
-                account_id=seller.account_id,
-                ticker=ticker,
-                side=Side.SELL,
-                order_type=OrderType.LIMIT,
-                quantity=qty,
-                price=price,
+        # -- Instruments -------------------------------------------------------
+        print(f'\nRegistering {len(INSTRUMENTS)} instruments...')
+        instrument_prices: dict[str, float] = {}
+        for ticker, name, price in INSTRUMENTS:
+            resp = await http.post(
+                '/instruments', json={'ticker': ticker, 'name': name, 'last_price': price}
             )
-        )
-        if sell.status == OrderStatus.REJECTED:
-            continue
+            resp.raise_for_status()
+            instrument_prices[ticker] = price
+        print(f'  Done — {len(instrument_prices)} instruments registered.')
 
-        # Submit matching buy — should fill immediately
-        buy = await exchange.submit_order(
-            Order(
-                account_id=buyer.account_id,
-                ticker=ticker,
-                side=Side.BUY,
-                order_type=OrderType.LIMIT,
-                quantity=qty,
-                price=price,
+        # -- Accounts with initial positions -----------------------------------
+        print(f'\nRegistering {len(ACCOUNTS)} accounts...')
+        tickers = list(instrument_prices.keys())
+        account_map: dict[str, Account] = {}
+
+        for account_id, name, cash in ACCOUNTS:
+            positions = {t: 200 for t in random.sample(tickers, 15)}
+            resp = await http.post(
+                '/accounts',
+                json={'account_id': account_id, 'name': name, 'cash_balance': cash, 'positions': positions},
             )
-        )
+            resp.raise_for_status()
+            # Mirror state locally so trade generation can check availability
+            acct = Account(account_id=account_id, name=name, cash_balance=cash)
+            acct.positions = positions
+            account_map[account_id] = acct
 
-        if buy.status == OrderStatus.FILLED:
-            trades_done += 1
-            _print_bar('trades', trades_done, 100)
+        print(f'  Done — {len(account_map)} accounts registered.')
+
+        # -- Trades via matched order pairs ------------------------------------
+        print('\nGenerating 100 trades...')
+        account_list = list(account_map.values())
+        trades_done = 0
+        attempts = 0
+        max_attempts = 2_000
+
+        while trades_done < 100 and attempts < max_attempts:
+            attempts += 1
+
+            ticker = random.choice(tickers)
+            price = instrument_prices[ticker]
+
+            sellers = [a for a in account_list if a.available_shares(ticker) >= 5]
+            if not sellers:
+                continue
+            seller = random.choice(sellers)
+
+            max_qty = _safe_qty(price, seller.available_shares(ticker) // 2)
+            if max_qty < 1:
+                continue
+            qty = random.randint(1, min(max_qty, 20))
+            cost = price * qty
+
+            buyers = [
+                a
+                for a in account_list
+                if a.account_id != seller.account_id and a.available_cash() >= cost
+            ]
+            if not buyers:
+                continue
+            buyer = random.choice(buyers)
+
+            # Submit sell — should rest in the book
+            sell_resp = await http.post(
+                '/orders',
+                json={
+                    'account_id': seller.account_id,
+                    'ticker': ticker,
+                    'side': 'SELL',
+                    'order_type': 'LIMIT',
+                    'quantity': qty,
+                    'price': price,
+                },
+            )
+            sell_resp.raise_for_status()
+            sell_data = sell_resp.json()
+            if sell_data['status'] == 'REJECTED':
+                continue
+            sell_order_id = sell_data['order_id']
+            # Reserve shares in local model
+            seller.reserved_shares[ticker] = seller.reserved_shares.get(ticker, 0) + qty
+
+            # Submit matching buy — should fill immediately
+            buy_resp = await http.post(
+                '/orders',
+                json={
+                    'account_id': buyer.account_id,
+                    'ticker': ticker,
+                    'side': 'BUY',
+                    'order_type': 'LIMIT',
+                    'quantity': qty,
+                    'price': price,
+                },
+            )
+            buy_resp.raise_for_status()
+            buy_data = buy_resp.json()
+
+            if buy_data['status'] == 'FILLED':
+                trades_done += 1
+                # Mirror clearing in local model
+                buyer.cash_balance -= cost
+                buyer.positions[ticker] = buyer.positions.get(ticker, 0) + qty
+                seller.cash_balance += cost
+                seller.positions[ticker] = max(0, seller.positions.get(ticker, 0) - qty)
+                seller.reserved_shares[ticker] = max(
+                    0, seller.reserved_shares.get(ticker, 0) - qty
+                )
+                _print_bar('trades', trades_done, 100)
+            else:
+                # Buy was rejected — release reservation and cancel resting sell
+                seller.reserved_shares[ticker] = max(
+                    0, seller.reserved_shares.get(ticker, 0) - qty
+                )
+                await http.delete(
+                    f'/orders/{sell_order_id}', params={'account_id': seller.account_id}
+                )
+
+        print()  # newline after progress bar
+
+        if trades_done < 100:
+            print(
+                f'  Warning: only {trades_done}/100 trades completed'
+                f' after {attempts} attempts.'
+            )
         else:
-            # Buy was rejected — cancel the resting sell to keep the book clean
-            await exchange.cancel_order(sell.order_id, seller.account_id)
+            print(f'  Done — 100 trades in {attempts} attempts.')
 
-    print()  # newline after progress bar
-
-    if trades_done < 100:
-        print(
-            f'  Warning: only {trades_done}/100 trades completed'
-            f' after {attempts} attempts.'
-        )
-    else:
-        print(f'  Done — 100 trades in {attempts} attempts.')
-
-    # -- Summary -------------------------------------------------------------
     print(f"""
 Seed complete:
-  instruments : {len(instrument_map)}
+  instruments : {len(instrument_prices)}
   accounts    : {len(account_map)}
   trades      : {trades_done}
 """)

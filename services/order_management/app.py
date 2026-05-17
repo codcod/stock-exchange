@@ -6,7 +6,7 @@ Receives orders from the gateway, calls Risk Engine and Matching Engine via HTTP
 and accepts fill-event callbacks from the Matching Engine.
 
 Environment variables:
-  DATABASE_URL          — Postgres URL (optional)
+  DATABASE_URL          — Postgres URL (required)
   RISK_ENGINE_URL       — default http://localhost:8002
   MATCHING_ENGINE_URL   — default http://localhost:8003
   PORT                  — default 8001
@@ -44,11 +44,9 @@ _MATCHING_URL = os.getenv('MATCHING_ENGINE_URL', 'http://localhost:8003')
 async def lifespan(app: FastAPI):
     _state.http = httpx.AsyncClient(timeout=10.0)
 
-    order_repo = None
-    if os.getenv('DATABASE_URL'):
-        db = get_engine()
-        await ensure_tables(db)
-        order_repo = OrderRepository(db)
+    db = get_engine()
+    await ensure_tables(db)
+    order_repo = OrderRepository(db)
 
     risk_client = RiskEngineClient(_RISK_URL, _state.http)
     matching_client = MatchingEngineClient(_MATCHING_URL, _state.http)
@@ -57,9 +55,8 @@ async def lifespan(app: FastAPI):
         risk_client, matching_client, local_bus, order_repo
     )
 
-    if order_repo:
-        for order in await order_repo.load_all():
-            _state.svc._orders[order.order_id] = order
+    for order in await order_repo.load_all():
+        _state.svc._orders[order.order_id] = order
 
     yield
     await _state.http.aclose()
