@@ -1,3 +1,12 @@
+"""
+clients/tui/widgets/open_orders.py
+
+OpenOrdersWidget — table of active orders (OPEN and PARTIALLY_FILLED).
+
+Pressing 'd' on the selected row posts CancelRequested(order_id) to the App,
+which dispatches a cancel worker.  Status values are color-coded.
+"""
+
 import typing as tp
 
 from rich.text import Text

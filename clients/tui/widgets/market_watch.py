@@ -1,3 +1,13 @@
+"""
+clients/tui/widgets/market_watch.py
+
+MarketWatchWidget — scrollable ticker list with live bid/ask/last/volume.
+
+Posts TickerSelected(ticker) when the user presses Enter on a row.
+Color-codes the Last column green (▲) or red (▼) based on price direction
+relative to the previous poll.
+"""
+
 import typing as tp
 
 from rich.text import Text

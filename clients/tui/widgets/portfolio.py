@@ -1,3 +1,13 @@
+"""
+clients/tui/widgets/portfolio.py
+
+PortfolioWidget — account cash summary and position table.
+
+The cash header (Label) shows total and available cash in Rich markup.
+The positions DataTable shows each held ticker with its last price and
+current market value.  Zero-quantity positions are omitted.
+"""
+
 import typing as tp
 
 from rich.text import Text

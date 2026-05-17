@@ -1,3 +1,14 @@
+"""
+clients/tui/widgets/order_entry.py
+
+OrderEntryWidget — full-width horizontal order ticket.
+
+Fields laid out in a single row: Ticker | Side | Type | Qty | Price | Notional | Submit.
+Selecting MARKET order type disables the Price field.
+Posts OrderSubmitRequested to the App on submit (after local validation).
+Notional value updates live as Qty or Price changes.
+"""
+
 import typing as tp
 
 from textual.app import ComposeResult

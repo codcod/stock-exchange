@@ -1,3 +1,13 @@
+"""
+clients/tui/api.py
+
+Synchronous HTTP client for the exchange gateway.
+
+GatewayClient wraps every gateway endpoint in a plain Python method so the
+rest of the TUI never imports httpx directly.  All methods are blocking and
+intended to be called from a @work(thread=True) worker, not from the UI thread.
+"""
+
 import typing as tp
 from datetime import datetime
 

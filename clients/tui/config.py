@@ -1,3 +1,19 @@
+"""
+clients/tui/config.py
+
+AppConfig dataclass and load_config() factory.
+
+All values are read from environment variables with sensible defaults so the
+app works out of the box against a local exchange stack.
+
+Environment variables:
+  EXCHANGE_BASE_URL       — gateway base URL     (default: http://localhost:8000)
+  EXCHANGE_ACCOUNT_ID     — account to trade as  (default: trader-0)
+  EXCHANGE_API_KEY        — X-API-Key header      (default: empty / no auth)
+  EXCHANGE_POLL_MARKET_MS — market data interval  (default: 2000 ms)
+  EXCHANGE_POLL_ORDERS_MS — account/orders interval (default: 3000 ms)
+"""
+
 import os
 import typing as tp
 from dataclasses import dataclass

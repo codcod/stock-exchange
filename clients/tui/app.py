@@ -1,3 +1,18 @@
+"""
+clients/tui/app.py
+
+Root Textual application for the exchange terminal.
+
+ExchangeApp owns all shared reactive state (selected_ticker, status_message)
+and all background workers.  Widgets never call the API directly — they post
+custom Messages; the App handles those messages, dispatches workers, and
+pushes results back to widgets via update() calls on the UI thread.
+
+Polling timers:
+  _fetch_market   — every EXCHANGE_POLL_MARKET_MS ms (default 2 s)
+  _fetch_account  — every EXCHANGE_POLL_ORDERS_MS ms (default 3 s)
+"""
+
 import typing as tp
 from datetime import datetime
 

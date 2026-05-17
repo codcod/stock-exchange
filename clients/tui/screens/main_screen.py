@@ -1,3 +1,14 @@
+"""
+clients/tui/screens/main_screen.py
+
+Main trading screen layout (three rows):
+  Row 1 — MarketWatchWidget | OrderBookWidget | PortfolioWidget
+  Row 2 — OrderEntryWidget  (full-width horizontal order ticket)
+  Row 3 — OpenOrdersWidget  | TradeTapeWidget
+
+A TabbedContent wrapper adds a second tab for OrderHistoryWidget.
+"""
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.screen import Screen

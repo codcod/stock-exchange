@@ -10,16 +10,15 @@ risk checks, clearing) — not to build a production-grade, high-performance sys
 
 ```text
 clients/simulator      → generates synthetic order traffic for testing
+clients/tui/           → interactive terminal trading app (Textual)
 services/gateway       → entry point: auth, rate limiting, order routing
 services/risk_engine   → pre-trade checks before orders reach the book
 services/order_management → order lifecycle and persistence
 services/matching_engine  → order book + price-time priority matching
 services/clearing      → post-trade settlement and position updates
 services/market_data   → publishes prices, depth, and trade feed
-services/account       → balances, positions, portfolio
-services/notifications → fill confirmations and alerts
-shared/                → domain models, event bus, db layer (tables + repositories)
-infra/                 → docker-compose, helper scripts
+shared/                → domain models, HTTP service clients, outbox event routing, db layer
+infra/                 → docker-compose files and helper scripts
 ```
 
 ## Key domain concepts
@@ -33,40 +32,41 @@ infra/                 → docker-compose, helper scripts
 ## Running the project
 
 ```bash
-# Install all dependencies (fastapi, uvicorn, sqlalchemy, psycopg2-binary)
-pip install -e ".[dev]"
+# Install all dependencies
+uv sync --extra dev
 
-# Start Postgres (required)
-docker-compose -f infra/docker/docker-compose.yml up -d
+# Start Postgres + all six microservices
+just up
 
 # Run all tests
-pytest
-
-# Start the HTTP gateway (DATABASE_URL required for stateful services)
-DATABASE_URL=postgresql://exchange:exchange@localhost:5432/exchange python -m services.gateway
+just test
 
 # Run the simulator to generate traffic
-python -m clients.simulator.main
+just sim
+
+# Launch the interactive TUI (set account and base URL as needed)
+EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 ```
 
 ## Development conventions
 
-- Each service has a local in-process event bus (see shared/events/) used for internal pub/sub within that service
 - The HTTP gateway (`services/gateway/`) is a thin FastAPI layer that routes requests to downstream microservices
-- Each service exposes a simple Python class interface — no HTTP in the core loop
-- Persistence uses SQLAlchemy Core only (no ORM) — see shared/db/
+- Each service exposes a plain Python class interface — no HTTP in the core service loop; HTTP lives in `app.py`
+- Services communicate via HTTP (httpx); after a match the matching engine writes events to a Postgres outbox table and a background relay delivers them to downstream services
+- Persistence uses SQLAlchemy Core (async) only — no ORM; see `shared/db/`
 - `DATABASE_URL` is required for stateful services (risk_engine, order_management, matching_engine, clearing); stateless services (gateway, market_data) do not need it
-- Tests live alongside each service in its tests/ directory
-- Use dataclasses for domain models (shared/models/)
+- Tests live alongside each service in its `tests/` directory
+- Use dataclasses for domain models (`shared/models/`)
 - Keep each service file under ~200 lines; split into submodules when it grows
-- No async/await — synchronous for clarity and ease of debugging
+- Services use `async def` throughout — FastAPI and asyncpg both require it
+- Client code (`clients/tui/`) is synchronous; use `@work(thread=True)` for blocking I/O instead of coroutines
 - Always use `import typing as tp` — never `from typing import XXX`; reference types as `tp.Optional`, `tp.List`, etc.
 
 ## When modifying a service
 
-1. Check shared/models/ first — domain models are shared
+1. Check `shared/models/` first — domain models are shared across all services
 2. Update the service logic
-3. Publish events via shared/events/bus.py if state changed
-4. If the change affects persistent state, update the relevant repository in shared/db/repositories.py (and the table in shared/db/tables.py if the schema changes)
-5. Add or update tests in the service's tests/ directory
-6. Update docs/architecture.md if the data flow changed
+3. If the change produces new events, add rows to the outbox in the matching engine's `_enqueue_events()` and register the destination in `_EVENT_DESTINATIONS`
+4. If the change affects persistent state, update the relevant repository in `shared/db/repositories.py` (and the table in `shared/db/tables.py` if the schema changes)
+5. Add or update tests in the service's `tests/` directory
+6. Update `docs/architecture.md` if the data flow changed

@@ -1,3 +1,13 @@
+"""
+clients/tui/widgets/order_history.py
+
+OrderHistoryWidget — all orders for the current account (all statuses).
+
+Shown in the History tab and only refreshed when that tab is active.
+Orders are displayed most-recent-first.  Side and status columns are
+color-coded: BUY green, SELL red, FILLED/OPEN green, CANCELLED/REJECTED dim/red.
+"""
+
 import typing as tp
 
 from rich.text import Text
