@@ -114,3 +114,67 @@ class Instrument:
     max_order_size: int = 10_000
     is_tradeable: bool = True
     last_price: tp.Optional[float] = None
+
+
+# ---------------------------------------------------------------------------
+# Domain events
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class Event:
+    event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class OrderSubmitted(Event):
+    order_id: str = ''
+    account_id: str = ''
+    ticker: str = ''
+
+
+@dataclass
+class OrderAccepted(Event):
+    order_id: str = ''
+
+
+@dataclass
+class OrderRejected(Event):
+    order_id: str = ''
+    reason: str = ''
+
+
+@dataclass
+class OrderCancelled(Event):
+    order_id: str = ''
+
+
+@dataclass
+class TradeExecuted(Event):
+    trade_id: str = ''
+    buy_order_id: str = ''
+    sell_order_id: str = ''
+    buyer_account_id: str = ''
+    seller_account_id: str = ''
+    ticker: str = ''
+    quantity: int = 0
+    price: float = 0.0
+
+
+@dataclass
+class OrderFilled(Event):
+    order_id: str = ''
+    account_id: str = ''
+    fill_quantity: int = 0
+    fill_price: float = 0.0
+    is_fully_filled: bool = False
+
+
+@dataclass
+class MarketDataUpdate(Event):
+    ticker: str = ''
+    bid: float = 0.0
+    ask: float = 0.0
+    last_price: float = 0.0
+    volume: int = 0

@@ -2,7 +2,8 @@
 services/matching_engine/app.py
 
 Standalone FastAPI service wrapping MatchingEngine.
-After each match, events are fanned out via HTTP to downstream services:
+After each match, events are written to the outbox table (matching_engine.outbox)
+and a background relay delivers them via HTTP to downstream services:
   - TradeExecuted  → ClearingService + MarketDataService
   - OrderFilled    → OrderManagementService
   - MarketDataUpdate → MarketDataService
@@ -18,8 +19,12 @@ Environment variables:
 from __future__ import annotations
 
 import asyncio
+import json
+import logging
 import os
 from contextlib import asynccontextmanager
+from dataclasses import asdict
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import httpx
@@ -27,88 +32,124 @@ from fastapi import FastAPI
 
 from services.matching_engine.engine import MatchingEngine
 from shared.db.connection import get_engine
-from shared.db.repositories import OrderRepository
+from shared.db.repositories import OrderRepository, OutboxRepository, write_outbox_rows
 from shared.db.tables import ensure_tables
-from shared.events.bus import EventBus, MarketDataUpdate, OrderFilled, TradeExecuted
 from shared.models.domain import Order, OrderStatus, OrderType, Side
 
-_local_bus = EventBus()
-_engine_svc = MatchingEngine(_local_bus)
-_state = SimpleNamespace(http=None)
+logger = logging.getLogger(__name__)
+
+_engine_svc = MatchingEngine()
+_state = SimpleNamespace(http=None, db=None)
 
 _CLEARING_URL = os.getenv('CLEARING_URL', 'http://localhost:8004')
 _OMS_URL = os.getenv('ORDER_MANAGEMENT_URL', 'http://localhost:8001')
 _MARKET_DATA_URL = os.getenv('MARKET_DATA_URL', 'http://localhost:8005')
 
+_EVENT_DESTINATIONS: dict = {
+    'TradeExecuted': ['clearing', 'market_data'],
+    'OrderFilled': ['order_management'],
+    'MarketDataUpdate': ['market_data'],
+}
+_DESTINATION_URLS: dict = {}
+_ENDPOINT_FOR_EVENT_TYPE: dict = {
+    'TradeExecuted': '/events/trade-executed',
+    'OrderFilled': '/events/order-filled',
+    'MarketDataUpdate': '/events/market-data-update',
+}
+
+_RELAY_POLL_INTERVAL = 0.5
+
 
 # ---------------------------------------------------------------------------
-# HTTP event fan-out adapters (subscribe to local bus, forward via HTTP)
+# Outbox write helper
 # ---------------------------------------------------------------------------
 
 
-async def _forward_trade_executed(event: TradeExecuted) -> None:
-    assert _state.http is not None
-    payload = {
-        'trade_id': event.trade_id,
-        'buy_order_id': event.buy_order_id,
-        'sell_order_id': event.sell_order_id,
-        'buyer_account_id': event.buyer_account_id,
-        'seller_account_id': event.seller_account_id,
-        'ticker': event.ticker,
-        'quantity': event.quantity,
-        'price': event.price,
-    }
-    await asyncio.gather(
-        _state.http.post(f'{_CLEARING_URL}/events/trade-executed', json=payload),
-        _state.http.post(f'{_MARKET_DATA_URL}/events/trade-executed', json=payload),
-        return_exceptions=True,
-    )
+async def _enqueue_events(conn, events: list) -> None:
+    now = datetime.now(timezone.utc)
+    rows = []
+    for event in events:
+        event_type = type(event).__name__
+        payload = json.dumps(asdict(event), default=str)
+        for dest in _EVENT_DESTINATIONS.get(event_type, []):
+            rows.append({
+                'event_id': event.event_id,
+                'event_type': event_type,
+                'destination': dest,
+                'payload': payload,
+                'created_at': now,
+                'published_at': None,
+            })
+    await write_outbox_rows(conn, rows)
 
 
-async def _forward_order_filled(event: OrderFilled) -> None:
-    assert _state.http is not None
-    payload = {
-        'order_id': event.order_id,
-        'account_id': event.account_id,
-        'fill_quantity': event.fill_quantity,
-        'fill_price': event.fill_price,
-        'is_fully_filled': event.is_fully_filled,
-    }
-    await _state.http.post(f'{_OMS_URL}/events/order-filled', json=payload)
+# ---------------------------------------------------------------------------
+# Outbox relay background task
+# ---------------------------------------------------------------------------
 
 
-async def _forward_market_data_update(event: MarketDataUpdate) -> None:
-    assert _state.http is not None
-    payload = {
-        'ticker': event.ticker,
-        'bid': event.bid,
-        'ask': event.ask,
-        'last_price': event.last_price,
-        'volume': event.volume,
-    }
-    await _state.http.post(
-        f'{_MARKET_DATA_URL}/events/market-data-update', json=payload
-    )
+async def _outbox_relay() -> None:
+    repo = OutboxRepository(_state.db)
+    while True:
+        try:
+            rows = await repo.fetch_unpublished()
+            for row in rows:
+                dest_url = _DESTINATION_URLS.get(row['destination'])
+                endpoint = _ENDPOINT_FOR_EVENT_TYPE.get(row['event_type'])
+                if not dest_url or not endpoint:
+                    logger.warning(
+                        'Unknown destination/event: %s / %s',
+                        row['destination'],
+                        row['event_type'],
+                    )
+                    continue
+                try:
+                    resp = await _state.http.post(
+                        f'{dest_url}{endpoint}',
+                        json=json.loads(row['payload']),
+                    )
+                    resp.raise_for_status()
+                    await repo.mark_published(row['id'])
+                except Exception:
+                    logger.exception('Relay failed for outbox row %d', row['id'])
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception('Outbox relay poll error')
+        await asyncio.sleep(_RELAY_POLL_INTERVAL)
+
+
+# ---------------------------------------------------------------------------
+# App lifecycle
+# ---------------------------------------------------------------------------
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _DESTINATION_URLS
+    _DESTINATION_URLS = {
+        'clearing': _CLEARING_URL,
+        'order_management': _OMS_URL,
+        'market_data': _MARKET_DATA_URL,
+    }
     _state.http = httpx.AsyncClient(timeout=10.0)
+    _state.db = get_engine()
+    await ensure_tables(_state.db)
 
-    # Wire up HTTP event fan-out
-    _local_bus.subscribe(TradeExecuted, _forward_trade_executed)
-    _local_bus.subscribe(OrderFilled, _forward_order_filled)
-    _local_bus.subscribe(MarketDataUpdate, _forward_market_data_update)
-
-    # Restore active orders from DB
-    db = get_engine()
-    await ensure_tables(db)
-    for order in await OrderRepository(db).load_all():
+    for order in await OrderRepository(_state.db).load_all():
         if order.is_active:
             _engine_svc.restore_order(order)
 
-    yield
-    await _state.http.aclose()
+    relay_task = asyncio.create_task(_outbox_relay())
+    try:
+        yield
+    finally:
+        relay_task.cancel()
+        try:
+            await relay_task
+        except asyncio.CancelledError:
+            pass
+        await _state.http.aclose()
 
 
 app = FastAPI(title='Matching Engine', version='0.1.0', lifespan=lifespan)
@@ -127,7 +168,10 @@ async def health() -> dict:
 @app.post('/orders', status_code=201)
 async def submit_order(data: dict) -> dict:
     order = _parse_order(data)
-    trades = await _engine_svc.submit(order)
+    trades, events = await _engine_svc.submit(order)
+    if events:
+        async with _state.db.begin() as conn:
+            await _enqueue_events(conn, events)
     return {
         'trades': [
             {
@@ -155,11 +199,10 @@ async def restore_order(data: dict) -> dict:
 
 @app.delete('/orders/{order_id}')
 async def cancel_order(order_id: str) -> dict:
-    # Reconstruct a minimal Order for the cancel call
-    book_orders = _find_order(order_id)
-    if book_orders is None:
+    book_order = _find_order(order_id)
+    if book_order is None:
         return {'cancelled': False}
-    cancelled = await _engine_svc.cancel(book_orders)
+    cancelled = await _engine_svc.cancel(book_order)
     return {'cancelled': cancelled}
 
 
@@ -177,7 +220,7 @@ async def get_depth(ticker: str) -> dict:
 
 
 def _parse_order(data: dict) -> Order:
-    order = Order(
+    return Order(
         account_id=data['account_id'],
         ticker=data['ticker'],
         side=Side(data['side']),
@@ -188,7 +231,6 @@ def _parse_order(data: dict) -> Order:
         status=OrderStatus(data['status']),
         filled_quantity=data['filled_quantity'],
     )
-    return order
 
 
 def _find_order(order_id: str):

@@ -15,7 +15,7 @@ from sqlalchemy.schema import CreateTable
 
 metadata = MetaData()
 
-_SCHEMAS = ('order_management', 'risk_engine', 'clearing')
+_SCHEMAS = ('order_management', 'risk_engine', 'clearing', 'matching_engine')
 
 # Arbitrary fixed lock ID — serialises DDL across all services at startup.
 _DDL_LOCK_ID = 20260516
@@ -122,4 +122,17 @@ trades = Table(
     Column('price', Numeric(18, 6), nullable=False),
     Column('executed_at', DateTime(timezone=True), nullable=False),
     schema='clearing',
+)
+
+outbox = Table(
+    'outbox',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('event_id', String, nullable=False),
+    Column('event_type', String, nullable=False),
+    Column('destination', String, nullable=False),
+    Column('payload', Text, nullable=False),
+    Column('created_at', DateTime(timezone=True), nullable=False),
+    Column('published_at', DateTime(timezone=True), nullable=True),
+    schema='matching_engine',
 )

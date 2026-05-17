@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from shared.db.tables import accounts as accounts_t
 from shared.db.tables import instruments as instruments_t
 from shared.db.tables import orders as orders_t
+from shared.db.tables import outbox as outbox_t
 from shared.db.tables import positions as positions_t
 from shared.db.tables import reserved_shares as reserved_shares_t
 from shared.db.tables import trades as trades_t
@@ -267,4 +268,37 @@ class TradeRepository:
                     price=trade.price,
                     executed_at=trade.executed_at,
                 )
+            )
+
+
+# ---------------------------------------------------------------------------
+# Outbox
+# ---------------------------------------------------------------------------
+
+
+async def write_outbox_rows(conn, rows: tp.List[dict]) -> None:
+    """Insert outbox rows into an already-open connection/transaction."""
+    if rows:
+        await conn.execute(insert(outbox_t), rows)
+
+
+class OutboxRepository:
+    def __init__(self, engine: AsyncEngine) -> None:
+        self._engine = engine
+
+    async def fetch_unpublished(self) -> tp.List[dict]:
+        async with self._engine.connect() as conn:
+            result = await conn.execute(
+                select(outbox_t)
+                .where(outbox_t.c.published_at.is_(None))
+                .order_by(outbox_t.c.id)
+            )
+            return [dict(row) for row in result.mappings().all()]
+
+    async def mark_published(self, row_id: int) -> None:
+        async with self._engine.begin() as conn:
+            await conn.execute(
+                update(outbox_t)
+                .where(outbox_t.c.id == row_id)
+                .values(published_at=datetime.now(timezone.utc))
             )
