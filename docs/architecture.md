@@ -27,7 +27,7 @@ flowchart TD
     Matching -->|"POST /events/market-data-update"| MarketData
 ```
 
-All inter-service calls are HTTP (httpx). The matching engine fans out trade events by calling downstream services directly after a match.
+All synchronous inter-service calls are HTTP (httpx). Trade events are delivered asynchronously via the outbox pattern: the matching engine writes events to a Postgres table, and a background relay polls every 0.5 s to forward them to downstream services.
 
 ## Service responsibilities
 
@@ -36,7 +36,7 @@ All inter-service calls are HTTP (httpx). The matching engine fans out trade eve
 | Gateway | 8000 | HTTP interface, request/response translation | OMS, MarketData | no |
 | OrderManagement | 8001 | Order lifecycle, routing | RiskEngine, MatchingEngine | orders |
 | RiskEngine | 8002 | Account state cache, pre-trade rules | — | instruments |
-| MatchingEngine | 8003 | Order books, trade execution, event fan-out | Clearing, OMS, MarketData | no |
+| MatchingEngine | 8003 | Order books, trade execution, outbox relay | Clearing, OMS, MarketData | outbox |
 | Clearing | 8004 | Account balances, positions | — | accounts, positions, trades |
 | MarketData | 8005 | Quote snapshots, trade history (memory only) | — | no |
 
@@ -87,9 +87,9 @@ All persistence uses SQLAlchemy Core (async) — no ORM. Tables are split across
 ```text
 shared/db/
 ├── connection.py    # get_engine() singleton; reads DATABASE_URL env var
-├── tables.py        # MetaData + 6 Table definitions across 3 schemas
+├── tables.py        # MetaData + 7 Table definitions across 3 schemas (+ outbox)
 └── repositories.py  # OrderRepository, AccountRepository,
-                     # InstrumentRepository, TradeRepository
+                     # InstrumentRepository, TradeRepository, OutboxRepository
 ```
 
 **Tables:**
@@ -102,6 +102,7 @@ shared/db/
 | `reserved_shares` | `clearing` | ClearingService (on each trade, full replace per account) |
 | `instruments` | `risk_engine` | RiskEngine (on registration via POST /instruments) |
 | `trades` | `clearing` | ClearingService (on each trade) |
+| `outbox` | `matching_engine` | MatchingEngine (one row per event per destination; relay marks rows published) |
 
 **Startup DDL** uses a Postgres advisory lock (key `20260516`) to serialise `CREATE TABLE IF NOT EXISTS`
 across concurrent service instances so only one runs DDL at startup.
@@ -110,49 +111,75 @@ across concurrent service instances so only one runs DDL at startup.
 
 **Write-through pattern.** In-memory state is authoritative at runtime; every mutation immediately writes through to Postgres so the DB is always consistent with memory.
 
-## Event bus (`shared/events/bus.py`)
+## Outbox event relay (`services/matching_engine/`)
 
-The event bus is an in-process publish/subscribe mechanism.
-Each service has its own local `EventBus` instance. Within the matching engine it decouples
-trade execution from HTTP fan-out: the engine publishes events to its local bus, and subscribed
-handlers translate those events into HTTP calls to downstream services.
+After each match the matching engine writes event rows to the `matching_engine.outbox` Postgres table — one row per event per destination — and immediately returns a response to the caller. A background coroutine (`_outbox_relay`) polls the table every 0.5 s, delivers each unpublished row via HTTP POST to the target service, and marks the row as published.
 
-`publish()` is an async coroutine; all handlers registered via `subscribe()` must be `async def` coroutines.
-Events are delivered sequentially — each handler is awaited before the next runs, preserving causal ordering.
-Handler exceptions are logged but do not block other handlers.
+This outbox pattern decouples trade execution from downstream delivery and guarantees at-least-once delivery without a message broker.
 
-**Events:**
+**Event routing:**
 
-| Event | Published by | Handled by |
+| Event | Destinations | Endpoint |
 |---|---|---|
-| `OrderSubmitted` | OMS | — |
-| `OrderAccepted` | OMS | — |
-| `OrderRejected` | OMS | — |
-| `OrderCancelled` | OMS | — |
-| `TradeExecuted` | MatchingEngine | Clearing, MarketData |
-| `OrderFilled` | MatchingEngine | OMS |
-| `MarketDataUpdate` | MatchingEngine | MarketData |
+| `TradeExecuted` | Clearing, MarketData | `/events/trade-executed` |
+| `OrderFilled` | OMS | `/events/order-filled` |
+| `MarketDataUpdate` | MarketData | `/events/market-data-update` |
 
-In a production system the bus would be replaced with Kafka or Redis Streams.
+Destination base URLs are configured via env vars (`CLEARING_URL`, `ORDER_MANAGEMENT_URL`, `MARKET_DATA_URL`).
 
 ## Infrastructure (`infra/docker/`)
 
 ```text
 infra/docker/
-├── compose.infra.yml     # Postgres 18 (postgres-data volume, named 'exchange' network)
-└── compose.services.yml  # Six service containers; startup order enforced via depends_on
+├── compose.infra.yml     # Postgres 17 (postgres-data volume, named 'exchange' network)
+└── compose.services.yml  # Six service containers; all depend only on Postgres health
 ```
 
-Service startup order (enforced by healthchecks): `risk-engine` → `clearing` → `market-data` → `matching-engine` → `order-management` → `gateway`.
+All six service containers share a single `depends_on: postgres: condition: service_healthy` — no inter-service dependency ordering is enforced by docker-compose. Services that call each other retry gracefully at the application level. Each container runs `python -m services.<name>` and is reachable on `localhost:800X`.
 
-Each service container runs `python -m services.<name>` and is reachable on `localhost:800X`.
+## Terminal client (`clients/tui/`)
+
+An interactive trading terminal built with [Textual](https://textual.textualize.io/).
+
+```text
+clients/tui/
+├── __main__.py       # Entry point: python -m clients.tui
+├── app.py            # ExchangeApp — root Textual app, reactive state, workers
+├── api.py            # GatewayClient — synchronous httpx wrapper
+├── config.py         # AppConfig loaded from env vars
+├── models.py         # Presentation dataclasses (QuoteRow, OrderRow, …)
+├── tui.tcss          # Dark terminal CSS theme
+├── screens/
+│   ├── main_screen.py  # Three-row layout: data panels / order entry / bottom strip
+│   └── help_screen.py  # F1 modal with keybinding reference
+└── widgets/
+    ├── market_watch.py   # Live ticker table; posts TickerSelected on row enter
+    ├── order_book.py     # Bid/ask depth for selected ticker
+    ├── order_entry.py    # Horizontal order ticket (full-width bar)
+    ├── open_orders.py    # Active orders; d key posts CancelRequested
+    ├── portfolio.py      # Cash summary + position table
+    ├── trade_tape.py     # Recent trades for selected ticker
+    └── order_history.py  # All orders shown in the History tab
+```
+
+The TUI polls the gateway every 2 s (market data) and 3 s (account/orders). Blocking HTTP calls run in background threads via `@work(thread=True)`; results are posted back to the UI thread via `call_from_thread`.
+
+**Environment variables:**
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `EXCHANGE_BASE_URL` | `http://localhost:8000` | Gateway URL |
+| `EXCHANGE_ACCOUNT_ID` | `trader-0` | Account to trade as |
+| `EXCHANGE_API_KEY` | _(empty)_ | Optional `X-API-Key` header |
+| `EXCHANGE_POLL_MARKET_MS` | `2000` | Market data poll interval |
+| `EXCHANGE_POLL_ORDERS_MS` | `3000` | Account/orders poll interval |
 
 ## What's intentionally simplified
 
 - **MarketData not persisted** — quote snapshots, trade history, and the last traded price are in-memory only and reset on restart. `instruments.last_price` reflects the price at instrument registration, not the last trade. Intraday volume is also lost.
 - **No WebSocket** — market data requires polling. Add a push feed later.
 - **No real authentication** — API key auth is a single shared secret. Add JWT / OAuth later.
-- **Async in-process** — the event bus delivers events sequentially (each handler is awaited before the next), preserving deterministic ordering. Replace the bus with Kafka or Redis Streams to go multi-process.
 - **Instant settlement (T+0)** — real exchanges settle T+1 or T+2.
-- **HTTP fan-out, not a message broker** — the matching engine calls downstream services directly over HTTP rather than publishing to a topic. Add a broker (Kafka, Redis Streams) to decouple producers from consumers.
+- **Outbox relay, not a message broker** — the matching engine persists events to Postgres and a polling relay delivers them via HTTP. Replace the relay with Kafka or Redis Streams for lower latency and multi-consumer fan-out.
+- **At-least-once delivery** — the relay retries failed rows on the next poll. There is no deduplication on the consumer side; idempotent handlers are assumed.
 - **No service discovery** — service URLs are hardcoded env vars. Add Consul or Kubernetes service DNS for dynamic discovery.

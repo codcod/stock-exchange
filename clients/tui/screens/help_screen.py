@@ -1,3 +1,10 @@
+"""
+clients/tui/screens/help_screen.py
+
+Modal help screen (F1).  Displays a Markdown table of all key bindings.
+Dismissed with Escape.
+"""
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.screen import ModalScreen

@@ -1,7 +1,22 @@
 """
 services/gateway/app.py
 
-FastAPI application. Routes HTTP requests to downstream microservices.
+Public HTTP entry point for the exchange.
+Delegates every request to the appropriate downstream service via ServiceClients:
+  - Orders  → OrderManagementService (:8001)
+  - Accounts / instruments → RiskEngine (:8002) and ClearingService (:8004)
+  - Market data → MarketDataService (:8005)
+
+Authentication is opt-in: when EXCHANGE_API_KEY is set every request must
+include the matching X-API-Key header.
+
+Environment variables:
+  ORDER_MANAGEMENT_URL  — default http://localhost:8001
+  RISK_ENGINE_URL       — default http://localhost:8002
+  CLEARING_URL          — default http://localhost:8004
+  MARKET_DATA_URL       — default http://localhost:8005
+  PORT                  — default 8000
+  EXCHANGE_API_KEY      — optional; enables X-API-Key authentication
 """
 
 from contextlib import asynccontextmanager

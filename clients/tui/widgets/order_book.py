@@ -1,3 +1,13 @@
+"""
+clients/tui/widgets/order_book.py
+
+OrderBookWidget — bid/ask depth for the selected ticker.
+
+Renders two DataTables (asks descending above the spread label, bids below)
+showing up to _DEPTH_LEVELS price levels per side.  The border title updates
+to reflect the currently selected ticker.
+"""
+
 import typing as tp
 
 from rich.text import Text

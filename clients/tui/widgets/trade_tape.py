@@ -1,3 +1,12 @@
+"""
+clients/tui/widgets/trade_tape.py
+
+TradeTapeWidget — time-and-sales tape for the selected ticker.
+
+Displays the most recent trades (newest first) up to _MAX_ROWS entries.
+Clears and reloads on every update call; does not diff rows.
+"""
+
 import typing as tp
 
 from rich.text import Text

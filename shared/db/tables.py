@@ -1,3 +1,18 @@
+"""
+shared/db/tables.py
+
+SQLAlchemy Core table definitions for all domain entities, spread across three
+Postgres schemas:
+
+  order_management — orders, outbox
+  clearing         — accounts, positions, reserved_shares, trades
+  risk_engine      — instruments
+
+`ensure_tables()` runs CREATE TABLE IF NOT EXISTS for every table using a
+Postgres advisory lock (key 20260516) so concurrent service startups don't
+race on DDL.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,

@@ -1,3 +1,13 @@
+"""
+clients/tui/models.py
+
+Presentation-layer dataclasses for the TUI.
+
+These are separate from the shared domain models in shared/models/domain.py:
+they carry only the data the widgets need and add display-oriented derived
+properties (price_str, is_active, direction, etc.).
+"""
+
 import typing as tp
 from dataclasses import dataclass, field
 
