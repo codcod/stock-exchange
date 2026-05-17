@@ -50,7 +50,11 @@ _EVENT_DESTINATIONS: dict = {
     'OrderFilled': ['order_management'],
     'MarketDataUpdate': ['market_data'],
 }
-_DESTINATION_URLS: dict = {}
+_DESTINATION_URLS: dict = {
+    'clearing': _CLEARING_URL,
+    'order_management': _OMS_URL,
+    'market_data': _MARKET_DATA_URL,
+}
 _ENDPOINT_FOR_EVENT_TYPE: dict = {
     'TradeExecuted': '/events/trade-executed',
     'OrderFilled': '/events/order-filled',
@@ -126,12 +130,6 @@ async def _outbox_relay() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _DESTINATION_URLS
-    _DESTINATION_URLS = {
-        'clearing': _CLEARING_URL,
-        'order_management': _OMS_URL,
-        'market_data': _MARKET_DATA_URL,
-    }
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.db = get_engine()
     await ensure_tables(_state.db)
