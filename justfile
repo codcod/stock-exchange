@@ -151,11 +151,6 @@ run-clearing:
 run-market-data:
     uv run python -m services.market_data
 
-# Run the in-process demo (one trade between Alice and Bob, no HTTP, no Docker)
-[group('demo')]
-demo:
-    uv run python -m exchange.main
-
 # Run the simulator (generates synthetic order traffic against the gateway)
 [group('demo')]
 sim:
@@ -185,7 +180,7 @@ fmt-check:
 [group('qa')]
 check: lint fmt-check
 
-# Run all unit + integration tests (persistence tests skip without Postgres)
+# Run all unit + integration tests
 [group('qa')]
 test:
     uv run --extra dev python -m pytest
@@ -195,12 +190,7 @@ test:
 test-cov:
     uv run --extra dev python -m pytest --cov --cov-report=term-missing
 
-# Run persistence tests only (requires infra-up)
-[group('qa')]
-test-db:
-    DATABASE_URL={{ db_url }} uv run --extra dev python -m pytest tests/test_persistence.py -v
-
-# Seed the database (drops all tables — 100 instruments, 30 accounts, 100 trades)
+# Seed the exchange (requires full stack running — 100 instruments, 30 accounts, 100 trades)
 [group('qa')]
 seed:
-    DATABASE_URL={{ db_url }} uv run python scripts/seed.py
+    GATEWAY_URL=http://localhost:8000 uv run python scripts/seed.py

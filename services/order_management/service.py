@@ -40,7 +40,7 @@ class OrderManagementService:
         risk_engine: tp.Any,
         matching_engine: tp.Any,
         event_bus: EventBus,
-        order_repo: tp.Optional['OrderRepository'] = None,
+        order_repo: 'OrderRepository',
     ) -> None:
         self._risk = risk_engine
         self._matching = matching_engine
@@ -68,8 +68,7 @@ class OrderManagementService:
         )
 
         self._orders[order.order_id] = order
-        if self._order_repo:
-            await self._order_repo.save(order)
+        await self._order_repo.save(order)
         await self._bus.publish(
             OrderSubmitted(
                 order_id=order.order_id,
@@ -82,8 +81,7 @@ class OrderManagementService:
         if not risk_result.passed:
             order.status = OrderStatus.REJECTED
             order.reject_reason = risk_result.reason
-            if self._order_repo:
-                await self._order_repo.update(order)
+            await self._order_repo.update(order)
             await self._bus.publish(
                 OrderRejected(
                     order_id=order.order_id,
@@ -98,8 +96,7 @@ class OrderManagementService:
 
         # Persist final state (fill/partial-fill already written via _on_order_filled;
         # this catches the OPEN case where no fill occurred)
-        if self._order_repo:
-            await self._order_repo.update(order)
+        await self._order_repo.update(order)
 
         return order
 
@@ -118,8 +115,7 @@ class OrderManagementService:
         cancelled = await self._matching.cancel(order)
         if cancelled:
             self._release(order)
-            if self._order_repo:
-                await self._order_repo.update(order)
+            await self._order_repo.update(order)
             await self._bus.publish(OrderCancelled(order_id=order_id))
         return cancelled
 
@@ -139,8 +135,7 @@ class OrderManagementService:
             return
         if order.status == OrderStatus.FILLED:
             self._release(order)
-        if self._order_repo:
-            await self._order_repo.update(order)
+        await self._order_repo.update(order)
 
     # ------------------------------------------------------------------
     # Fund / share reservation

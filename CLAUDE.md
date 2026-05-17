@@ -36,20 +36,14 @@ infra/                 → docker-compose, helper scripts
 # Install all dependencies (fastapi, uvicorn, sqlalchemy, psycopg2-binary)
 pip install -e ".[dev]"
 
-# Start Postgres (required for persistence)
+# Start Postgres (required)
 docker-compose -f infra/docker/docker-compose.yml up -d
 
-# Run all tests (persistence tests skip automatically without Postgres)
+# Run all tests
 pytest
 
-# Start the HTTP gateway with persistence enabled
+# Start the HTTP gateway (DATABASE_URL required for stateful services)
 DATABASE_URL=postgresql://exchange:exchange@localhost:5432/exchange python -m services.gateway
-
-# Start the HTTP gateway in-memory only (no Postgres needed)
-python -m services.gateway
-
-# Start the exchange without HTTP (demo mode, always in-memory)
-python -m exchange.main
 
 # Run the simulator to generate traffic
 python -m clients.simulator.main
@@ -57,11 +51,11 @@ python -m clients.simulator.main
 
 ## Development conventions
 
-- Services communicate via an in-process event bus (see shared/events/)
-- The HTTP gateway (`services/gateway/`) is a thin FastAPI layer over the Exchange facade
+- Each service has a local in-process event bus (see shared/events/) used for internal pub/sub within that service
+- The HTTP gateway (`services/gateway/`) is a thin FastAPI layer that routes requests to downstream microservices
 - Each service exposes a simple Python class interface — no HTTP in the core loop
 - Persistence uses SQLAlchemy Core only (no ORM) — see shared/db/
-- DB is opt-in: services accept optional `*_repo` kwargs; tests run in-memory without a DB
+- `DATABASE_URL` is required for stateful services (risk_engine, order_management, matching_engine, clearing); stateless services (gateway, market_data) do not need it
 - Tests live alongside each service in its tests/ directory
 - Use dataclasses for domain models (shared/models/)
 - Keep each service file under ~200 lines; split into submodules when it grows

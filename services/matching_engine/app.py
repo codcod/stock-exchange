@@ -8,7 +8,7 @@ After each match, events are fanned out via HTTP to downstream services:
   - MarketDataUpdate → MarketDataService
 
 Environment variables:
-  DATABASE_URL          — Postgres URL (optional)
+  DATABASE_URL          — Postgres URL (required)
   CLEARING_URL          — default http://localhost:8004
   ORDER_MANAGEMENT_URL  — default http://localhost:8001
   MARKET_DATA_URL       — default http://localhost:8005
@@ -101,12 +101,11 @@ async def lifespan(app: FastAPI):
     _local_bus.subscribe(MarketDataUpdate, _forward_market_data_update)
 
     # Restore active orders from DB
-    if os.getenv('DATABASE_URL'):
-        db = get_engine()
-        await ensure_tables(db)
-        for order in await OrderRepository(db).load_all():
-            if order.is_active:
-                _engine_svc.restore_order(order)
+    db = get_engine()
+    await ensure_tables(db)
+    for order in await OrderRepository(db).load_all():
+        if order.is_active:
+            _engine_svc.restore_order(order)
 
     yield
     await _state.http.aclose()

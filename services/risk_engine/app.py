@@ -5,14 +5,14 @@ Standalone FastAPI service wrapping RiskEngine.
 Exposes risk checks, account/instrument registration, and trading halts.
 
 Environment variables:
-  DATABASE_URL  — Postgres URL (optional; in-memory if absent)
+  DATABASE_URL  — Postgres URL (required)
   PORT          — HTTP port (default 8002)
 """
 
 from __future__ import annotations
 
-import os
 from contextlib import asynccontextmanager
+from types import SimpleNamespace
 
 from fastapi import FastAPI
 
@@ -30,17 +30,18 @@ from shared.models.domain import (
 )
 
 _engine_svc: RiskEngine = RiskEngine()
+_state = SimpleNamespace(instrument_repo=None)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if os.getenv('DATABASE_URL'):
-        db = get_engine()
-        await ensure_tables(db)
-        for instrument in await InstrumentRepository(db).load_all():
-            _engine_svc.register_instrument(instrument)
-        for account in await AccountRepository(db).load_all():
-            _engine_svc.register_account(account)
+    db = get_engine()
+    await ensure_tables(db)
+    _state.instrument_repo = InstrumentRepository(db)
+    for instrument in await _state.instrument_repo.load_all():
+        _engine_svc.register_instrument(instrument)
+    for account in await AccountRepository(db).load_all():
+        _engine_svc.register_account(account)
 
     yield
 
@@ -83,9 +84,7 @@ async def register_instrument(data: dict) -> dict:
         last_price=data.get('last_price'),
     )
 
-    if os.getenv('DATABASE_URL'):
-        await InstrumentRepository(get_engine()).save(instrument)
-
+    await _state.instrument_repo.save(instrument)
     _engine_svc.register_instrument(instrument)
     return {}
 

@@ -12,19 +12,13 @@ pip install -e ".[dev]"
 # Start Postgres (required for persistence)
 docker-compose -f infra/docker/docker-compose.yml up -d
 
-# Run the HTTP gateway with persistence (http://localhost:8000, docs at /docs)
+# Run the HTTP gateway (http://localhost:8000, docs at /docs)
 DATABASE_URL=postgresql://exchange:exchange@localhost:5432/exchange python -m services.gateway
-
-# Run without persistence (in-memory only)
-python -m services.gateway
-
-# Run the demo (one trade between Alice and Bob, no HTTP)
-python -m exchange.main
 
 # Run the simulator (50 random orders across 3 tickers)
 python -m clients.simulator.main
 
-# Run tests (persistence tests skip automatically if Postgres is not running)
+# Run tests
 pytest
 ```
 
@@ -50,7 +44,6 @@ Authentication is opt-in: set `EXCHANGE_API_KEY=<secret>` and pass `X-API-Key: <
 ## Structure
 
 ```text
-exchange/          # Top-level facade wiring all services
 services/
   gateway/         # FastAPI HTTP layer (entry point for HTTP clients)
   matching_engine/ # Order book, price-time priority matching
@@ -90,4 +83,4 @@ Suggested next steps, roughly in order:
 1. Add WebSocket feed for live market data
 2. Implement stop orders and order expiry (GTC, IOC, FOK)
 3. Add a circuit breaker: halt a ticker if it moves >X% in Y minutes
-4. Replace the in-process event bus with Redis Streams
+4. Replace the HTTP event fan-out with a message broker (Kafka, Redis Streams)

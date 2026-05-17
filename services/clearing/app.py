@@ -6,13 +6,12 @@ Settles trades (via HTTP event callbacks from the Matching Engine) and
 manages account registration and queries.
 
 Environment variables:
-  DATABASE_URL  — Postgres URL (optional)
+  DATABASE_URL  — Postgres URL (required)
   PORT          — default 8004
 """
 
 from __future__ import annotations
 
-import os
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
@@ -25,27 +24,23 @@ from shared.db.tables import ensure_tables
 from shared.events.bus import EventBus, TradeExecuted
 from shared.models.domain import Account
 
-_state = SimpleNamespace(svc=None)
+_state = SimpleNamespace(svc=None, account_repo=None)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    account_repo = None
-    trade_repo = None
-    if os.getenv('DATABASE_URL'):
-        db = get_engine()
-        await ensure_tables(db)
-        account_repo = AccountRepository(db)
-        trade_repo = TradeRepository(db)
+    db = get_engine()
+    await ensure_tables(db)
+    _state.account_repo = AccountRepository(db)
+    trade_repo = TradeRepository(db)
 
     local_bus = EventBus()
     _state.svc = ClearingService(
-        local_bus, account_repo=account_repo, trade_repo=trade_repo
+        local_bus, account_repo=_state.account_repo, trade_repo=trade_repo
     )
 
-    if account_repo:
-        for account in await account_repo.load_all():
-            _state.svc.register_account(account)
+    for account in await _state.account_repo.load_all():
+        _state.svc.register_account(account)
 
     yield
 
@@ -75,10 +70,7 @@ async def register_account(data: dict) -> dict:
     account.positions = data.get('positions', {})
     account.reserved_shares = data.get('reserved_shares', {})
     _state.svc.register_account(account)
-
-    if os.getenv('DATABASE_URL'):
-        await AccountRepository(get_engine()).save(account)
-
+    await _state.account_repo.save(account)
     return {}
 
 

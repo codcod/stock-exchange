@@ -21,10 +21,10 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["exchange*", "services*", "shared*", "clients*"]
+include = ["services*", "shared*", "clients*"]
 
 [tool.pytest.ini_options]
-testpaths = ["services", "tests"]
+testpaths = ["services"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -32,7 +32,7 @@ asyncio_mode = "auto"
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["exchange", "services", "shared"]
+source = ["services", "shared"]
 omit = ["*/tests/*", "clients/*"]
 
 # optional config below
@@ -84,7 +84,6 @@ exclude = [
   "setup.py",
   "docs",
   "build",
-  "tests/",
   "**/__init__.py",
   "CHANGELOG.md",
 ]
