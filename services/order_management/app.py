@@ -26,8 +26,7 @@ from services.order_management.service import OrderManagementService
 from shared.db.connection import get_engine
 from shared.db.repositories import OrderRepository
 from shared.db.tables import ensure_tables
-from shared.events.bus import EventBus, OrderFilled
-from shared.models.domain import Order, OrderStatus, OrderType, Side
+from shared.models.domain import Order, OrderFilled, OrderStatus, OrderType, Side
 from shared.service_clients import (
     MatchingEngineClient,
     RiskEngineClient,
@@ -50,9 +49,8 @@ async def lifespan(app: FastAPI):
 
     risk_client = RiskEngineClient(_RISK_URL, _state.http)
     matching_client = MatchingEngineClient(_MATCHING_URL, _state.http)
-    local_bus = EventBus()
     _state.svc = OrderManagementService(
-        risk_client, matching_client, local_bus, order_repo
+        risk_client, matching_client, order_repo
     )
 
     for order in await order_repo.load_all():

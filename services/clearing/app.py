@@ -21,8 +21,7 @@ from services.clearing.service import ClearingService
 from shared.db.connection import get_engine
 from shared.db.repositories import AccountRepository, TradeRepository
 from shared.db.tables import ensure_tables
-from shared.events.bus import EventBus, TradeExecuted
-from shared.models.domain import Account
+from shared.models.domain import Account, TradeExecuted
 
 _state = SimpleNamespace(svc=None, account_repo=None)
 
@@ -34,9 +33,8 @@ async def lifespan(app: FastAPI):
     _state.account_repo = AccountRepository(db)
     trade_repo = TradeRepository(db)
 
-    local_bus = EventBus()
     _state.svc = ClearingService(
-        local_bus, account_repo=_state.account_repo, trade_repo=trade_repo
+        account_repo=_state.account_repo, trade_repo=trade_repo
     )
 
     for account in await _state.account_repo.load_all():

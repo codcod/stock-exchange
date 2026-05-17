@@ -14,7 +14,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from shared.events.bus import EventBus, MarketDataUpdate, TradeExecuted
+from shared.models.domain import MarketDataUpdate, TradeExecuted
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +40,9 @@ class TickerTrade:
 
 
 class MarketDataService:
-    def __init__(self, event_bus: EventBus) -> None:
+    def __init__(self) -> None:
         self._quotes: tp.Dict[str, Quote] = {}
         self._trade_history: tp.Dict[str, tp.Deque[TickerTrade]] = {}
-
-        event_bus.subscribe(MarketDataUpdate, self.on_market_data_update)
-        event_bus.subscribe(TradeExecuted, self.on_trade_executed)
 
     # ------------------------------------------------------------------
     # Query interface

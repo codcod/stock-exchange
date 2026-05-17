@@ -6,8 +6,7 @@ Covers: basic match, partial fill, price priority, no match, market order.
 import pytest
 
 from services.matching_engine.engine import MatchingEngine, OrderBook
-from shared.events.bus import EventBus, TradeExecuted
-from shared.models.domain import Order, OrderStatus, OrderType, Side
+from shared.models.domain import Order, OrderFilled, OrderStatus, OrderType, Side, TradeExecuted
 
 
 @pytest.fixture
@@ -17,7 +16,7 @@ def book():
 
 @pytest.fixture
 def engine():
-    return MatchingEngine(EventBus())
+    return MatchingEngine()
 
 
 def limit_order(side, quantity, price, account='acc1'):
@@ -156,28 +155,25 @@ def test_depth_snapshot(book):
 
 
 # ---------------------------------------------------------------------------
-# Engine-level (event publishing — async)
+# Engine-level (event return — async)
 # ---------------------------------------------------------------------------
 
 
-async def test_engine_publishes_trade_events():
-    collected = []
-    event_bus = EventBus()
-
-    async def collect(event):
-        collected.append(event)
-
-    event_bus.subscribe(TradeExecuted, collect)
-
-    engine = MatchingEngine(event_bus)
+async def test_engine_returns_trade_events():
+    engine = MatchingEngine()
     engine.get_or_create_book('AAPL')
 
     sell = limit_order(Side.SELL, 10, 100.0, account='seller')
-    await engine.submit(sell)
+    _, events = await engine.submit(sell)
+    assert not any(isinstance(e, TradeExecuted) for e in events)
 
     buy = limit_order(Side.BUY, 10, 100.0, account='buyer')
-    await engine.submit(buy)
+    trades, events = await engine.submit(buy)
 
-    assert len(collected) == 1
-    assert collected[0].ticker == 'AAPL'
-    assert collected[0].quantity == 10
+    assert len(trades) == 1
+    trade_evts = [e for e in events if isinstance(e, TradeExecuted)]
+    fill_evts = [e for e in events if isinstance(e, OrderFilled)]
+    assert len(trade_evts) == 1
+    assert trade_evts[0].ticker == 'AAPL'
+    assert trade_evts[0].quantity == 10
+    assert len(fill_evts) == 2

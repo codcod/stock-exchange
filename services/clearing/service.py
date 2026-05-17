@@ -13,8 +13,7 @@ from __future__ import annotations
 import logging
 import typing as tp
 
-from shared.events.bus import EventBus, TradeExecuted
-from shared.models.domain import Account, Trade
+from shared.models.domain import Account, Trade, TradeExecuted
 
 if tp.TYPE_CHECKING:
     from shared.db.repositories import AccountRepository, TradeRepository
@@ -25,17 +24,13 @@ logger = logging.getLogger(__name__)
 class ClearingService:
     def __init__(
         self,
-        event_bus: EventBus,
         account_repo: 'AccountRepository',
         trade_repo: 'TradeRepository',
     ) -> None:
-        self._bus = event_bus
         self._accounts: tp.Dict[str, Account] = {}
         self._settled_trades: tp.List[str] = []
         self._account_repo = account_repo
         self._trade_repo = trade_repo
-
-        self._bus.subscribe(TradeExecuted, self.on_trade_executed)
 
     def register_account(self, account: Account) -> None:
         self._accounts[account.account_id] = account

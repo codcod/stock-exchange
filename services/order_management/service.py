@@ -14,15 +14,7 @@ from __future__ import annotations
 import logging
 import typing as tp
 
-from shared.events.bus import (
-    EventBus,
-    OrderAccepted,
-    OrderCancelled,
-    OrderFilled,
-    OrderRejected,
-    OrderSubmitted,
-)
-from shared.models.domain import Order, OrderStatus, OrderType, Side
+from shared.models.domain import Order, OrderFilled, OrderStatus, OrderType, Side
 
 if tp.TYPE_CHECKING:
     from shared.db.repositories import OrderRepository
@@ -39,16 +31,12 @@ class OrderManagementService:
         self,
         risk_engine: tp.Any,
         matching_engine: tp.Any,
-        event_bus: EventBus,
         order_repo: 'OrderRepository',
     ) -> None:
         self._risk = risk_engine
         self._matching = matching_engine
-        self._bus = event_bus
         self._orders: tp.Dict[str, Order] = {}
         self._order_repo = order_repo
-
-        self._bus.subscribe(OrderFilled, self.on_order_filled)
 
     # ------------------------------------------------------------------
     # Public API
@@ -69,29 +57,15 @@ class OrderManagementService:
 
         self._orders[order.order_id] = order
         await self._order_repo.save(order)
-        await self._bus.publish(
-            OrderSubmitted(
-                order_id=order.order_id,
-                account_id=order.account_id,
-                ticker=order.ticker,
-            )
-        )
 
         risk_result = await self._risk.check(order)
         if not risk_result.passed:
             order.status = OrderStatus.REJECTED
             order.reject_reason = risk_result.reason
             await self._order_repo.update(order)
-            await self._bus.publish(
-                OrderRejected(
-                    order_id=order.order_id,
-                    reason=risk_result.reason or 'Risk check failed',
-                )
-            )
             return order
 
         self._reserve(order)
-        await self._bus.publish(OrderAccepted(order_id=order.order_id))
         await self._matching.submit(order)
 
         # Persist final state (fill/partial-fill already written via _on_order_filled;
@@ -116,7 +90,6 @@ class OrderManagementService:
         if cancelled:
             self._release(order)
             await self._order_repo.update(order)
-            await self._bus.publish(OrderCancelled(order_id=order_id))
         return cancelled
 
     def get_order(self, order_id: str) -> tp.Optional[Order]:

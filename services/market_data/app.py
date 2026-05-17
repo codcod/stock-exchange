@@ -18,15 +18,14 @@ from types import SimpleNamespace
 from fastapi import FastAPI, HTTPException, Query
 
 from services.market_data.service import MarketDataService
-from shared.events.bus import EventBus, MarketDataUpdate, TradeExecuted
+from shared.models.domain import MarketDataUpdate, TradeExecuted
 
 _state = SimpleNamespace(svc=None)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    local_bus = EventBus()
-    _state.svc = MarketDataService(local_bus)
+    _state.svc = MarketDataService()
     yield
 
 
