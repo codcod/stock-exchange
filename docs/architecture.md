@@ -35,7 +35,7 @@ All inter-service calls are HTTP (httpx). The matching engine fans out trade eve
 |---|---|---|---|---|
 | Gateway | 8000 | HTTP interface, request/response translation | OMS, MarketData | no |
 | OrderManagement | 8001 | Order lifecycle, routing | RiskEngine, MatchingEngine | orders |
-| RiskEngine | 8002 | Account state cache, pre-trade rules | — | no |
+| RiskEngine | 8002 | Account state cache, pre-trade rules | — | instruments |
 | MatchingEngine | 8003 | Order books, trade execution, event fan-out | Clearing, OMS, MarketData | no |
 | Clearing | 8004 | Account balances, positions | — | accounts, positions, trades |
 | MarketData | 8005 | Quote snapshots, trade history (memory only) | — | no |
@@ -97,10 +97,10 @@ shared/db/
 | Table | Schema | Populated by |
 |---|---|---|
 | `orders` | `order_management` | OrderManagementService (on submit, fill, cancel, reject) |
-| `accounts` | `clearing` | Clearing (on each trade); Exchange (on register) |
+| `accounts` | `clearing` | ClearingService (on registration via POST /accounts; on each trade) |
 | `positions` | `clearing` | ClearingService (on each trade, full replace per account) |
 | `reserved_shares` | `clearing` | ClearingService (on each trade, full replace per account) |
-| `instruments` | `risk_engine` | RiskEngine (on register); MatchingEngine (last_price on each trade) |
+| `instruments` | `risk_engine` | RiskEngine (on registration via POST /instruments) |
 | `trades` | `clearing` | ClearingService (on each trade) |
 
 **Startup DDL** uses a Postgres advisory lock (key `20260516`) to serialise `CREATE TABLE IF NOT EXISTS`
@@ -149,7 +149,7 @@ Each service container runs `python -m services.<name>` and is reachable on `loc
 
 ## What's intentionally simplified
 
-- **MarketData not persisted** — quote snapshots and trade history are in-memory only; they reset on restart. The last price is recoverable via `instruments.last_price`, but intraday volume is lost.
+- **MarketData not persisted** — quote snapshots, trade history, and the last traded price are in-memory only and reset on restart. `instruments.last_price` reflects the price at instrument registration, not the last trade. Intraday volume is also lost.
 - **No WebSocket** — market data requires polling. Add a push feed later.
 - **No real authentication** — API key auth is a single shared secret. Add JWT / OAuth later.
 - **Async in-process** — the event bus delivers events sequentially (each handler is awaited before the next), preserving deterministic ordering. Replace the bus with Kafka or Redis Streams to go multi-process.

@@ -9,13 +9,13 @@ The goal is to understand how trading works, not to build a production system.
 # Install
 pip install -e ".[dev]"
 
-# Start Postgres (required for persistence)
-docker-compose -f infra/docker/docker-compose.yml up -d
+# Start Postgres
+just infra-up
 
-# Run the HTTP gateway (http://localhost:8000, docs at /docs)
-DATABASE_URL=postgresql://exchange:exchange@localhost:5432/exchange python -m services.gateway
+# Start all six microservices
+just services-up
 
-# Run the simulator (50 random orders across 3 tickers)
+# Run the simulator (generates synthetic order traffic)
 python -m clients.simulator.main
 
 # Run tests
@@ -60,7 +60,7 @@ shared/
 clients/
   simulator/       # Generates synthetic order flow for testing
 infra/
-  docker/          # docker-compose for Postgres + Redis
+  docker/          # docker-compose for Postgres (infra) and all six services
 docs/
   architecture.md  # Data flow diagrams and design notes
 CLAUDE.md          # Claude Code project context
