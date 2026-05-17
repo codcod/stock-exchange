@@ -6,14 +6,14 @@ Pydantic request/response models for the HTTP layer.
 
 from __future__ import annotations
 
+import typing as tp
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import BaseModel
 
 from shared.models.domain import OrderStatus, OrderType, Side
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from shared.models.domain import Account, Order
 
 
@@ -28,13 +28,14 @@ class SubmitOrderRequest(BaseModel):
     side: Side
     order_type: OrderType
     quantity: int
-    price: Optional[float] = None
+    price: tp.Optional[float] = None
 
 
 class RegisterAccountRequest(BaseModel):
     account_id: str
     name: str
     cash_balance: float = 0.0
+    positions: tp.Dict[str, int] = {}
 
 
 class RegisterInstrumentRequest(BaseModel):
@@ -42,7 +43,7 @@ class RegisterInstrumentRequest(BaseModel):
     name: str
     lot_size: int = 1
     max_order_size: int = 10_000
-    last_price: Optional[float] = None
+    last_price: tp.Optional[float] = None
 
 
 # ---------------------------------------------------------------------------
@@ -57,12 +58,12 @@ class OrderResponse(BaseModel):
     side: Side
     order_type: OrderType
     quantity: int
-    price: Optional[float]
+    price: tp.Optional[float]
     status: OrderStatus
     filled_quantity: int
     remaining_quantity: int
-    average_fill_price: Optional[float]
-    reject_reason: Optional[str]
+    average_fill_price: tp.Optional[float]
+    reject_reason: tp.Optional[str]
     created_at: datetime
     updated_at: datetime
 
@@ -94,9 +95,9 @@ class DepthLevel(BaseModel):
 
 class DepthResponse(BaseModel):
     ticker: str
-    bids: List[DepthLevel]
-    asks: List[DepthLevel]
-    last_price: Optional[float]
+    bids: tp.List[DepthLevel]
+    asks: tp.List[DepthLevel]
+    last_price: tp.Optional[float]
 
 
 class TradeItem(BaseModel):

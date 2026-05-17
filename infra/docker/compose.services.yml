@@ -1,0 +1,114 @@
+# Application services — all six microservices.
+# Requires the 'exchange' network created by compose.infra.yml.
+# Run with: just services-up   (after just infra-up)
+#        or: just up            (starts infra + services together)
+
+name: exchange
+
+networks:
+  default:
+    name: exchange
+    external: true
+
+services:
+  # ---------------------------------------------------------------------------
+  # Tier 1: stateless services that only need Postgres
+  # ---------------------------------------------------------------------------
+
+  risk-engine:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    command: python -m services.risk_engine
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+      PORT: "8002"
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  clearing:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    command: python -m services.clearing
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+      PORT: "8004"
+    ports:
+      - "8004:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  market-data:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    command: python -m services.market_data
+    environment:
+      PORT: "8005"
+    ports:
+      - "8005:8005"
+
+  # ---------------------------------------------------------------------------
+  # Tier 2: matching engine (restores open orders from DB on startup)
+  # ---------------------------------------------------------------------------
+
+  matching-engine:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    command: python -m services.matching_engine
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+      PORT: "8003"
+      CLEARING_URL: http://clearing:8004
+      ORDER_MANAGEMENT_URL: http://order-management:8001
+      MARKET_DATA_URL: http://market-data:8005
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Tier 3: order management (coordinates risk + matching)
+  # ---------------------------------------------------------------------------
+
+  order-management:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    command: python -m services.order_management
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+      PORT: "8001"
+      RISK_ENGINE_URL: http://risk-engine:8002
+      MATCHING_ENGINE_URL: http://matching-engine:8003
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Tier 4: HTTP gateway (public entry point)
+  # ---------------------------------------------------------------------------
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    command: python -m services.gateway
+    environment:
+      PORT: "8000"
+      ORDER_MANAGEMENT_URL: http://order-management:8001
+      RISK_ENGINE_URL: http://risk-engine:8002
+      MATCHING_ENGINE_URL: http://matching-engine:8003
+      CLEARING_URL: http://clearing:8004
+      MARKET_DATA_URL: http://market-data:8005
+    ports:
+      - "8000:8000"

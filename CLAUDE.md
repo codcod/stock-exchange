@@ -66,6 +66,7 @@ python -m clients.simulator.main
 - Use dataclasses for domain models (shared/models/)
 - Keep each service file under ~200 lines; split into submodules when it grows
 - No async/await — synchronous for clarity and ease of debugging
+- Always use `import typing as tp` — never `from typing import XXX`; reference types as `tp.Optional`, `tp.List`, etc.
 
 ## When modifying a service
 

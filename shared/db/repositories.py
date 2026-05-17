@@ -7,31 +7,19 @@ No ORM; all queries use Core expression language.
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Dict, List, Optional
+import typing as tp
+from datetime import datetime, timezone
 
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from shared.db.tables import (
-    accounts as accounts_t,
-)
-from shared.db.tables import (
-    instruments as instruments_t,
-)
-from shared.db.tables import (
-    orders as orders_t,
-)
-from shared.db.tables import (
-    positions as positions_t,
-)
-from shared.db.tables import (
-    reserved_shares as reserved_shares_t,
-)
-from shared.db.tables import (
-    trades as trades_t,
-)
+from shared.db.tables import accounts as accounts_t
+from shared.db.tables import instruments as instruments_t
+from shared.db.tables import orders as orders_t
+from shared.db.tables import positions as positions_t
+from shared.db.tables import reserved_shares as reserved_shares_t
+from shared.db.tables import trades as trades_t
 from shared.models.domain import (
     Account,
     Instrument,
@@ -43,7 +31,7 @@ from shared.models.domain import (
 )
 
 
-def _f(val) -> Optional[float]:
+def _f(val) -> tp.Optional[float]:
     return float(val) if val is not None else None
 
 
@@ -77,7 +65,7 @@ class OrderRepository:
             )
 
     async def update(self, order: Order) -> None:
-        order.updated_at = datetime.utcnow()
+        order.updated_at = datetime.now(timezone.utc)
         async with self._engine.begin() as conn:
             await conn.execute(
                 update(orders_t)
@@ -91,7 +79,7 @@ class OrderRepository:
                 )
             )
 
-    async def load_all(self) -> List[Order]:
+    async def load_all(self) -> tp.List[Order]:
         async with self._engine.connect() as conn:
             rows = (await conn.execute(select(orders_t))).mappings().all()
         return [_row_to_order(r) for r in rows]
@@ -171,14 +159,14 @@ class AccountRepository:
             if res_rows:
                 await conn.execute(insert(reserved_shares_t), res_rows)
 
-    async def load_all(self) -> List[Account]:
+    async def load_all(self) -> tp.List[Account]:
         async with self._engine.connect() as conn:
             acc_rows = (await conn.execute(select(accounts_t))).mappings().all()
             pos_rows = (await conn.execute(select(positions_t))).mappings().all()
             res_rows = (await conn.execute(select(reserved_shares_t))).mappings().all()
 
-        positions: Dict[str, dict] = {}
-        reserved: Dict[str, dict] = {}
+        positions: tp.Dict[str, dict] = {}
+        reserved: tp.Dict[str, dict] = {}
         for r in pos_rows:
             positions.setdefault(r['account_id'], {})[r['ticker']] = int(r['quantity'])
         for r in res_rows:
@@ -240,7 +228,7 @@ class InstrumentRepository:
                 .values(last_price=last_price)
             )
 
-    async def load_all(self) -> List[Instrument]:
+    async def load_all(self) -> tp.List[Instrument]:
         async with self._engine.connect() as conn:
             rows = (await conn.execute(select(instruments_t))).mappings().all()
         return [

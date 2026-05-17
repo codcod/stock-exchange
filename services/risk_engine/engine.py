@@ -2,7 +2,8 @@
 services/risk_engine/engine.py
 
 Performs pre-trade risk checks on every order before it enters the book.
-All checks are synchronous and in-memory (account state is cached here).
+Account state is cached in-memory for fast checks (no DB round-trip).
+The check() entry point is async; individual check methods are synchronous.
 
 If any check fails, the order is rejected with a reason.
 """
@@ -10,16 +11,10 @@ If any check fails, the order is rejected with a reason.
 from __future__ import annotations
 
 import logging
+import typing as tp
 from dataclasses import dataclass
-from typing import Dict, Optional
 
-from shared.models.domain import (
-    Account,
-    Instrument,
-    Order,
-    OrderType,
-    Side,
-)
+from shared.models.domain import Account, Instrument, Order, OrderType, Side
 
 logger = logging.getLogger(__name__)
 
@@ -32,18 +27,19 @@ MIN_CASH_BUFFER = 0.0  # no naked positions
 @dataclass
 class RiskResult:
     passed: bool
-    reason: Optional[str] = None
+    reason: tp.Optional[str] = None
 
 
 class RiskEngine:
     """
     Holds a local cache of account state so checks are fast (no DB round-trip).
-    State is updated via event subscriptions (see exchange/main.py for wiring).
+    State is updated via direct method calls: register_account/register_instrument
+    at startup, and update_reserved_cash/update_reserved_shares on each order.
     """
 
     def __init__(self) -> None:
-        self._accounts: Dict[str, Account] = {}
-        self._instruments: Dict[str, Instrument] = {}
+        self._accounts: tp.Dict[str, Account] = {}
+        self._instruments: tp.Dict[str, Instrument] = {}
         self._halted_tickers: set = set()
 
     # ------------------------------------------------------------------

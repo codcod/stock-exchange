@@ -1,12 +1,13 @@
 set dotenv-load := true
 
-db_url := "postgresql://exchange:exchange@localhost:5432/exchange"
-compose := "docker-compose -f infra/docker/compose.yaml"
+db_url     := "postgresql+asyncpg://exchange:exchange@localhost:5432/exchange"
+infra      := "docker-compose -f infra/docker/compose.infra.yml"
+services   := "docker-compose -f infra/docker/compose.services.yml"
+stack      := "docker-compose -f infra/docker/compose.infra.yml -f infra/docker/compose.services.yml"
 
 # List available recipes
 @_:
-   just --list
-
+    just --list
 
 # Install all dependencies (including dev extras)
 [group('lifecycle')]
@@ -34,65 +35,131 @@ clean-instance:
 clean-all: clean clean-instance
     rm -rf .venv || true
 
-# Recreate project virtualenv from nothing
+# Recreate project virtualenv from scratch
 [group('lifecycle')]
 fresh: clean-all install
 
 # Start Postgres
 [group('infra')]
 infra-up:
-    {{ compose }} up -d
+    {{ infra }} up -d
 
 # Stop Postgres
 [group('infra')]
 infra-down:
-    {{ compose }} down
+    {{ infra }} down
 
-# Follow infra logs
+# Follow Postgres logs
 [group('infra')]
 infra-logs:
-    {{ compose }} logs -f
+    {{ infra }} logs -f
 
 # Open a psql shell against the local exchange DB
-[group('run')]
+[group('infra')]
 db-shell:
-    docker exec -it $(docker-compose -f infra/docker/docker-compose.yaml ps -q postgres) \
-        psql -U exchange exchange
+    docker exec -it $({{ infra }} ps -q postgres) psql -U exchange exchange
 
-# Start the HTTP gateway with Postgres persistence (requires infra-up)
-[group('run')]
-gateway:
-    DATABASE_URL={{ db_url }} uv run python -m services.gateway
+# Build all service images
+[group('services')]
+services-build:
+    {{ services }} build
 
-# Start the HTTP gateway in-memory only (no Postgres needed)
-[group('run')]
-gateway-memory:
+# Start all microservices (requires infra-up first)
+[group('services')]
+services-up:
+    {{ services }} up -d
+
+# Stop all microservices
+[group('services')]
+services-down:
+    {{ services }} down
+
+# Follow microservice logs (all services)
+[group('services')]
+services-logs:
+    {{ services }} logs -f
+
+# Follow logs for a single service  e.g.: just service-logs matching-engine
+[group('services')]
+service-logs name:
+    {{ services }} logs -f {{ name }}
+
+# Restart a single service after a code change  e.g.: just redeploy matching-engine
+[group('services')]
+redeploy name:
+    {{ services }} build {{ name }} && {{ services }} up -d --no-deps {{ name }}
+
+# Start Postgres + all microservices
+[group('stack')]
+up:
+    docker network inspect exchange >/dev/null 2>&1 || docker network create exchange
+    {{ stack }} up -d --build
+
+# Stop everything
+[group('stack')]
+down:
+    {{ stack }} down
+
+# Follow all logs (infra + services)
+[group('stack')]
+logs:
+    {{ stack }} logs -f
+
+# Show running containers and their ports
+[group('stack')]
+ps:
+    @(echo "ID\tIMAGE\tSTATUS\tPORTS" && {{ stack }} ps \
+        --format '{{{{.ID}}\t{{{{.Image}}\t{{{{.Status}}\t{{{{.Ports}}') \
+        | column -t -s $'\t'
+
+# ── Run locally (no Docker, services speak to each other on localhost) ────────
+
+# Gateway (routes to local microservices)
+[group('run locally')]
+run-gateway:
     uv run python -m services.gateway
 
-# Start the HTTP gateway with prod like settings (minimal logging)
-[group('run')]
-gateway-prod:
+# Order Management Service
+[group('run locally')]
+run-oms:
     DATABASE_URL={{ db_url }} \
-    uvicorn services.gateway.app:app \
-        --host 0.0.0.0 \
-        --port 8000 \
-        --workers 4 \
-        --log-level warning
+    RISK_ENGINE_URL=http://localhost:8002 \
+    MATCHING_ENGINE_URL=http://localhost:8003 \
+    uv run python -m services.order_management
 
-# Run the demo script (one trade between Alice and Bob, no HTTP)
+# Risk Engine
+[group('run locally')]
+run-risk:
+    DATABASE_URL={{ db_url }} uv run python -m services.risk_engine
+
+# Matching Engine
+[group('run locally')]
+run-matching:
+    DATABASE_URL={{ db_url }} \
+    CLEARING_URL=http://localhost:8004 \
+    ORDER_MANAGEMENT_URL=http://localhost:8001 \
+    MARKET_DATA_URL=http://localhost:8005 \
+    uv run python -m services.matching_engine
+
+# Clearing Service
+[group('run locally')]
+run-clearing:
+    DATABASE_URL={{ db_url }} uv run python -m services.clearing
+
+# Market Data Service
+[group('run locally')]
+run-market-data:
+    uv run python -m services.market_data
+
+# Run the in-process demo (one trade between Alice and Bob, no HTTP, no Docker)
 [group('demo')]
 demo:
     uv run python -m exchange.main
 
-# Run the simulator (generates synthetic order traffic)
+# Run the simulator (generates synthetic order traffic against the gateway)
 [group('demo')]
 sim:
     uv run python -m clients.simulator.main
-
-# Seed the database (drops all tables first — 100 instruments, 30 accounts, 100 trades)
-[group('qa')]
-seed:
-    DATABASE_URL={{ db_url }} uv run python scripts/seed.py
 
 # Check for lint errors (no auto-fix)
 [group('qa')]
@@ -114,21 +181,26 @@ fmt:
 fmt-check:
     uv run ruff format --check .
 
-# Run all checks: lint + format-check (mirrors CI)
+# Run all static checks: lint + format (mirrors CI)
 [group('qa')]
 check: lint fmt-check
 
-# Run all tests (persistence tests skip automatically without Postgres)
+# Run all unit + integration tests (persistence tests skip without Postgres)
 [group('qa')]
 test:
-    uv run pytest
+    uv run --extra dev python -m pytest
 
 # Run tests with coverage report
 [group('qa')]
 test-cov:
-    uv run pytest --cov --cov-report=term-missing
+    uv run --extra dev python -m pytest --cov --cov-report=term-missing
 
-# Run only the persistence integration tests (requires infra-up)
+# Run persistence tests only (requires infra-up)
 [group('qa')]
 test-db:
-    DATABASE_URL={{ db_url }} uv run pytest tests/test_persistence.py -v
+    DATABASE_URL={{ db_url }} uv run --extra dev python -m pytest tests/test_persistence.py -v
+
+# Seed the database (drops all tables — 100 instruments, 30 accounts, 100 trades)
+[group('qa')]
+seed:
+    DATABASE_URL={{ db_url }} uv run python scripts/seed.py

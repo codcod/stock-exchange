@@ -1,0 +1,29 @@
+# Core infrastructure — Postgres only.
+# Run with: just infra-up
+# Services connect via the named 'exchange' network.
+
+name: exchange
+
+networks:
+  default:
+    name: exchange
+
+volumes:
+  postgres-data:
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: exchange
+      POSTGRES_PASSWORD: exchange
+      POSTGRES_DB: exchange
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exchange"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

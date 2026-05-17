@@ -9,10 +9,10 @@ for quotes and trade history.
 from __future__ import annotations
 
 import logging
+import typing as tp
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Deque, Dict, List, Optional
+from datetime import datetime, timezone
 
 from shared.events.bus import EventBus, MarketDataUpdate, TradeExecuted
 
@@ -28,7 +28,7 @@ class Quote:
     ask: float = 0.0
     last_price: float = 0.0
     volume_today: int = 0
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -41,31 +41,31 @@ class TickerTrade:
 
 class MarketDataService:
     def __init__(self, event_bus: EventBus) -> None:
-        self._quotes: Dict[str, Quote] = {}
-        self._trade_history: Dict[str, Deque[TickerTrade]] = {}
+        self._quotes: tp.Dict[str, Quote] = {}
+        self._trade_history: tp.Dict[str, tp.Deque[TickerTrade]] = {}
 
-        event_bus.subscribe(MarketDataUpdate, self._on_market_data)
-        event_bus.subscribe(TradeExecuted, self._on_trade_executed)
+        event_bus.subscribe(MarketDataUpdate, self.on_market_data_update)
+        event_bus.subscribe(TradeExecuted, self.on_trade_executed)
 
     # ------------------------------------------------------------------
     # Query interface
     # ------------------------------------------------------------------
 
-    def get_quote(self, ticker: str) -> Optional[Quote]:
+    def get_quote(self, ticker: str) -> tp.Optional[Quote]:
         return self._quotes.get(ticker)
 
-    def get_trade_history(self, ticker: str, limit: int = 20) -> List[TickerTrade]:
+    def get_trade_history(self, ticker: str, limit: int = 20) -> tp.List[TickerTrade]:
         history = self._trade_history.get(ticker, deque())
         return list(history)[-limit:]
 
-    def all_tickers(self) -> List[str]:
+    def all_tickers(self) -> tp.List[str]:
         return list(self._quotes.keys())
 
     # ------------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------------
 
-    async def _on_market_data(self, event: MarketDataUpdate) -> None:
+    async def on_market_data_update(self, event: MarketDataUpdate) -> None:
         quote = self._quotes.setdefault(
             event.ticker,
             Quote(ticker=event.ticker),
@@ -77,9 +77,9 @@ class MarketDataService:
         if event.last_price:
             quote.last_price = event.last_price
         quote.volume_today += event.volume
-        quote.updated_at = datetime.utcnow()
+        quote.updated_at = datetime.now(timezone.utc)
 
-    async def _on_trade_executed(self, event: TradeExecuted) -> None:
+    async def on_trade_executed(self, event: TradeExecuted) -> None:
         if event.ticker not in self._trade_history:
             self._trade_history[event.ticker] = deque(maxlen=MAX_TRADE_HISTORY)
         self._trade_history[event.ticker].append(
@@ -87,6 +87,6 @@ class MarketDataService:
                 ticker=event.ticker,
                 price=event.price,
                 quantity=event.quantity,
-                executed_at=datetime.utcnow(),
+                executed_at=datetime.now(timezone.utc),
             )
         )
