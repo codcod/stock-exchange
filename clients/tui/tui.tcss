@@ -1,0 +1,237 @@
+/* ── Global ─────────────────────────────────────────────── */
+Screen {
+    background: #0a0e14;
+    color: #c9d1d9;
+}
+
+Header {
+    background: #0d1117;
+    color: #e6edf3;
+}
+
+Footer {
+    background: #0d1117;
+    color: #4a6080;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+#top-row {
+    height: 1fr;
+    min-height: 16;
+}
+
+#bottom-row {
+    height: 10;
+}
+
+/* ── Top row panels ─────────────────────────────────────── */
+MarketWatchWidget {
+    width: 30;
+    height: 100%;
+    border: solid #1e2d40;
+    border-title-color: #0088ff;
+    border-title-style: bold;
+}
+
+OrderBookWidget {
+    width: 1fr;
+    height: 100%;
+    border: solid #1e2d40;
+    border-title-color: #0088ff;
+    border-title-style: bold;
+}
+
+PortfolioWidget {
+    width: 38;
+    height: 100%;
+    border: solid #1e2d40;
+    border-title-color: #0088ff;
+    border-title-style: bold;
+}
+
+/* ── Order Entry — full-width horizontal bar ────────────── */
+OrderEntryWidget {
+    height: 7;
+    border: solid #2a4a6a;
+    border-title-color: #00ccff;
+    border-title-style: bold;
+    background: #080d14;
+    padding: 0 1;
+}
+
+#oe-fields {
+    height: 100%;
+    align: left middle;
+}
+
+.oe-field {
+    height: auto;
+    padding: 0 1 0 0;
+}
+
+.oe-ticker { width: 14; }
+.oe-side   { width: 14; }
+.oe-type   { width: 14; }
+.oe-qty    { width: 12; }
+.oe-price  { width: 14; }
+.oe-info   { width: 16; }
+.oe-action { width: 1fr; }
+
+.oe-field Label {
+    color: #4a6080;
+    height: 1;
+    text-style: bold;
+}
+
+#notional-title {
+    color: #4a6080;
+}
+
+#notional-label {
+    color: #ff8f00;
+    text-style: bold;
+    height: 1;
+}
+
+OrderEntryWidget Input {
+    background: #0d1f33;
+    border: tall #1e2d40;
+    color: #e6edf3;
+    height: 3;
+    width: 100%;
+}
+
+OrderEntryWidget Input:focus {
+    border: tall #00ccff;
+}
+
+OrderEntryWidget Input.-invalid {
+    border: tall #ff4444;
+}
+
+OrderEntryWidget Select {
+    background: #0d1f33;
+    border: tall #1e2d40;
+    color: #e6edf3;
+    height: 3;
+    width: 100%;
+}
+
+OrderEntryWidget Select:focus {
+    border: tall #00ccff;
+}
+
+#submit-btn {
+    background: #005fa3;
+    color: #e6edf3;
+    width: 100%;
+    height: 3;
+    text-style: bold;
+    border: tall #1e2d40;
+}
+
+#submit-btn:hover {
+    background: #0077cc;
+    border: tall #00aaff;
+}
+
+#submit-btn:focus {
+    background: #0077cc;
+    border: tall #00ccff;
+}
+
+/* ── Bottom panels ──────────────────────────────────────── */
+OpenOrdersWidget {
+    width: 1fr;
+    height: 100%;
+    border: solid #1e2d40;
+    border-title-color: #ff8f00;
+    border-title-style: bold;
+}
+
+TradeTapeWidget {
+    width: 1fr;
+    height: 100%;
+    border: solid #1e2d40;
+    border-title-color: #4a6080;
+    border-title-style: bold;
+}
+
+OrderHistoryWidget {
+    height: 1fr;
+    border: solid #1e2d40;
+    border-title-color: #0088ff;
+    border-title-style: bold;
+}
+
+/* ── DataTable ──────────────────────────────────────────── */
+DataTable {
+    background: #0a0e14;
+    color: #c9d1d9;
+}
+
+DataTable > .datatable--header {
+    background: #0d1117;
+    color: #4a6080;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #0d2244;
+    color: #e6edf3;
+}
+
+DataTable > .datatable--even-row {
+    background: #0c1220;
+}
+
+/* ── Portfolio ──────────────────────────────────────────── */
+#portfolio-stats {
+    padding: 0 1;
+    color: #c9d1d9;
+    height: auto;
+}
+
+/* ── TabbedContent ──────────────────────────────────────── */
+TabbedContent {
+    background: #0a0e14;
+}
+
+TabPane {
+    background: #0a0e14;
+    padding: 0;
+}
+
+Tabs {
+    background: #0d1117;
+    border-bottom: solid #1e2d40;
+}
+
+Tab {
+    color: #4a6080;
+}
+
+Tab.-active {
+    color: #0088ff;
+    text-style: bold;
+}
+
+/* ── Help modal ─────────────────────────────────────────── */
+HelpScreen {
+    align: center middle;
+}
+
+#help-dialog {
+    background: #0f1520;
+    border: solid #1e2d40;
+    width: 60;
+    height: auto;
+    max-height: 30;
+    padding: 1 2;
+}
+
+#help-title {
+    text-style: bold;
+    color: #0088ff;
+    margin-bottom: 1;
+}
