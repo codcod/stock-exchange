@@ -100,6 +100,12 @@ up:
 down:
     {{ stack }} down
 
+# Wipe all data volumes and restart the full stack from scratch
+[group('stack')]
+db-wipe:
+    {{ stack }} down -v
+    just up
+
 # Follow all logs (infra + services)
 [group('stack')]
 logs:
