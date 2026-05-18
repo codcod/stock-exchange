@@ -23,7 +23,7 @@ Source: [Introduction to Limit Order Books](https://www.machow.ski/posts/2021-07
 |---|---|---|
 | **Price/Time Priority** — The best price takes precedence, with ties broken by the earliest submission time. | ✅ | Bids are sorted in descending order and asks in ascending order. A `Deque` is used to maintain the arrival order for orders at the same price level. |
 | **Best Bid / Best Ask** — The highest bid and lowest ask prices at the top of the book. | ✅ | Implemented as `OrderBook.best_bid()` and `best_ask()` methods, with the values published in `MarketDataUpdate` events. |
-| **Bid/Ask Spread** (`best_ask − best_bid`) | ❌ | The bid and ask prices are stored in the `Quote` object, but the spread is never calculated or exposed. This can be added by implementing a `Quote.spread` property. |
+| **Bid/Ask Spread** (`best_ask − best_bid`) | ⚠️ | The backend quote APIs do not calculate or expose the spread, but the TUI computes it from L2 depth data via `DepthSnapshot.spread` in `clients/tui/models.py`. |
 | **Mid Price** (`(best_bid + best_ask) / 2`) | ❌ | This value is not calculated. It can be added with a simple one-line implementation in the `Quote` object. |
 
 ---
@@ -45,7 +45,7 @@ Source: [Introduction to Limit Order Books](https://www.machow.ski/posts/2021-07
 | Concept | Status | Notes / Implementation Gap |
 |---|---|---|
 | **New Order Submission** | ✅ | The full path is: HTTP → `OrderManagementService` → `RiskEngine` → `MatchingEngine`. |
-| **Cancel Order** — Removes an order by its ID and releases any reserved funds. | ✅ | Implemented in `Exchange.cancel_order()`; reserved cash and shares are released in `OrderManagementService._release()`. |
+| **Cancel Order** — Removes an order by its ID and releases any reserved funds. | ⚠️ | The path exists via `OrderManagementService.cancel_order()` → `MatchingEngine.cancel()`, and reservations are released in `OrderManagementService._release()`. However, `OrderBook._remove_resting_order()` only removes the head order at each price level, the OMS does not set `OrderStatus.CANCELLED`, and canceling does not emit a `MarketDataUpdate`. |
 | **Amend Order** — Modifies the price or quantity of an existing order. | ❌ | Not supported. This would require removing the existing order from the book (losing time priority), adjusting reservations, and re-submitting. The current convention is to cancel and replace, which can be achieved using existing functionalities. |
 
 ---
@@ -59,7 +59,7 @@ Source: [Introduction to Limit Order Books](https://www.machow.ski/posts/2021-07
 | **Multi-Level Trade** — An aggressive order that sweeps across multiple price levels. | ✅ | The `_match()` method iterates through price levels until the incoming order is fully filled or no more crossing prices are available. |
 | **Remainder** — The unmatched portion of an order that becomes a new passive order. | ✅ | After `_match()` is called, `_rest()` is executed if `remaining_quantity > 0`. |
 | **Slippage** — The difference between the expected execution price and the actual execution price. | ❌ | Not measured. For market orders, the actual fill prices are recorded in the `Trade` objects, but no slippage figure is computed or returned to the client. This would require moderate effort to calculate and include in the fill notification. |
-| **Volume Weighted Average Price (VWAP)** — `Σ(price × qty) / Σqty` | ❌ | The `Order.average_fill_price` field exists but is never populated. This can be fixed by accumulating the value in `_execute_fill()` using the formula: `(old_vwap * old_qty + price * fill_qty) / new_qty`. |
+| **Volume Weighted Average Price (VWAP)** — `Σ(price × qty) / Σqty` | ✅ | Implemented as `Order.average_fill_price`. The matching engine updates it in `_execute_fill()`, and the OMS recomputes/persists it in `OrderManagementService.on_order_filled()`. |
 | **Impact Prices** — The projected best bid and ask prices after removing a certain number of shares from the book. | ❌ | Not implemented. This would require a moderate amount of effort to add a read-only query method to `OrderBook` that can walk the book without modifying its state. |
 
 ---
@@ -70,7 +70,7 @@ Source: [Introduction to Limit Order Books](https://www.machow.ski/posts/2021-07
 |---|---|---|
 | **Add Liquidity / Making** — A passive order that rests in the book. | ✅ | This is functionally present, as any resting limit order adds liquidity, but it is not explicitly labeled or tracked as a metric. |
 | **Remove Liquidity / Taking** — An aggressive order that consumes liquidity from the book. | ✅ | This is functionally correct, but no specific metric is emitted. |
-| **Depth** — The distance in price levels from the top of the book. | ⚠️ | The `depth_snapshot()` method returns up to 5 levels, whereas the article notes that exchanges typically provide 10–25 L2 levels. The current cap is arbitrary and can be easily increased. |
+| **Depth** — The distance in price levels from the top of the book. | ✅ | Implemented via `depth_snapshot()` and exposed through the matching engine and gateway depth endpoints. The default depth is 10 levels, and the public APIs allow `1..25` levels, which matches the article's typical L2 range. |
 | **Thin Book / Price Impact** — A market condition where large orders can significantly move the market price. | ❌ | There is no detection or warning mechanism for when the book is thin. This would require a moderate amount of effort to add a liquidity check in the risk engine. |
 | **Maker/Taker Fees** — Different fees for adding versus removing liquidity. | ❌ | No fee model is implemented. This would require a moderate amount of effort to add a `FeeEngine` service, which would involve storing fee rates per instrument/account and applying them in the `ClearingService`. |
 | **Market Maker Role** — A participant that simultaneously places bid and ask orders to profit from the spread. | ❌ | No special account type or role is defined. The simulator could be extended to run a market-making strategy, but the necessary infrastructure does not yet exist. |
@@ -103,8 +103,8 @@ Source: [Introduction to Limit Order Books](https://www.machow.ski/posts/2021-07
 
 | Concept | Status | Notes / Implementation Gap |
 |---|---|---|
-| **Level 1 (L1)** — Shows only the best bid/ask price and quantity. | ✅ | Implemented in the `Quote` object and accessible via the `/market-data/quotes/{ticker}` endpoint. |
-| **Level 2 (L2)** — Displays aggregated price levels, typically 10–25 levels deep. | ⚠️ | The `depth_snapshot()` method returns 5 levels per side. Since the full order book is stored in memory, increasing the cap to 25 would be a one-line change. |
+| **Level 1 (L1)** — Shows only the best bid/ask price and quantity. | ⚠️ | The quote APIs expose best bid/ask prices and last price, but not top-of-book quantities. Best-size quantities are available only indirectly via depth snapshots. |
+| **Level 2 (L2)** — Displays aggregated price levels, typically 10–25 levels deep. | ✅ | Implemented via `depth_snapshot()` and the `/market-data/{ticker}/depth` gateway endpoint. Clients can request `1..25` aggregated levels per side. |
 | **Level 3 (L3)** — Provides visibility into individual orders. | ❌ | Not exposed. This could be easily added as a read-only endpoint that iterates over `PriceLevel.orders`, but it is not currently implemented. |
 
 ---
@@ -156,24 +156,24 @@ Source: [Introduction to Limit Order Books](https://www.machow.ski/posts/2021-07
 | Category | Implemented | Partial | Missing |
 |---|---|---|---|
 | Core data structures | 3 | 0 | 1 (tick size) |
-| Ordering & priority | 2 | 0 | 2 (spread, mid price) |
+| Ordering & priority | 2 | 1 (spread) | 1 (mid price) |
 | Order states | 5 | 0 | 0 |
-| Order lifecycle | 2 | 0 | 1 (amend) |
-| Trade execution | 4 | 0 | 3 (slippage, VWAP, impact) |
-| Liquidity | 2 | 1 (depth) | 3 (thin-book, fees, MM) |
+| Order lifecycle | 1 | 1 (cancel) | 1 (amend) |
+| Trade execution | 5 | 0 | 2 (slippage, impact) |
+| Liquidity | 3 | 0 | 3 (thin-book, fees, MM) |
 | Order types | 2 | 0 | 1 (stop) |
 | Time-in-Force | 0 | 1 (GTC implicit) | 4 (DAY, IOC, FOK, Post-Only) |
-| Market data levels | 1 | 1 (L2) | 1 (L3) |
+| Market data levels | 1 (L2) | 1 (L1) | 1 (L3) |
 | Special order features | 0 | 0 | 2 (hidden, iceberg) |
 | Market sessions | 1 | 1 (crossed book) | 4 (auction, IEP, IEV, open/close) |
 | Constraints | 1 | 0 | 1 (tick size) |
 | Other | 1 | 2 | 1 |
-| **Total** | **24** | **6** | **23** |
+| **Total** | **25** | **7** | **22** |
 
-### Effort classification for missing items
+### Effort classification for remaining gaps
 
 | Effort | Items |
 |---|---|
-| **Easy** (< 1 day) | Spread & mid-price on `Quote`, VWAP fill on `Order`, open/close price on `Quote`, Post-Only TIF, L3 endpoint, depth cap increase |
-| **Moderate** (1–3 days) | Tick size, IOC/FOK TIF, Day TIF + session sweep, slippage reporting, impact price query, amend order, hidden orders, iceberg orders, thin-book risk check, fee engine |
+| **Easy** (< 1 day) | Backend spread and mid-price on quote APIs, top-of-book size on L1 quote responses, open/close price on `Quote`, Post-Only TIF, L3 endpoint |
+| **Moderate** (1–3 days) | Tick size, IOC/FOK TIF, Day TIF + session sweep, slippage reporting, impact price query, amend order, hidden orders, iceberg orders, thin-book risk check, fee engine, fully correct queued-order cancellation |
 | **Hard** (> 3 days) | Stop/stop-limit orders, call auction + IEP/IEV, full maker/taker fee model, market maker role/rebates |
