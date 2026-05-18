@@ -63,7 +63,6 @@ class ExchangeApp(App):
         self._api = GatewayClient(config)
         self._last_quotes: tp.List[QuoteRow] = []
         self._last_account: tp.Optional[AccountSnapshot] = None
-        self._history_tab_active = False
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -191,11 +190,10 @@ class ExchangeApp(App):
             self.screen.query_one(OpenOrdersWidget).update(orders)
         except Exception:
             pass
-        if self._history_tab_active:
-            try:
-                self.screen.query_one(OrderHistoryWidget).update(orders)
-            except Exception:
-                pass
+        try:
+            self.screen.query_one(OrderHistoryWidget).update(orders)
+        except Exception:
+            pass
         self._refresh_portfolio()
 
     def _refresh_portfolio(self) -> None:
@@ -231,11 +229,6 @@ class ExchangeApp(App):
         self, event: OpenOrdersWidget.CancelRequested
     ) -> None:
         self._do_cancel(event.order_id)
-
-    def on_tabbed_content_tab_activated(self, event) -> None:
-        self._history_tab_active = getattr(event.tab, 'id', '') == 'history-tab--tab'
-        if self._history_tab_active:
-            self._fetch_account()
 
     # ------------------------------------------------------------------
     # Actions
