@@ -18,7 +18,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from shared.models.domain import MarketDataUpdate, Trade, TradeExecuted
+from shared.models.domain import MarketDataUpdate, TradeExecuted
 
 logger = logging.getLogger(__name__)
 
@@ -66,13 +66,23 @@ class MarketDataService:
     # Event handlers
     # ------------------------------------------------------------------
 
-    async def handle_market_data_update(self, md: MarketDataUpdate) -> None:
-        """
-        Updates the in-memory market data state with the latest top-of-book information.
-        """
-        self.last_prices[md.ticker] = md.last_price
-        self.best_bids[md.ticker] = md.best_bid
-        self.best_asks[md.ticker] = md.best_ask
+    async def on_market_data_update(self, md: MarketDataUpdate) -> None:
+        quote = self._quotes.get(md.ticker)
+        if quote is None:
+            self._quotes[md.ticker] = Quote(
+                ticker=md.ticker,
+                bid=md.bid,
+                ask=md.ask,
+                last_price=md.last_price,
+                volume_today=md.volume,
+            )
+        else:
+            quote.bid = md.bid
+            quote.ask = md.ask
+            if md.last_price:
+                quote.last_price = md.last_price
+            quote.volume_today += md.volume
+            quote.updated_at = datetime.now(timezone.utc)
 
     async def on_trade_executed(self, event: TradeExecuted) -> None:
         if event.ticker not in self._trade_history:
@@ -85,10 +95,3 @@ class MarketDataService:
                 executed_at=datetime.now(timezone.utc),
             )
         )
-
-    async def handle_trade(self, trade: Trade) -> None:
-        """
-        Persists a trade to the database and updates the last trade price.
-        """
-        await self.trades.add_trade(trade)
-        self.last_prices[trade.ticker] = trade.price
