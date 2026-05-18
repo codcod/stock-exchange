@@ -29,7 +29,8 @@ Usage
   uv run python scripts/validate_trade.py
 
   # Or with a custom gateway:
-  GATEWAY_URL=http://localhost:8000 DATABASE_URL=... uv run python scripts/validate_trade.py
+  GATEWAY_URL=http://localhost:8000 DATABASE_URL=... \
+    uv run python scripts/validate_trade.py
 """
 
 from __future__ import annotations
