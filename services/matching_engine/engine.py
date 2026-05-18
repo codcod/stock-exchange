@@ -98,7 +98,7 @@ class OrderBook:
     def best_ask(self) -> tp.Optional[float]:
         return self.asks[0].price if self.asks else None
 
-    def depth_snapshot(self, levels: int = 5) -> dict:
+    def depth_snapshot(self, levels: int = 10) -> dict:
         return {
             'ticker': self.ticker,
             'bids': [
@@ -163,9 +163,14 @@ class OrderBook:
         qty: int,
         price: float,
     ) -> Trade:
-        # Update quantities
-        incoming.filled_quantity += qty
-        resting.filled_quantity += qty
+        # Update quantities and VWAP average fill price
+        for order in (incoming, resting):
+            old_filled = order.filled_quantity
+            new_filled = old_filled + qty
+            order.average_fill_price = (
+                (order.average_fill_price or 0.0) * old_filled + price * qty
+            ) / new_filled
+            order.filled_quantity = new_filled
 
         # Update statuses
         for order in (incoming, resting):
@@ -293,6 +298,6 @@ class MatchingEngine:
             return book.cancel_order(order.order_id)
         return False
 
-    def snapshot(self, ticker: str) -> tp.Optional[dict]:
+    def snapshot(self, ticker: str, levels: int = 10) -> tp.Optional[dict]:
         book = self._books.get(ticker)
-        return book.depth_snapshot() if book else None
+        return book.depth_snapshot(levels) if book else None

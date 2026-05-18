@@ -144,22 +144,6 @@ class RiskEngineClient:
         )
         return RiskResult(passed=data['passed'], reason=data.get('reason'))
 
-    async def update_reserved_cash(self, account_id: str, delta: float) -> None:
-        await http_post(
-            self._client,
-            f'{self._base}/accounts/{account_id}/reserve/cash',
-            {'delta': delta},
-        )
-
-    async def update_reserved_shares(
-        self, account_id: str, ticker: str, delta: int
-    ) -> None:
-        await http_post(
-            self._client,
-            f'{self._base}/accounts/{account_id}/reserve/shares/{ticker}',
-            {'delta': delta},
-        )
-
     async def register_account(self, account: Account) -> None:
         await http_post(
             self._client, f'{self._base}/accounts', _account_to_dict(account)
@@ -199,9 +183,11 @@ class MatchingEngineClient:
         data = await http_delete(self._client, f'{self._base}/orders/{order.order_id}')
         return data.get('cancelled', False)
 
-    async def snapshot(self, ticker: str) -> tp.Optional[dict]:
+    async def snapshot(self, ticker: str, levels: int = 10) -> tp.Optional[dict]:
         try:
-            return await http_get(self._client, f'{self._base}/books/{ticker}/depth')
+            return await http_get(
+                self._client, f'{self._base}/books/{ticker}/depth?levels={levels}'
+            )
         except httpx.HTTPStatusError:
             return None
 
@@ -234,6 +220,20 @@ class ClearingClient:
             return _dict_to_account(data)
         except httpx.HTTPStatusError:
             return None
+
+    async def reserve_cash(self, account_id: str, delta: float) -> None:
+        await http_post(
+            self._client,
+            f'{self._base}/accounts/{account_id}/reserve/cash',
+            {'delta': delta},
+        )
+
+    async def reserve_shares(self, account_id: str, ticker: str, delta: int) -> None:
+        await http_post(
+            self._client,
+            f'{self._base}/accounts/{account_id}/reserve/shares/{ticker}',
+            {'delta': delta},
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -293,6 +293,10 @@ class OrderManagementClient:
             return _dict_to_order(data)
         except httpx.HTTPStatusError:
             return None
+
+    async def get_open_orders(self) -> tp.List[Order]:
+        data = await http_get(self._client, f'{self._base}/orders/open')
+        return [_dict_to_order(o) for o in data]
 
     async def get_orders_for_account(self, account_id: str) -> tp.List[Order]:
         data = await http_get(

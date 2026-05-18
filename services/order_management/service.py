@@ -4,9 +4,9 @@ services/order_management/service.py
 Owns the lifecycle of every order:
   - Persists incoming orders (IDs are assigned by the Order constructor)
   - Routes to the risk engine, then the matching engine
-  - Reserves cash or shares while an order is open
+  - Reserves cash or shares via the Clearing service while an order is open
   - Processes cancellation requests
-  - Listens for fill events to update order status and release reservations
+  - Listens for fill events to update order status
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ import typing as tp
 from shared.models.domain import Order, OrderFilled, OrderStatus, OrderType, Side
 
 if tp.TYPE_CHECKING:
-    from shared.db.repositories import OrderRepository
+    from shared.db.repos import OrderRepository
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 class OrderManagementService:
     """
     Central coordinator: receives orders, runs risk, sends to matching engine.
+    Delegates reservation management to the Clearing service.
     """
 
     def __init__(
@@ -32,11 +33,13 @@ class OrderManagementService:
         risk_engine: tp.Any,
         matching_engine: tp.Any,
         order_repo: 'OrderRepository',
+        clearing_engine: tp.Any,
     ) -> None:
         self._risk = risk_engine
         self._matching = matching_engine
         self._orders: tp.Dict[str, Order] = {}
         self._order_repo = order_repo
+        self._clearing = clearing_engine
 
     # ------------------------------------------------------------------
     # Public API
@@ -65,7 +68,7 @@ class OrderManagementService:
             await self._order_repo.update(order)
             return order
 
-        self._reserve(order)
+        await self._reserve(order)
         order.status = OrderStatus.OPEN
         await self._matching.submit(order)
         await self._order_repo.update(order)
@@ -86,7 +89,7 @@ class OrderManagementService:
 
         cancelled = await self._matching.cancel(order)
         if cancelled:
-            self._release(order)
+            await self._release(order)
             await self._order_repo.update(order)
         return cancelled
 
@@ -95,6 +98,9 @@ class OrderManagementService:
 
     def get_orders_for_account(self, account_id: str) -> tp.List[Order]:
         return [o for o in self._orders.values() if o.account_id == account_id]
+
+    def get_open_orders(self) -> tp.List[Order]:
+        return [o for o in self._orders.values() if o.is_active]
 
     # ------------------------------------------------------------------
     # Event handlers
@@ -115,37 +121,36 @@ class OrderManagementService:
 
         if order.filled_quantity >= order.quantity:
             order.status = OrderStatus.FILLED
-            self._release(order)
         else:
             order.status = OrderStatus.PARTIALLY_FILLED
 
         await self._order_repo.update(order)
 
     # ------------------------------------------------------------------
-    # Fund / share reservation
+    # Fund / share reservation — delegated to Clearing
     # ------------------------------------------------------------------
 
-    def _reserve(self, order: Order) -> None:
-        if order.order_type == OrderType.LIMIT:
-            if order.side == Side.BUY and order.price:
-                self._risk.update_reserved_cash(
-                    order.account_id, order.price * order.quantity
-                )
-            elif order.side == Side.SELL:
-                self._risk.update_reserved_shares(
-                    order.account_id, order.ticker, order.quantity
-                )
-
-    def _release(self, order: Order) -> None:
-        remaining = order.remaining_quantity
-        if remaining <= 0:
+    async def _reserve(self, order: Order) -> None:
+        if order.order_type != OrderType.LIMIT:
             return
-        if order.order_type == OrderType.LIMIT:
-            if order.side == Side.BUY and order.price:
-                self._risk.update_reserved_cash(
-                    order.account_id, -(order.price * remaining)
-                )
-            elif order.side == Side.SELL:
-                self._risk.update_reserved_shares(
-                    order.account_id, order.ticker, -remaining
-                )
+        if order.side == Side.BUY and order.price:
+            await self._clearing.reserve_cash(
+                order.account_id, order.price * order.quantity
+            )
+        elif order.side == Side.SELL:
+            await self._clearing.reserve_shares(
+                order.account_id, order.ticker, order.quantity
+            )
+
+    async def _release(self, order: Order) -> None:
+        remaining = order.remaining_quantity
+        if remaining <= 0 or order.order_type != OrderType.LIMIT:
+            return
+        if order.side == Side.BUY and order.price:
+            await self._clearing.reserve_cash(
+                order.account_id, -(order.price * remaining)
+            )
+        elif order.side == Side.SELL:
+            await self._clearing.reserve_shares(
+                order.account_id, order.ticker, -remaining
+            )

@@ -60,15 +60,6 @@ class RiskEngine:
         self._halted_tickers.discard(ticker)
         logger.info('Trading resumed for %s', ticker)
 
-    def update_reserved_cash(self, account_id: str, delta: float) -> None:
-        if account_id in self._accounts:
-            self._accounts[account_id].reserved_cash += delta
-
-    def update_reserved_shares(self, account_id: str, ticker: str, delta: int) -> None:
-        acct = self._accounts.get(account_id)
-        if acct:
-            acct.reserved_shares[ticker] = acct.reserved_shares.get(ticker, 0) + delta
-
     # ------------------------------------------------------------------
     # Main check entry point
     # ------------------------------------------------------------------

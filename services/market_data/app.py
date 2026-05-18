@@ -13,14 +13,21 @@ from __future__ import annotations
 
 import typing as tp
 from contextlib import asynccontextmanager
-from types import SimpleNamespace
+from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException, Query
 
+from services.market_data.schemas import MarketDataUpdateEvent, TradeExecutedEvent
 from services.market_data.service import MarketDataService
 from shared.models.domain import MarketDataUpdate, TradeExecuted
 
-_state = SimpleNamespace(svc=None)
+
+@dataclass
+class _AppState:
+    svc: tp.Optional[MarketDataService] = None
+
+
+_state = _AppState()
 
 
 @asynccontextmanager
@@ -44,13 +51,11 @@ async def health() -> dict:
 
 @app.get('/tickers', response_model=tp.List[str])
 async def list_tickers() -> tp.List[str]:
-    assert _state.svc is not None
     return _state.svc.all_tickers()
 
 
 @app.get('/quotes/{ticker}')
 async def get_quote(ticker: str) -> dict:
-    assert _state.svc is not None
     quote = _state.svc.get_quote(ticker)
     if quote is None:
         raise HTTPException(status_code=404, detail='No quote data for ticker')
@@ -66,7 +71,6 @@ async def get_quote(ticker: str) -> dict:
 
 @app.get('/trades/{ticker}')
 async def get_trades(ticker: str, limit: int = Query(20, le=200)) -> tp.List[dict]:
-    assert _state.svc is not None
     return [
         {
             'ticker': t.ticker,
@@ -84,31 +88,29 @@ async def get_trades(ticker: str, limit: int = Query(20, le=200)) -> tp.List[dic
 
 
 @app.post('/events/market-data-update')
-async def on_market_data_update(data: dict) -> dict:
-    assert _state.svc is not None
+async def on_market_data_update(req: MarketDataUpdateEvent) -> dict:
     event = MarketDataUpdate(
-        ticker=data['ticker'],
-        bid=data.get('bid', 0.0),
-        ask=data.get('ask', 0.0),
-        last_price=data.get('last_price', 0.0),
-        volume=data.get('volume', 0),
+        ticker=req.ticker,
+        bid=req.bid,
+        ask=req.ask,
+        last_price=req.last_price,
+        volume=req.volume,
     )
     await _state.svc.on_market_data_update(event)
     return {}
 
 
 @app.post('/events/trade-executed')
-async def on_trade_executed(data: dict) -> dict:
-    assert _state.svc is not None
+async def on_trade_executed(req: TradeExecutedEvent) -> dict:
     event = TradeExecuted(
-        trade_id=data['trade_id'],
-        buy_order_id=data['buy_order_id'],
-        sell_order_id=data['sell_order_id'],
-        buyer_account_id=data['buyer_account_id'],
-        seller_account_id=data['seller_account_id'],
-        ticker=data['ticker'],
-        quantity=data['quantity'],
-        price=data['price'],
+        trade_id=req.trade_id,
+        buy_order_id=req.buy_order_id,
+        sell_order_id=req.sell_order_id,
+        buyer_account_id=req.buyer_account_id,
+        seller_account_id=req.seller_account_id,
+        ticker=req.ticker,
+        quantity=req.quantity,
+        price=req.price,
     )
     await _state.svc.on_trade_executed(event)
     return {}

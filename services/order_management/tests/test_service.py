@@ -25,10 +25,7 @@ class FakeRiskEngine:
     async def check(self, order: Order) -> RiskResult:
         return self._result
 
-    def update_reserved_cash(self, account_id: str, delta: float) -> None:
-        pass
-
-    def update_reserved_shares(self, account_id: str, ticker: str, delta: int) -> None:
+    async def register_account(self, account) -> None:
         pass
 
 
@@ -38,6 +35,14 @@ class FakeMatchingEngine:
 
     async def cancel(self, order: Order) -> bool:
         return True
+
+
+class FakeClearingEngine:
+    async def reserve_cash(self, account_id: str, delta: float) -> None:
+        pass
+
+    async def reserve_shares(self, account_id: str, ticker: str, delta: int) -> None:
+        pass
 
 
 class FakeOrderRepo:
@@ -92,6 +97,7 @@ def make_svc(
         risk_engine=risk or FakeRiskEngine(),
         matching_engine=FakeMatchingEngine(),
         order_repo=repo,
+        clearing_engine=FakeClearingEngine(),
     )
     return svc, repo
 

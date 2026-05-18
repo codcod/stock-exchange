@@ -23,27 +23,35 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from types import SimpleNamespace
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
 from services.matching_engine.engine import MatchingEngine
+from services.matching_engine.schemas import OrderRequest
 from shared.db.connection import get_engine
-from shared.db.repositories import OrderRepository, OutboxRepository, write_outbox_rows
+from shared.db.repos import OutboxRepository, write_outbox_rows
 from shared.db.tables import ensure_tables
-from shared.models.domain import Order, OrderStatus, OrderType, Side
+from shared.service_clients import OrderManagementClient
 
 logger = logging.getLogger(__name__)
 
 _engine_svc = MatchingEngine()
-_state = SimpleNamespace(http=None, db=None)
 
 _CLEARING_URL = os.getenv('CLEARING_URL', 'http://localhost:8004')
 _OMS_URL = os.getenv('ORDER_MANAGEMENT_URL', 'http://localhost:8001')
 _MARKET_DATA_URL = os.getenv('MARKET_DATA_URL', 'http://localhost:8005')
+
+
+@dataclass
+class _AppState:
+    http: httpx.AsyncClient | None = None
+    db: object = None
+
+
+_state = _AppState()
 
 _EVENT_DESTINATIONS: dict = {
     'TradeExecuted': ['clearing', 'market_data'],
@@ -136,9 +144,14 @@ async def lifespan(app: FastAPI):
     _state.db = get_engine()
     await ensure_tables(_state.db)
 
-    for order in await OrderRepository(_state.db).load_all():
-        if order.is_active:
+    try:
+        oms_client = OrderManagementClient(_OMS_URL, _state.http)
+        for order in await oms_client.get_open_orders():
             _engine_svc.restore_order(order)
+    except Exception:
+        logger.warning(
+            'Could not restore open orders from OMS — starting with empty books'
+        )
 
     relay_task = asyncio.create_task(_outbox_relay())
     try:
@@ -166,9 +179,8 @@ async def health() -> dict:
 
 
 @app.post('/orders', status_code=201)
-async def submit_order(data: dict) -> dict:
-    order = _parse_order(data)
-    trades, events = await _engine_svc.submit(order)
+async def submit_order(req: OrderRequest) -> dict:
+    trades, events = await _engine_svc.submit(req.to_domain())
     if events:
         async with _state.db.begin() as conn:
             await _enqueue_events(conn, events)
@@ -191,9 +203,8 @@ async def submit_order(data: dict) -> dict:
 
 
 @app.post('/orders/restore', status_code=201)
-async def restore_order(data: dict) -> dict:
-    order = _parse_order(data)
-    _engine_svc.restore_order(order)
+async def restore_order(req: OrderRequest) -> dict:
+    _engine_svc.restore_order(req.to_domain())
     return {}
 
 
@@ -207,8 +218,8 @@ async def cancel_order(order_id: str) -> dict:
 
 
 @app.get('/books/{ticker}/depth')
-async def get_depth(ticker: str) -> dict:
-    depth = _engine_svc.snapshot(ticker)
+async def get_depth(ticker: str, levels: int = Query(10, ge=1, le=25)) -> dict:
+    depth = _engine_svc.snapshot(ticker, levels)
     if depth is None:
         return {'ticker': ticker, 'bids': [], 'asks': [], 'last_price': None}
     return depth
@@ -217,20 +228,6 @@ async def get_depth(ticker: str) -> dict:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _parse_order(data: dict) -> Order:
-    return Order(
-        account_id=data['account_id'],
-        ticker=data['ticker'],
-        side=Side(data['side']),
-        order_type=OrderType(data['order_type']),
-        quantity=data['quantity'],
-        price=data.get('price'),
-        order_id=data['order_id'],
-        status=OrderStatus(data['status']),
-        filled_quantity=data['filled_quantity'],
-    )
 
 
 def _find_order(order_id: str):

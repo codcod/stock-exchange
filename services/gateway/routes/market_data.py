@@ -31,8 +31,12 @@ async def get_quote(ticker: str, clients: ServiceClients = Depends(get_clients))
 
 
 @router.get('/{ticker}/depth', response_model=DepthResponse)
-async def get_depth(ticker: str, clients: ServiceClients = Depends(get_clients)):
-    depth = await clients.matching.snapshot(ticker)
+async def get_depth(
+    ticker: str,
+    levels: int = Query(10, ge=1, le=25),
+    clients: ServiceClients = Depends(get_clients),
+):
+    depth = await clients.matching.snapshot(ticker, levels)
     if depth is None:
         raise HTTPException(status_code=404, detail='No order book for ticker')
     return DepthResponse(
