@@ -80,9 +80,13 @@ async def test_zero_quantity_rejected(engine):
 
 
 async def test_reserved_cash_reduces_availability(engine):
-    # Reserve almost all cash
-    engine.update_reserved_cash('acc1', 9_500.0)
-    # Now only 500 available; a 10x175=1750 order should fail
+    # Simulate Clearing syncing a fresh account state with most cash reserved.
+    # (Reservations are now owned by Clearing; Risk Engine receives the updated
+    # account via register_account() after each reservation change.)
+    acct = Account('acc1', 'Alice', cash_balance=10_000.0, reserved_cash=9_500.0)
+    acct.positions['AAPL'] = 100
+    engine.register_account(acct)
+    # Only 500 available; a 10x175=1750 order should fail.
     result = await engine.check(buy(quantity=10, price=175.0))
     assert not result.passed
     assert 'Insufficient funds' in result.reason

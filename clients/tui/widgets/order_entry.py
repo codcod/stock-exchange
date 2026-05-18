@@ -1,12 +1,15 @@
 """
-clients/tui/widgets/order_entry.py
+This module defines the `OrderEntryWidget`, a full-width, horizontal form
+for submitting new orders.
 
-OrderEntryWidget — full-width horizontal order ticket.
+The widget's fields are laid out in a single row:
+Ticker | Side | Type | Qty | Price | Notional | Submit
 
-Fields laid out in a single row: Ticker | Side | Type | Qty | Price | Notional | Submit.
-Selecting MARKET order type disables the Price field.
-Posts OrderSubmitRequested to the App on submit (after local validation).
-Notional value updates live as Qty or Price changes.
+Key features:
+- Selecting the `MARKET` order type disables the `Price` input.
+- The `Notional` value is updated live as the `Qty` or `Price` changes.
+- After local validation, the widget posts an `OrderSubmitRequested` message
+  to the main application for submission to the exchange.
 """
 
 import typing as tp
@@ -20,9 +23,13 @@ from textual.widgets import Button, Input, Label, Select
 
 
 class OrderEntryWidget(Widget):
+    """A widget for entering and submitting new orders."""
+
     BORDER_TITLE = 'ORDER ENTRY'
 
     class OrderSubmitRequested(Message):
+        """Posted when the user clicks the submit button."""
+
         def __init__(
             self,
             ticker: str,
@@ -42,6 +49,7 @@ class OrderEntryWidget(Widget):
     _TYPES = [('LIMIT', 'LIMIT'), ('MARKET', 'MARKET')]
 
     def compose(self) -> ComposeResult:
+        """Compose the widget's layout."""
         with Horizontal(id='oe-fields'):
             with Vertical(classes='oe-field oe-ticker'):
                 yield Label('Ticker')
@@ -76,16 +84,19 @@ class OrderEntryWidget(Widget):
                 yield Button('▶  SUBMIT ORDER', id='submit-btn', variant='primary')
 
     def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle input changes to update the notional value."""
         if event.input.id in ('oe-qty', 'oe-price'):
             self._update_notional()
 
     def on_select_changed(self, event: Select.Changed) -> None:
+        """Handle select changes to disable the price input for market orders."""
         if event.select.id == 'oe-type':
             price_input = self.query_one('#oe-price', Input)
             price_input.disabled = event.value == 'MARKET'
             self._update_notional()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the submit button press."""
         if event.button.id != 'submit-btn':
             return
 
@@ -124,13 +135,16 @@ class OrderEntryWidget(Widget):
         )
 
     def set_ticker(self, ticker: str) -> None:
+        """Set the ticker input's value."""
         self.query_one('#oe-ticker', Input).value = ticker
         self._update_notional()
 
     def set_side(self, side: str) -> None:
+        """Set the side select's value."""
         self.query_one('#oe-side', Select).value = side
 
     def _update_notional(self) -> None:
+        """Update the notional value label based on the quantity and price."""
         label = self.query_one('#notional-label', Label)
         try:
             qty = float(self.query_one('#oe-qty', Input).value or '0')

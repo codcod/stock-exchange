@@ -20,16 +20,22 @@ from enum import Enum
 
 
 class Side(str, Enum):
+    """The side of an order, either BUY or SELL."""
+
     BUY = 'BUY'
     SELL = 'SELL'
 
 
 class OrderType(str, Enum):
+    """The type of an order, either MARKET or LIMIT."""
+
     MARKET = 'MARKET'  # execute immediately at best available price
     LIMIT = 'LIMIT'  # execute only at the specified price or better
 
 
 class OrderStatus(str, Enum):
+    """The lifecycle status of an order."""
+
     PENDING = 'PENDING'  # received, not yet risk-checked
     OPEN = 'OPEN'  # in the order book, waiting to match
     PARTIALLY_FILLED = 'PARTIALLY_FILLED'
@@ -45,6 +51,8 @@ class OrderStatus(str, Enum):
 
 @dataclass
 class Order:
+    """Represents a single instruction to buy or sell a quantity of a ticker."""
+
     account_id: str
     ticker: str
     side: Side
@@ -62,16 +70,18 @@ class Order:
 
     @property
     def remaining_quantity(self) -> int:
+        """The number of shares that have not yet been filled."""
         return self.quantity - self.filled_quantity
 
     @property
     def is_active(self) -> bool:
+        """Whether the order is in a state where it can be matched."""
         return self.status in (OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED)
 
 
 @dataclass
 class Trade:
-    """Produced by the matching engine when a buy and sell order agree on price."""
+    """A record of a single match between a buy and a sell order."""
 
     trade_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     ticker: str = ''
@@ -86,21 +96,25 @@ class Trade:
 
 @dataclass
 class Account:
+    """A trading account, holding cash and share positions."""
+
     account_id: str
     name: str
     cash_balance: float = 0.0
     # ticker -> quantity
     positions: dict = field(default_factory=dict)
-    # ticker -> quantity reserved by open buy orders
+    # Cash reserved by open buy orders
     reserved_cash: float = 0.0
-    # ticker -> quantity reserved by open sell orders
+    # Shares reserved by open sell orders (ticker -> quantity)
     reserved_shares: dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def available_cash(self) -> float:
+        """The amount of cash not currently reserved by open orders."""
         return self.cash_balance - self.reserved_cash
 
     def available_shares(self, ticker: str) -> int:
+        """The number of shares of a ticker not currently reserved by open orders."""
         held = self.positions.get(ticker, 0)
         reserved = self.reserved_shares.get(ticker, 0)
         return held - reserved
@@ -108,6 +122,8 @@ class Account:
 
 @dataclass
 class Instrument:
+    """A tradeable instrument, such as a stock."""
+
     ticker: str
     name: str
     lot_size: int = 1  # minimum tradeable quantity
@@ -123,12 +139,16 @@ class Instrument:
 
 @dataclass
 class Event:
+    """Base class for all domain events."""
+
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
 class OrderSubmitted(Event):
+    """Fired when an order is first submitted to the exchange."""
+
     order_id: str = ''
     account_id: str = ''
     ticker: str = ''
@@ -136,22 +156,30 @@ class OrderSubmitted(Event):
 
 @dataclass
 class OrderAccepted(Event):
+    """Fired when an order passes risk checks and is sent to the matching engine."""
+
     order_id: str = ''
 
 
 @dataclass
 class OrderRejected(Event):
+    """Fired when an order fails risk checks."""
+
     order_id: str = ''
     reason: str = ''
 
 
 @dataclass
 class OrderCancelled(Event):
+    """Fired when an order is successfully cancelled."""
+
     order_id: str = ''
 
 
 @dataclass
 class TradeExecuted(Event):
+    """Fired by the matching engine when two orders are matched."""
+
     trade_id: str = ''
     buy_order_id: str = ''
     sell_order_id: str = ''
@@ -164,6 +192,8 @@ class TradeExecuted(Event):
 
 @dataclass
 class OrderFilled(Event):
+    """Fired by the matching engine to report a full or partial fill."""
+
     order_id: str = ''
     account_id: str = ''
     fill_quantity: int = 0
@@ -173,6 +203,8 @@ class OrderFilled(Event):
 
 @dataclass
 class MarketDataUpdate(Event):
+    """Fired by the matching engine after a trade or book change."""
+
     ticker: str = ''
     bid: float = 0.0
     ask: float = 0.0

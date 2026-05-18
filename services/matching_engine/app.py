@@ -1,19 +1,22 @@
 """
-services/matching_engine/app.py
+A standalone FastAPI service that wraps the MatchingEngine.
 
-Standalone FastAPI service wrapping MatchingEngine.
-After each match, events are written to the outbox table (matching_engine.outbox)
-and a background relay delivers them via HTTP to downstream services:
-  - TradeExecuted  → ClearingService + MarketDataService
-  - OrderFilled    → OrderManagementService
-  - MarketDataUpdate → MarketDataService
+After each match, this service writes events to the
+`matching_engine.outbox` table. A background relay then delivers these
+events via HTTP to the appropriate downstream services, ensuring that
+trade and market data are updated across the system.
+
+The events are routed as follows:
+- `TradeExecuted`: Sent to `ClearingService` and `MarketDataService`.
+- `OrderFilled`: Sent to `OrderManagementService`.
+- `MarketDataUpdate`: Sent to `MarketDataService`.
 
 Environment variables:
-  DATABASE_URL          — Postgres URL (required)
-  CLEARING_URL          — default http://localhost:8004
-  ORDER_MANAGEMENT_URL  — default http://localhost:8001
-  MARKET_DATA_URL       — default http://localhost:8005
-  PORT                  — default 8003
+- `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `CLEARING_URL`: The URL for the Clearing Service (default: `http://localhost:8004`).
+- `ORDER_MANAGEMENT_URL`: The URL for the Order Management Service (default: `http://localhost:8001`).
+- `MARKET_DATA_URL`: The URL for the Market Data Service (default: `http://localhost:8005`).
+- `PORT`: The HTTP port on which the service will run (default: `8003`).
 """
 
 from __future__ import annotations
@@ -23,27 +26,35 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from types import SimpleNamespace
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
 from services.matching_engine.engine import MatchingEngine
+from services.matching_engine.schemas import OrderRequest
 from shared.db.connection import get_engine
-from shared.db.repositories import OrderRepository, OutboxRepository, write_outbox_rows
+from shared.db.repos import OutboxRepository, write_outbox_rows
 from shared.db.tables import ensure_tables
-from shared.models.domain import Order, OrderStatus, OrderType, Side
+from shared.service_clients import OrderManagementClient
 
 logger = logging.getLogger(__name__)
 
 _engine_svc = MatchingEngine()
-_state = SimpleNamespace(http=None, db=None)
 
 _CLEARING_URL = os.getenv('CLEARING_URL', 'http://localhost:8004')
 _OMS_URL = os.getenv('ORDER_MANAGEMENT_URL', 'http://localhost:8001')
 _MARKET_DATA_URL = os.getenv('MARKET_DATA_URL', 'http://localhost:8005')
+
+
+@dataclass
+class _AppState:
+    http: httpx.AsyncClient | None = None
+    db: object = None
+
+
+_state = _AppState()
 
 _EVENT_DESTINATIONS: dict = {
     'TradeExecuted': ['clearing', 'market_data'],
@@ -70,6 +81,10 @@ _RELAY_POLL_INTERVAL = 0.5
 
 
 async def _enqueue_events(conn, events: list) -> None:
+    """
+    Serialize a list of domain events and write them to the outbox table
+    within a single database transaction.
+    """
     now = datetime.now(timezone.utc)
     rows = []
     for event in events:
@@ -95,6 +110,10 @@ async def _enqueue_events(conn, events: list) -> None:
 
 
 async def _outbox_relay() -> None:
+    """
+    A background task that polls the outbox for unpublished events and
+    relays them to their destinations via HTTP.
+    """
     repo = OutboxRepository(_state.db)
     while True:
         try:
@@ -132,13 +151,25 @@ async def _outbox_relay() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Application startup and shutdown logic.
+
+    - Initializes HTTP and database clients.
+    - Restores open orders from the Order Management Service.
+    - Starts the outbox relay background task.
+    """
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.db = get_engine()
     await ensure_tables(_state.db)
 
-    for order in await OrderRepository(_state.db).load_all():
-        if order.is_active:
+    try:
+        oms_client = OrderManagementClient(_OMS_URL, _state.http)
+        for order in await oms_client.get_open_orders():
             _engine_svc.restore_order(order)
+    except Exception:
+        logger.warning(
+            'Could not restore open orders from OMS — starting with empty books'
+        )
 
     relay_task = asyncio.create_task(_outbox_relay())
     try:
@@ -157,6 +188,7 @@ app = FastAPI(title='Matching Engine', version='0.1.0', lifespan=lifespan)
 
 @app.get('/health')
 async def health() -> dict:
+    """Health check endpoint."""
     return {'status': 'ok'}
 
 
@@ -166,9 +198,9 @@ async def health() -> dict:
 
 
 @app.post('/orders', status_code=201)
-async def submit_order(data: dict) -> dict:
-    order = _parse_order(data)
-    trades, events = await _engine_svc.submit(order)
+async def submit_order(req: OrderRequest) -> dict:
+    """Submit a new order to the matching engine."""
+    trades, events = await _engine_svc.submit(req.to_domain())
     if events:
         async with _state.db.begin() as conn:
             await _enqueue_events(conn, events)
@@ -191,14 +223,20 @@ async def submit_order(data: dict) -> dict:
 
 
 @app.post('/orders/restore', status_code=201)
-async def restore_order(data: dict) -> dict:
-    order = _parse_order(data)
-    _engine_svc.restore_order(order)
+async def restore_order(req: OrderRequest) -> dict:
+    """
+    Restore a resting order into the book without triggering matching.
+
+    This is used during startup to rebuild the book from active orders
+    that existed before a service restart.
+    """
+    _engine_svc.restore_order(req.to_domain())
     return {}
 
 
 @app.delete('/orders/{order_id}')
 async def cancel_order(order_id: str) -> dict:
+    """Cancel an active order."""
     book_order = _find_order(order_id)
     if book_order is None:
         return {'cancelled': False}
@@ -207,8 +245,9 @@ async def cancel_order(order_id: str) -> dict:
 
 
 @app.get('/books/{ticker}/depth')
-async def get_depth(ticker: str) -> dict:
-    depth = _engine_svc.snapshot(ticker)
+async def get_depth(ticker: str, levels: int = Query(10, ge=1, le=25)) -> dict:
+    """Get a snapshot of the order book depth for a given ticker."""
+    depth = _engine_svc.snapshot(ticker, levels)
     if depth is None:
         return {'ticker': ticker, 'bids': [], 'asks': [], 'last_price': None}
     return depth
@@ -217,20 +256,6 @@ async def get_depth(ticker: str) -> dict:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _parse_order(data: dict) -> Order:
-    return Order(
-        account_id=data['account_id'],
-        ticker=data['ticker'],
-        side=Side(data['side']),
-        order_type=OrderType(data['order_type']),
-        quantity=data['quantity'],
-        price=data.get('price'),
-        order_id=data['order_id'],
-        status=OrderStatus(data['status']),
-        filled_quantity=data['filled_quantity'],
-    )
 
 
 def _find_order(order_id: str):

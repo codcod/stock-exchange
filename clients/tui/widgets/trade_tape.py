@@ -1,10 +1,10 @@
 """
-clients/tui/widgets/trade_tape.py
+This module defines the `TradeTapeWidget`, which displays a time-and-sales
+tape for the currently selected ticker.
 
-TradeTapeWidget — time-and-sales tape for the selected ticker.
-
-Displays the most recent trades (newest first) up to _MAX_ROWS entries.
-Clears and reloads on every update call; does not diff rows.
+The widget shows the most recent trades, with the newest trades appearing
+at the top, up to a maximum of `_MAX_ROWS` entries. The table is cleared
+and reloaded on every update, rather than performing a diff.
 """
 
 import typing as tp
@@ -20,18 +20,23 @@ _MAX_ROWS = 50
 
 
 class TradeTapeWidget(Widget):
+    """A widget that displays a time-and-sales tape for a single ticker."""
+
     BORDER_TITLE = 'RECENT TRADES'
 
     def compose(self) -> ComposeResult:
+        """Compose the widget's layout."""
         yield DataTable(id='tape-table', cursor_type='none', zebra_stripes=True)
 
     def on_mount(self) -> None:
+        """Called when the widget is mounted."""
         table = self.query_one('#tape-table', DataTable)
         table.add_column('Time', key='time')
         table.add_column('Price', key='price')
         table.add_column('Qty', key='qty')
 
     def update(self, trades: tp.List[TradeRow], ticker: str) -> None:
+        """Update the widget with a new list of trades."""
         self.border_title = f'RECENT TRADES — {ticker}' if ticker else 'RECENT TRADES'
         table = self.query_one('#tape-table', DataTable)
         table.clear()

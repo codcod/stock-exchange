@@ -1,11 +1,10 @@
 """
-clients/tui/api.py
+A synchronous HTTP client for the exchange gateway.
 
-Synchronous HTTP client for the exchange gateway.
-
-GatewayClient wraps every gateway endpoint in a plain Python method so the
-rest of the TUI never imports httpx directly.  All methods are blocking and
-intended to be called from a @work(thread=True) worker, not from the UI thread.
+This client wraps every gateway endpoint in a plain Python method, so the
+rest of the TUI application does not need to interact with `httpx` directly.
+All methods are blocking and are intended to be called from a background
+worker thread, not from the main UI thread.
 """
 
 import typing as tp
@@ -28,6 +27,7 @@ _DATE_FMTS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S')
 
 
 def _fmt_ts(raw: str) -> str:
+    """Format an ISO timestamp into a more readable HH:MM:SS format."""
     for fmt in _DATE_FMTS:
         try:
             return datetime.strptime(raw[:26], fmt).strftime('%H:%M:%S')
@@ -37,6 +37,8 @@ def _fmt_ts(raw: str) -> str:
 
 
 class GatewayClient:
+    """A blocking HTTP client for all gateway API endpoints."""
+
     def __init__(self, config: AppConfig) -> None:
         self._base = config.base_url
         self._headers = config.headers
@@ -47,11 +49,13 @@ class GatewayClient:
     # ------------------------------------------------------------------
 
     def get_tickers(self) -> tp.List[str]:
+        """Fetch the list of all tradeable tickers."""
         r = self._client.get(f'{self._base}/market-data/tickers', headers=self._headers)
         r.raise_for_status()
         return r.json()
 
     def get_quote(self, ticker: str) -> tp.Optional[QuoteRow]:
+        """Fetch the latest top-of-book quote for a single ticker."""
         try:
             r = self._client.get(
                 f'{self._base}/market-data/{ticker}/quote', headers=self._headers
@@ -69,6 +73,7 @@ class GatewayClient:
             return None
 
     def get_all_quotes(self) -> tp.List[QuoteRow]:
+        """Fetch the latest quotes for all tradeable tickers."""
         tickers = self.get_tickers()
         rows = []
         for t in tickers:
@@ -78,6 +83,7 @@ class GatewayClient:
         return rows
 
     def get_depth(self, ticker: str) -> DepthSnapshot:
+        """Fetch the current order book depth for a single ticker."""
         try:
             r = self._client.get(
                 f'{self._base}/market-data/{ticker}/depth', headers=self._headers
@@ -100,6 +106,7 @@ class GatewayClient:
             return DepthSnapshot(ticker=ticker)
 
     def get_trades(self, ticker: str, limit: int = 30) -> tp.List[TradeRow]:
+        """Fetch the most recent trades for a single ticker."""
         try:
             r = self._client.get(
                 f'{self._base}/market-data/{ticker}/trades',
@@ -124,6 +131,7 @@ class GatewayClient:
     # ------------------------------------------------------------------
 
     def get_account(self, account_id: str) -> tp.Optional[AccountSnapshot]:
+        """Fetch the current state of a single trading account."""
         try:
             r = self._client.get(
                 f'{self._base}/accounts/{account_id}', headers=self._headers
@@ -141,6 +149,7 @@ class GatewayClient:
             return None
 
     def get_orders(self, account_id: str) -> tp.List[OrderRow]:
+        """Fetch all orders for a single trading account."""
         try:
             r = self._client.get(
                 f'{self._base}/accounts/{account_id}/orders', headers=self._headers
@@ -169,6 +178,7 @@ class GatewayClient:
     # ------------------------------------------------------------------
 
     def submit_order(self, account_id: str, req: SubmitRequest) -> dict:
+        """Submit a new order to the exchange."""
         body: dict = {
             'account_id': account_id,
             'ticker': req.ticker,
@@ -183,6 +193,7 @@ class GatewayClient:
         return r.json()
 
     def cancel_order(self, order_id: str, account_id: str) -> bool:
+        """Request cancellation of an active order."""
         try:
             r = self._client.delete(
                 f'{self._base}/orders/{order_id}',
@@ -195,4 +206,5 @@ class GatewayClient:
             return False
 
     def close(self) -> None:
+        """Close the underlying HTTP client."""
         self._client.close()

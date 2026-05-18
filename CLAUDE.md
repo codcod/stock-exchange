@@ -50,17 +50,17 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 
 ## Development conventions
 
-- The HTTP gateway (`services/gateway/`) is a thin FastAPI layer that routes requests to downstream microservices
-- Each service exposes a plain Python class interface — no HTTP in the core service loop; HTTP lives in `app.py`
-- Services communicate via HTTP (httpx); after a match the matching engine writes events to a Postgres outbox table and a background relay delivers them to downstream services
-- Persistence uses SQLAlchemy Core (async) only — no ORM; see `shared/db/`
-- `DATABASE_URL` is required for stateful services (risk_engine, order_management, matching_engine, clearing); stateless services (gateway, market_data) do not need it
-- Tests live alongside each service in its `tests/` directory
-- Use dataclasses for domain models (`shared/models/`)
-- Keep each service file under ~200 lines; split into submodules when it grows
-- Services use `async def` throughout — FastAPI and asyncpg both require it
-- Client code (`clients/tui/`) is synchronous; use `@work(thread=True)` for blocking I/O instead of coroutines
-- Always use `import typing as tp` — never `from typing import XXX`; reference types as `tp.Optional`, `tp.List`, etc.
+- The HTTP gateway (`services/gateway/`) is a lightweight FastAPI layer that routes incoming requests to the appropriate downstream microservices.
+- Each service exposes a plain Python class interface. HTTP-specific logic is confined to the `app.py` file, keeping the core service logic clean and framework-agnostic.
+- Services communicate with each other via synchronous HTTP calls using `httpx`. After a match, the matching engine writes events to a PostgreSQL outbox table. A background relay process then delivers these events to downstream services.
+- Persistence is handled using SQLAlchemy Core (async) without an ORM. See the `shared/db/` directory for more details.
+- A `DATABASE_URL` is required for stateful services (i.e., `risk_engine`, `order_management`, `matching_engine`, and `clearing`). Stateless services like `gateway` and `market_data` do not require it.
+- Tests are located alongside each service in its corresponding `tests/` directory.
+- Domain models are defined as dataclasses in `shared/models/`.
+- To maintain readability, each service file should ideally be kept under 200 lines. If a file grows beyond this, consider splitting it into submodules.
+- All services are built with `async def`, as both FastAPI and `asyncpg` require it.
+- The client-side code in `clients/tui/` is synchronous. For blocking I/O operations, use `@work(thread=True)` instead of coroutines.
+- Always use `import typing as tp` instead of `from typing import XXX`. This convention ensures that types are referenced consistently (e.g., `tp.Optional`, `tp.List`).
 
 ## When modifying a service
 

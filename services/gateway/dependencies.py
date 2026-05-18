@@ -1,8 +1,9 @@
 """
-services/gateway/dependencies.py
+Provides a FastAPI dependency for accessing service HTTP clients.
 
-FastAPI dependency providing service HTTP clients.
-Each client calls the relevant downstream service over HTTP.
+Each client is responsible for communicating with a downstream service
+over HTTP. This module ensures that clients are initialised once and
+reused across requests.
 """
 
 from __future__ import annotations
@@ -26,6 +27,8 @@ _clients: tp.Optional['ServiceClients'] = None
 
 @dataclass
 class ServiceClients:
+    """A container for all downstream service clients."""
+
     oms: OrderManagementClient
     clearing: ClearingClient
     market_data: MarketDataClient
@@ -34,6 +37,12 @@ class ServiceClients:
 
 
 def init_clients(http: httpx.AsyncClient) -> 'ServiceClients':
+    """
+    Initialise all service clients with the given HTTP client.
+
+    Service URLs are read from environment variables with sensible defaults
+    for local development.
+    """
     return ServiceClients(
         oms=OrderManagementClient(
             os.getenv('ORDER_MANAGEMENT_URL', 'http://localhost:8001'), http
@@ -54,5 +63,6 @@ def init_clients(http: httpx.AsyncClient) -> 'ServiceClients':
 
 
 async def get_clients() -> 'ServiceClients':
+    """FastAPI dependency to get the initialised service clients."""
     assert _clients is not None, 'ServiceClients not initialised'
     return _clients

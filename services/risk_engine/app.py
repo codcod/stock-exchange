@@ -1,36 +1,45 @@
 """
-services/risk_engine/app.py
+A standalone FastAPI service that wraps the RiskEngine, providing
+endpoints for risk checks, account and instrument registration, and
+trading halts.
 
-Standalone FastAPI service wrapping RiskEngine.
-Exposes risk checks, account/instrument registration, and trading halts.
+This service is responsible for ensuring that all trading activities
+comply with the defined risk rules before they are processed by the
+matching engine.
 
 Environment variables:
-  DATABASE_URL  — Postgres URL (required)
-  PORT          — HTTP port (default 8002)
+- `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `PORT`: The HTTP port on which the service will run (default: 8002).
 """
 
 from __future__ import annotations
 
+import typing as tp
 from contextlib import asynccontextmanager
-from types import SimpleNamespace
+from dataclasses import dataclass
 
 from fastapi import FastAPI
 
 from services.risk_engine.engine import RiskEngine
-from shared.db.connection import get_engine
-from shared.db.repositories import AccountRepository, InstrumentRepository
-from shared.db.tables import ensure_tables
-from shared.models.domain import (
-    Account,
-    Instrument,
-    Order,
-    OrderStatus,
-    OrderType,
-    Side,
+from services.risk_engine.schemas import (
+    RegisterAccountRequest,
+    RegisterInstrumentRequest,
 )
+from shared.db.connection import get_engine
+from shared.db.repos import AccountRepository, InstrumentRepository
+from shared.db.tables import ensure_tables
+from shared.models.domain import Account, Instrument
+from shared.schemas import OrderRequest
 
 _engine_svc: RiskEngine = RiskEngine()
-_state = SimpleNamespace(instrument_repo=None)
+
+
+@dataclass
+class _AppState:
+    instrument_repo: tp.Optional[InstrumentRepository] = None
+
+
+_state = _AppState()
 
 
 @asynccontextmanager
@@ -60,30 +69,31 @@ async def health() -> dict:
 
 
 @app.post('/accounts', status_code=201)
-async def register_account(data: dict) -> dict:
+async def register_account(req: RegisterAccountRequest) -> dict:
+    """Register a new trading account in the risk engine's cache."""
     account = Account(
-        account_id=data['account_id'],
-        name=data['name'],
-        cash_balance=data['cash_balance'],
-        reserved_cash=data.get('reserved_cash', 0.0),
+        account_id=req.account_id,
+        name=req.name,
+        cash_balance=req.cash_balance,
+        reserved_cash=req.reserved_cash,
     )
-    account.positions = data.get('positions', {})
-    account.reserved_shares = data.get('reserved_shares', {})
+    account.positions = dict(req.positions)
+    account.reserved_shares = dict(req.reserved_shares)
     _engine_svc.register_account(account)
     return {}
 
 
 @app.post('/instruments', status_code=201)
-async def register_instrument(data: dict) -> dict:
+async def register_instrument(req: RegisterInstrumentRequest) -> dict:
+    """Register a new tradeable instrument."""
     instrument = Instrument(
-        ticker=data['ticker'],
-        name=data['name'],
-        lot_size=data.get('lot_size', 1),
-        max_order_size=data.get('max_order_size', 10_000),
-        is_tradeable=data.get('is_tradeable', True),
-        last_price=data.get('last_price'),
+        ticker=req.ticker,
+        name=req.name,
+        lot_size=req.lot_size,
+        max_order_size=req.max_order_size,
+        is_tradeable=req.is_tradeable,
+        last_price=req.last_price,
     )
-
     await _state.instrument_repo.save(instrument)
     _engine_svc.register_instrument(instrument)
     return {}
@@ -95,37 +105,10 @@ async def register_instrument(data: dict) -> dict:
 
 
 @app.post('/orders/check')
-async def check_order(data: dict) -> dict:
-    order = Order(
-        account_id=data['account_id'],
-        ticker=data['ticker'],
-        side=Side(data['side']),
-        order_type=OrderType(data['order_type']),
-        quantity=data['quantity'],
-        price=data.get('price'),
-        order_id=data['order_id'],
-        status=OrderStatus(data['status']),
-        filled_quantity=data['filled_quantity'],
-    )
-    result = await _engine_svc.check(order)
+async def check_order(req: OrderRequest) -> dict:
+    """Run pre-trade risk checks on a new order."""
+    result = await _engine_svc.check(req.to_domain())
     return {'passed': result.passed, 'reason': result.reason}
-
-
-# ---------------------------------------------------------------------------
-# Reservation management
-# ---------------------------------------------------------------------------
-
-
-@app.post('/accounts/{account_id}/reserve/cash')
-async def reserve_cash(account_id: str, data: dict) -> dict:
-    _engine_svc.update_reserved_cash(account_id, data['delta'])
-    return {}
-
-
-@app.post('/accounts/{account_id}/reserve/shares/{ticker}')
-async def reserve_shares(account_id: str, ticker: str, data: dict) -> dict:
-    _engine_svc.update_reserved_shares(account_id, ticker, int(data['delta']))
-    return {}
 
 
 # ---------------------------------------------------------------------------
@@ -135,11 +118,13 @@ async def reserve_shares(account_id: str, ticker: str, data: dict) -> dict:
 
 @app.post('/halt/{ticker}')
 async def halt(ticker: str) -> dict:
+    """Temporarily halt trading for a specific ticker."""
     _engine_svc.halt_ticker(ticker)
     return {}
 
 
 @app.post('/resume/{ticker}')
 async def resume(ticker: str) -> dict:
+    """Resume trading for a halted ticker."""
     _engine_svc.resume_ticker(ticker)
     return {}

@@ -1,10 +1,10 @@
 """
-clients/tui/widgets/open_orders.py
+This module defines the `OpenOrdersWidget`, which displays a table of all
+active orders (i.e., those with `OPEN` or `PARTIALLY_FILLED` statuses).
 
-OpenOrdersWidget — table of active orders (OPEN and PARTIALLY_FILLED).
-
-Pressing 'd' on the selected row posts CancelRequested(order_id) to the App,
-which dispatches a cancel worker.  Status values are color-coded.
+Pressing the 'd' key on a selected row posts a `CancelRequested` message
+to the main application, which then dispatches a worker to cancel the order.
+The status values in the table are color-coded for readability.
 """
 
 import typing as tp
@@ -29,6 +29,8 @@ _STATUS_STYLE = {
 
 
 class OpenOrdersWidget(Widget):
+    """A widget that displays a list of all open orders."""
+
     BORDER_TITLE = 'OPEN ORDERS  [d=cancel]'
 
     BINDINGS = [
@@ -36,14 +38,18 @@ class OpenOrdersWidget(Widget):
     ]
 
     class CancelRequested(Message):
+        """Posted when the user requests to cancel an order."""
+
         def __init__(self, order_id: str) -> None:
             super().__init__()
             self.order_id = order_id
 
     def compose(self) -> ComposeResult:
+        """Compose the widget's layout."""
         yield DataTable(id='oo-table', cursor_type='row', zebra_stripes=True)
 
     def on_mount(self) -> None:
+        """Called when the widget is mounted."""
         table = self.query_one('#oo-table', DataTable)
         table.add_column('Ticker', key='ticker')
         table.add_column('Side', key='side')
@@ -53,6 +59,7 @@ class OpenOrdersWidget(Widget):
         table.add_column('Status', key='status')
 
     def action_cancel_selected(self) -> None:
+        """Handle the 'd' key binding to cancel the selected order."""
         table = self.query_one('#oo-table', DataTable)
         if table.cursor_row >= 0:
             try:
@@ -65,6 +72,7 @@ class OpenOrdersWidget(Widget):
                 pass
 
     def update(self, orders: tp.List[OrderRow]) -> None:
+        """Update the widget with a new list of orders."""
         active = [o for o in orders if o.is_active]
         self.border_title = f'OPEN ORDERS ({len(active)})  [d=cancel]'
 

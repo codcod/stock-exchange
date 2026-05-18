@@ -5,8 +5,8 @@ Covers: quote updates, stale bid/ask cleared when book side empties.
 
 import pytest
 
-from services.market_data.service import MarketDataService
-from shared.models.domain import MarketDataUpdate
+from services.market_data.service import MAX_TRADE_HISTORY, MarketDataService
+from shared.models.domain import MarketDataUpdate, TradeExecuted
 
 
 @pytest.fixture
@@ -88,3 +88,67 @@ async def test_crossed_quote_cannot_persist_after_fix(svc):
     q = svc.get_quote('AAPL')
     # bid > ask would mean a crossed book in the cache — must not happen.
     assert not (q.bid > q.ask > 0), f'Crossed quote in cache: bid={q.bid} ask={q.ask}'
+
+
+# ---------------------------------------------------------------------------
+# Trade tape
+# ---------------------------------------------------------------------------
+
+
+def trade_evt(ticker='AAPL', price=100.0, qty=5):
+    return TradeExecuted(
+        ticker=ticker,
+        trade_id='t1',
+        buy_order_id='b1',
+        sell_order_id='s1',
+        buyer_account_id='acc1',
+        seller_account_id='acc2',
+        quantity=qty,
+        price=price,
+    )
+
+
+async def test_trade_appended_to_tape(svc):
+    await svc.on_trade_executed(trade_evt(price=100.0, qty=5))
+
+    history = svc.get_trade_history('AAPL')
+    assert len(history) == 1
+    assert history[0].price == pytest.approx(100.0)
+    assert history[0].quantity == 5
+
+
+async def test_get_trade_history_limit(svc):
+    for i in range(10):
+        await svc.on_trade_executed(trade_evt(price=float(100 + i)))
+
+    limited = svc.get_trade_history('AAPL', limit=3)
+    assert len(limited) == 3
+
+
+async def test_trade_tape_evicts_oldest_at_max_capacity(svc):
+    for i in range(MAX_TRADE_HISTORY + 10):
+        await svc.on_trade_executed(trade_evt(price=float(i)))
+
+    history = svc.get_trade_history('AAPL', limit=MAX_TRADE_HISTORY + 10)
+    assert len(history) == MAX_TRADE_HISTORY
+
+
+async def test_trade_history_empty_for_unknown_ticker(svc):
+    assert svc.get_trade_history('ZZZZ') == []
+
+
+async def test_trade_tapes_are_per_ticker(svc):
+    await svc.on_trade_executed(trade_evt('AAPL', price=100.0))
+    await svc.on_trade_executed(trade_evt('GOOG', price=200.0))
+
+    assert svc.get_trade_history('AAPL')[0].price == pytest.approx(100.0)
+    assert svc.get_trade_history('GOOG')[0].price == pytest.approx(200.0)
+
+
+async def test_all_tickers_includes_new_market_data_tickers(svc):
+    await svc.on_market_data_update(mdu(ticker='AAPL'))
+    await svc.on_market_data_update(mdu(ticker='GOOG'))
+
+    tickers = svc.all_tickers()
+    assert 'AAPL' in tickers
+    assert 'GOOG' in tickers

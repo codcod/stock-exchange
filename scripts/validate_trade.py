@@ -15,7 +15,8 @@ Expected outcome
   • 50 shares trade at 174.50  (the BUY may also fill against other resting
     SELL orders already in the book — this is normal and handled)
   • trader-2's sell order:  FILLED
-  • trader-0's buy order:   PARTIALLY_FILLED (≥50 filled, remainder resting)
+  • trader-0's buy order:   PARTIALLY_FILLED or FILLED (≥50 filled; fully fills
+    if other resting SELL orders at ≤175.00 are already in the book)
   • clearing.trades:        one row for the buy/sell order pair
   • positions delta:        matches the sum of all trades that settled
   • cash delta:             matches the sum of all settled trade values
@@ -353,14 +354,15 @@ async def _validate_db(
         passed = False
 
     buy_row = oms_by_id.get(buy_order_id)
-    # BUY may match more than SELL_QTY shares if other resting asks exist.
+    # BUY may match more than SELL_QTY shares (or fully fill) if other
+    # resting asks from unrelated traders are already in the book.
     if (
         buy_row
-        and buy_row['status'] == 'PARTIALLY_FILLED'
+        and buy_row['status'] in ('PARTIALLY_FILLED', 'FILLED')
         and buy_row['filled_quantity'] >= SELL_QTY
     ):
         _ok(
-            f'order_management.orders — BUY status=PARTIALLY_FILLED  '
+            f'order_management.orders — BUY status={buy_row["status"]}  '
             f'filled_qty={buy_row["filled_quantity"]} (≥{SELL_QTY})'
         )
     else:
@@ -368,7 +370,7 @@ async def _validate_db(
         filled = buy_row['filled_quantity'] if buy_row else '—'
         _fail(
             f'order_management.orders — BUY status={status}  '
-            f'filled_qty={filled} (expected PARTIALLY_FILLED/≥{SELL_QTY})'
+            f'filled_qty={filled} (expected PARTIALLY_FILLED or FILLED, ≥{SELL_QTY})'
         )
         passed = False
 

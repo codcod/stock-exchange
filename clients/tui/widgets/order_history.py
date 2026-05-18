@@ -1,11 +1,11 @@
 """
-clients/tui/widgets/order_history.py
+This module defines the `OrderHistoryWidget`, which displays a table of all
+orders for the current account, regardless of their status.
 
-OrderHistoryWidget — all orders for the current account (all statuses).
-
-Shown in the History tab and only refreshed when that tab is active.
-Orders are displayed most-recent-first.  Side and status columns are
-color-coded: BUY green, SELL red, FILLED/OPEN green, CANCELLED/REJECTED dim/red.
+This widget is shown in the "History" tab and is only refreshed when that
+tab is active. Orders are displayed in reverse chronological order (most
+recent first). The `Side` and `Status` columns are color-coded for better
+readability.
 """
 
 import typing as tp
@@ -28,12 +28,16 @@ _STATUS_STYLE = {
 
 
 class OrderHistoryWidget(Widget):
+    """A widget that displays a list of all historical orders."""
+
     BORDER_TITLE = 'ORDER HISTORY'
 
     def compose(self) -> ComposeResult:
+        """Compose the widget's layout."""
         yield DataTable(id='oh-table', cursor_type='row', zebra_stripes=True)
 
     def on_mount(self) -> None:
+        """Called when the widget is mounted."""
         table = self.query_one('#oh-table', DataTable)
         table.add_column('Time', key='time')
         table.add_column('Ticker', key='ticker')
@@ -44,6 +48,7 @@ class OrderHistoryWidget(Widget):
         table.add_column('Status', key='status')
 
     def update(self, orders: tp.List[OrderRow]) -> None:
+        """Update the widget with a new list of orders."""
         self.border_title = f'ORDER HISTORY ({len(orders)})'
         table = self.query_one('#oh-table', DataTable)
         table.clear()

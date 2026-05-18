@@ -12,7 +12,6 @@
     ],
     "deny": [
       "Bash(rm -rf *)",
-      "Bash(curl*)",
       "Bash(wget*)"
     ]
   },

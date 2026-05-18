@@ -1,11 +1,11 @@
 """
-clients/tui/widgets/portfolio.py
+This module defines the `PortfolioWidget`, which displays a summary of the
+user's account cash and a table of their current positions.
 
-PortfolioWidget — account cash summary and position table.
-
-The cash header (Label) shows total and available cash in Rich markup.
-The positions DataTable shows each held ticker with its last price and
-current market value.  Zero-quantity positions are omitted.
+The widget includes a header `Label` that shows the total and available cash
+balances, formatted with Rich markup. The main content is a `DataTable` that
+lists each ticker held, its last traded price, and its current market value.
+Positions with a quantity of zero are not displayed.
 """
 
 import typing as tp
@@ -19,13 +19,17 @@ from clients.tui.models import AccountSnapshot, QuoteRow
 
 
 class PortfolioWidget(Widget):
+    """A widget that displays the user's cash and stock positions."""
+
     BORDER_TITLE = 'PORTFOLIO'
 
     def compose(self) -> ComposeResult:
+        """Compose the widget's layout."""
         yield Label('', id='portfolio-stats')
         yield DataTable(id='pos-table', cursor_type='none', zebra_stripes=True)
 
     def on_mount(self) -> None:
+        """Called when the widget is mounted."""
         table = self.query_one('#pos-table', DataTable)
         table.add_column('Ticker', key='ticker')
         table.add_column('Qty', key='qty')
@@ -35,6 +39,7 @@ class PortfolioWidget(Widget):
     def update(
         self, account: tp.Optional[AccountSnapshot], quotes: tp.List[QuoteRow]
     ) -> None:
+        """Update the widget with new account and quote data."""
         if account is None:
             return
 
