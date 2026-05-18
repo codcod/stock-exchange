@@ -15,10 +15,16 @@ from shared.models.domain import Account
 
 
 class AccountRepository:
+    """Repository for Account persistence (cash, positions, reserved amounts)."""
+
     def __init__(self, engine: AsyncEngine) -> None:
         self._engine = engine
 
     async def save(self, account: Account) -> None:
+        """
+        Save an Account to the database, performing a full replace of all
+        associated data (cash, positions, reservations).
+        """
         async with self._engine.begin() as conn:
             await conn.execute(
                 pg_insert(accounts_t)
@@ -65,6 +71,7 @@ class AccountRepository:
                 await conn.execute(insert(reserved_shares_t), res_rows)
 
     async def load_all(self) -> tp.List[Account]:
+        """Load all accounts and their associated positions and reservations."""
         async with self._engine.connect() as conn:
             acc_rows = (await conn.execute(select(accounts_t))).mappings().all()
             pos_rows = (await conn.execute(select(positions_t))).mappings().all()

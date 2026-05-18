@@ -88,6 +88,7 @@ async def health() -> dict:
 
 @app.post('/orders', status_code=201)
 async def submit_order(req: OrderRequest) -> dict:
+    """Submit a new order for processing."""
     result = await _state.svc.submit_order(req.to_domain())
     return _order_to_dict(result)
 
@@ -95,15 +96,17 @@ async def submit_order(req: OrderRequest) -> dict:
 @app.get('/orders/open')
 async def list_open_orders() -> tp.List[dict]:
     """
-    Returns a list of all `OPEN` and `PARTIALLY_FILLED` orders. This
-    endpoint is intended for use by the Matching Engine during startup
-    to synchronize its state.
+    Return a list of all `OPEN` and `PARTIALLY_FILLED` orders.
+
+    This endpoint is intended for use by the Matching Engine during startup
+    to synchronize its state with any orders that were active before a restart.
     """
     return [_order_to_dict(o) for o in _state.svc.get_open_orders()]
 
 
 @app.get('/orders/{order_id}')
 async def get_order(order_id: str) -> dict:
+    """Retrieve a single order by its unique ID."""
     order = _state.svc.get_order(order_id)
     if order is None:
         raise HTTPException(status_code=404, detail='Order not found')
@@ -112,12 +115,14 @@ async def get_order(order_id: str) -> dict:
 
 @app.delete('/orders/{order_id}')
 async def cancel_order(order_id: str, account_id: str = Query(...)) -> dict:
+    """Request cancellation of an active order."""
     cancelled = await _state.svc.cancel_order(order_id, account_id)
     return {'cancelled': cancelled}
 
 
 @app.get('/accounts/{account_id}/orders')
 async def list_orders(account_id: str) -> tp.List[dict]:
+    """Retrieve all orders, active or inactive, for a specific account."""
     return [_order_to_dict(o) for o in _state.svc.get_orders_for_account(account_id)]
 
 
@@ -128,6 +133,10 @@ async def list_orders(account_id: str) -> tp.List[dict]:
 
 @app.post('/events/order-filled')
 async def on_order_filled(req: OrderFilledEvent) -> dict:
+    """
+    Endpoint for the Matching Engine to report that an order has been
+    partially or fully filled.
+    """
     event = OrderFilled(
         order_id=req.order_id,
         account_id=req.account_id,

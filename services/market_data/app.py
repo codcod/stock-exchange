@@ -53,11 +53,13 @@ async def health() -> dict:
 
 @app.get('/tickers', response_model=tp.List[str])
 async def list_tickers() -> tp.List[str]:
+    """Return a list of all tickers for which market data is available."""
     return _state.svc.all_tickers()
 
 
 @app.get('/quotes/{ticker}')
 async def get_quote(ticker: str) -> dict:
+    """Return the current top-of-book quote for a given ticker."""
     quote = _state.svc.get_quote(ticker)
     if quote is None:
         raise HTTPException(status_code=404, detail='No quote data for ticker')
@@ -73,6 +75,7 @@ async def get_quote(ticker: str) -> dict:
 
 @app.get('/trades/{ticker}')
 async def get_trades(ticker: str, limit: int = Query(20, le=200)) -> tp.List[dict]:
+    """Return the most recent trades for a given ticker."""
     return [
         {
             'ticker': t.ticker,
@@ -91,6 +94,10 @@ async def get_trades(ticker: str, limit: int = Query(20, le=200)) -> tp.List[dic
 
 @app.post('/events/market-data-update')
 async def on_market_data_update(req: MarketDataUpdateEvent) -> dict:
+    """
+    Endpoint for the Matching Engine to report that the top-of-book,
+    last trade price, or daily volume has changed.
+    """
     event = MarketDataUpdate(
         ticker=req.ticker,
         bid=req.bid,
@@ -104,6 +111,10 @@ async def on_market_data_update(req: MarketDataUpdateEvent) -> dict:
 
 @app.post('/events/trade-executed')
 async def on_trade_executed(req: TradeExecutedEvent) -> dict:
+    """
+    Endpoint for the Matching Engine to report that a trade has been
+    executed.
+    """
     event = TradeExecuted(
         trade_id=req.trade_id,
         buy_order_id=req.buy_order_id,

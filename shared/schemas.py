@@ -16,7 +16,7 @@ from shared.models.domain import Order, OrderStatus, OrderType, Side
 
 
 class OrderRequest(BaseModel):
-    """Wire format for an Order passed between services."""
+    """Pydantic model for an Order passed between services."""
 
     order_id: str
     account_id: str

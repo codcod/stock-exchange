@@ -6,6 +6,11 @@ from pydantic import BaseModel
 
 
 class OrderFilledEvent(BaseModel):
+    """
+    Event model sent from the Matching Engine to Order Management when an
+    order has been partially or fully filled.
+    """
+
     order_id: str
     account_id: str
     fill_quantity: int

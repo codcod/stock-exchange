@@ -37,10 +37,12 @@ _DDL_LOCK_ID = 20260516
 
 
 async def ensure_tables(engine) -> None:
-    """Create all schemas and tables.
+    """
+    Create all schemas and tables if they do not already exist.
 
-    Uses a pg advisory lock so concurrent service starts don't race on DDL.
-    IF NOT EXISTS on every statement makes the whole block idempotent.
+    This function uses a PostgreSQL advisory lock to ensure that concurrent
+    service startups do not attempt to create tables simultaneously. The use
+    of `IF NOT EXISTS` in the DDL makes the entire operation idempotent.
     """
     async with engine.begin() as conn:
         await conn.execute(text(f'SELECT pg_advisory_xact_lock({_DDL_LOCK_ID})'))
@@ -48,16 +50,6 @@ async def ensure_tables(engine) -> None:
             await conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS {schema}'))
         for table in metadata.sorted_tables:
             await conn.execute(CreateTable(table, if_not_exists=True))
-
-
-# ---------------------------------------------------------------------------
-# Backward-compat shim — callers that still pass a conn get a clear error.
-# ---------------------------------------------------------------------------
-
-
-async def create_schemas(engine) -> None:
-    """Deprecated: use ensure_tables() instead."""
-    await ensure_tables(engine)
 
 
 # schema= must follow all positional Column args (SQLAlchemy Table signature)

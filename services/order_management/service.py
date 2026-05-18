@@ -23,6 +23,11 @@ from shared.models.domain import Order, OrderFilled, OrderStatus, OrderType, Sid
 
 if tp.TYPE_CHECKING:
     from shared.db.repos import OrderRepository
+    from shared.service_clients import (
+        ClearingClient,
+        MatchingEngineClient,
+        RiskEngineClient,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +42,10 @@ class OrderManagementService:
 
     def __init__(
         self,
-        risk_engine: tp.Any,
-        matching_engine: tp.Any,
+        risk_engine: 'RiskEngineClient',
+        matching_engine: 'MatchingEngineClient',
         order_repo: 'OrderRepository',
-        clearing_engine: tp.Any,
+        clearing_engine: 'ClearingClient',
     ) -> None:
         self._risk = risk_engine
         self._matching = matching_engine
@@ -54,8 +59,17 @@ class OrderManagementService:
 
     async def submit_order(self, order: Order) -> Order:
         """
-        The main entry point for order submission. This method returns
-        the order with its final status set after processing.
+        Submit a new order, validate it, and route it to the matching engine.
+
+        This is the main entry point for order submission. The method performs
+        the following steps:
+        1. Persists the order to the database.
+        2. Sends the order to the Risk Engine for pre-trade checks.
+        3. If the checks pass, it reserves the required cash or shares via
+           the Clearing service.
+        4. Finally, it submits the order to the Matching Engine.
+
+        Returns the order with its final status set after processing.
         """
         logger.info(
             'Received order %s | %s %s %d @ %s',
@@ -84,6 +98,12 @@ class OrderManagementService:
         return order
 
     async def cancel_order(self, order_id: str, account_id: str) -> bool:
+        """
+        Request cancellation of an active order.
+
+        The request is forwarded to the Matching Engine. If the cancellation
+        is successful, any reserved cash or shares are released.
+        """
         order = self._orders.get(order_id)
         if not order:
             logger.warning('Cancel request for unknown order %s', order_id)
@@ -102,12 +122,15 @@ class OrderManagementService:
         return cancelled
 
     def get_order(self, order_id: str) -> tp.Optional[Order]:
+        """Retrieve a single order by its ID."""
         return self._orders.get(order_id)
 
     def get_orders_for_account(self, account_id: str) -> tp.List[Order]:
+        """Retrieve all orders belonging to a specific account."""
         return [o for o in self._orders.values() if o.account_id == account_id]
 
     def get_open_orders(self) -> tp.List[Order]:
+        """Retrieve all orders that are currently active (open or partially filled)."""
         return [o for o in self._orders.values() if o.is_active]
 
     # ------------------------------------------------------------------
@@ -115,6 +138,12 @@ class OrderManagementService:
     # ------------------------------------------------------------------
 
     async def on_order_filled(self, event: OrderFilled) -> None:
+        """
+        Handle an `OrderFilled` event from the Matching Engine.
+
+        This method updates the order's filled quantity, average fill price,
+        and status. The changes are then persisted to the database.
+        """
         order = self._orders.get(event.order_id)
         if not order:
             return
@@ -139,6 +168,12 @@ class OrderManagementService:
     # ------------------------------------------------------------------
 
     async def _reserve(self, order: Order) -> None:
+        """
+        Reserve cash for a BUY order or shares for a SELL order.
+
+        For limit orders, this method calls the Clearing service to place a
+        hold on the required assets, ensuring they are not used by other orders.
+        """
         if order.order_type != OrderType.LIMIT:
             return
         if order.side == Side.BUY and order.price:
@@ -151,6 +186,12 @@ class OrderManagementService:
             )
 
     async def _release(self, order: Order) -> None:
+        """
+        Release any remaining reserved cash or shares for a cancelled order.
+
+        If an order is cancelled before it is fully filled, this method calls
+        the Clearing service to release the hold on the remaining assets.
+        """
         remaining = order.remaining_quantity
         if remaining <= 0 or order.order_type != OrderType.LIMIT:
             return

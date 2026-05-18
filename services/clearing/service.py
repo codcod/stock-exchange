@@ -17,7 +17,6 @@ from __future__ import annotations
 import logging
 import typing as tp
 
-from shared.db.repositories import AccountRepository
 from shared.models.domain import Account, Trade, TradeExecuted
 
 if tp.TYPE_CHECKING:
@@ -27,6 +26,15 @@ logger = logging.getLogger(__name__)
 
 
 class ClearingService:
+    """
+    A service that handles trade settlement and asset reservations.
+
+    This service maintains the authoritative state of all trading accounts,
+    including cash balances and share positions. It processes `TradeExecuted`
+    events from the matching engine to settle trades and provides endpoints
+    for the order management service to manage reservations.
+    """
+
     def __init__(
         self,
         account_repo: 'AccountRepository',
@@ -38,6 +46,7 @@ class ClearingService:
         self._trade_repo = trade_repo
 
     def register_account(self, account: Account) -> None:
+        """Add or update an account in the local cache."""
         self._accounts[account.account_id] = account
 
     # ------------------------------------------------------------------
@@ -45,6 +54,12 @@ class ClearingService:
     # ------------------------------------------------------------------
 
     async def reserve_cash(self, account_id: str, delta: float) -> tp.Optional[Account]:
+        """
+        Update the reserved cash for an account by a given delta.
+
+        A positive delta increases the reservation, while a negative delta
+        releases it. The updated account state is persisted to the database.
+        """
         account = self._accounts.get(account_id)
         if account is None:
             return None
@@ -55,6 +70,12 @@ class ClearingService:
     async def reserve_shares(
         self, account_id: str, ticker: str, delta: int
     ) -> tp.Optional[Account]:
+        """
+        Update the reserved shares for a specific ticker by a given delta.
+
+        A positive delta increases the reservation, while a negative delta
+        releases it. The updated account state is persisted to the database.
+        """
         account = self._accounts.get(account_id)
         if account is None:
             return None
@@ -64,12 +85,21 @@ class ClearingService:
         return account
 
     # ------------------------------------------------------------------
-    # Settlement logic
+    # Settlement logic (called on TradeExecuted events)
     # ------------------------------------------------------------------
 
     async def on_trade_executed(
         self, event: TradeExecuted
     ) -> tp.Tuple[tp.Optional[Account], tp.Optional[Account]]:
+        """
+        Settle a trade by updating the cash and share balances of both parties.
+
+        This method adjusts the buyer's and seller's accounts to reflect the
+        transfer of assets. It also releases any reservations that were held
+        for the corresponding orders.
+
+        Returns a tuple containing the updated buyer and seller accounts.
+        """
         buyer = self._accounts.get(event.buyer_account_id)
         seller = self._accounts.get(event.seller_account_id)
         trade_value = event.price * event.quantity
@@ -128,31 +158,6 @@ class ClearingService:
 
         return buyer, seller
 
-    async def settle_trade(self, trade: Trade) -> None:
-        """
-        Settles a trade by adjusting the cash and share balances of
-        the buyer and seller.
-        """
-        # Retrieve buyer and seller account IDs from the trade
-        buy_order, sell_order = await self.accounts.get_orders_for_trade(trade.trade_id)
-
-        if not buy_order or not sell_order:
-            logger.warning(
-                'Trade %s has no buy or sell order. Cannot settle.',
-                trade.trade_id,
-            )
-            return
-
-        # Calculate the total cost of the trade
-        trade_cost = trade.price * trade.quantity
-
-        # Atomically update account balances
-        await self.accounts.update_balances_for_trade(
-            buy_order.account_id,
-            sell_order.account_id,
-            trade_cost,
-            trade.quantity,
-        )
-
     def get_account(self, account_id: str) -> Account | None:
+        """Retrieve a single account by its ID from the local cache."""
         return self._accounts.get(account_id)

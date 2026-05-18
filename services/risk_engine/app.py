@@ -70,6 +70,7 @@ async def health() -> dict:
 
 @app.post('/accounts', status_code=201)
 async def register_account(req: RegisterAccountRequest) -> dict:
+    """Register a new trading account in the risk engine's cache."""
     account = Account(
         account_id=req.account_id,
         name=req.name,
@@ -84,6 +85,7 @@ async def register_account(req: RegisterAccountRequest) -> dict:
 
 @app.post('/instruments', status_code=201)
 async def register_instrument(req: RegisterInstrumentRequest) -> dict:
+    """Register a new tradeable instrument."""
     instrument = Instrument(
         ticker=req.ticker,
         name=req.name,
@@ -104,6 +106,7 @@ async def register_instrument(req: RegisterInstrumentRequest) -> dict:
 
 @app.post('/orders/check')
 async def check_order(req: OrderRequest) -> dict:
+    """Run pre-trade risk checks on a new order."""
     result = await _engine_svc.check(req.to_domain())
     return {'passed': result.passed, 'reason': result.reason}
 
@@ -115,11 +118,13 @@ async def check_order(req: OrderRequest) -> dict:
 
 @app.post('/halt/{ticker}')
 async def halt(ticker: str) -> dict:
+    """Temporarily halt trading for a specific ticker."""
     _engine_svc.halt_ticker(ticker)
     return {}
 
 
 @app.post('/resume/{ticker}')
 async def resume(ticker: str) -> dict:
+    """Resume trading for a halted ticker."""
     _engine_svc.resume_ticker(ticker)
     return {}

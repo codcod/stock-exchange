@@ -1,11 +1,11 @@
 """
-clients/tui/widgets/order_book.py
+This module defines the `OrderBookWidget`, which displays the bid and ask
+depth for the currently selected ticker.
 
-OrderBookWidget — bid/ask depth for the selected ticker.
-
-Renders two DataTables (asks descending above the spread label, bids below)
-showing up to _DEPTH_LEVELS price levels per side.  The border title updates
-to reflect the currently selected ticker.
+It renders two `DataTable` widgets: one for asks (descending from the top)
+and one for bids (ascending from the bottom). A `Label` in the middle
+displays the current spread or the last traded price. The border title is
+updated to reflect the currently selected ticker.
 """
 
 import typing as tp
@@ -21,9 +21,12 @@ _DEPTH_LEVELS = 6
 
 
 class OrderBookWidget(Widget):
+    """A widget that displays the order book for a single ticker."""
+
     BORDER_TITLE = 'ORDER BOOK'
 
     def compose(self) -> ComposeResult:
+        """Compose the widget's layout."""
         yield DataTable(
             id='ob-asks', show_header=False, cursor_type='none', zebra_stripes=False
         )
@@ -33,6 +36,7 @@ class OrderBookWidget(Widget):
         )
 
     def on_mount(self) -> None:
+        """Called when the widget is mounted."""
         for table_id in ('#ob-asks', '#ob-bids'):
             t = self.query_one(table_id, DataTable)
             t.add_column('Price', key='price')
@@ -40,13 +44,14 @@ class OrderBookWidget(Widget):
             t.add_column('Side', key='side')
 
     def update(self, depth: DepthSnapshot) -> None:
+        """Update the widget with new order book depth data."""
         self.border_title = f'ORDER BOOK: {depth.ticker}'
 
         asks_table = self.query_one('#ob-asks', DataTable)
         bids_table = self.query_one('#ob-bids', DataTable)
         spread_label = self.query_one('#ob-spread', Label)
 
-        # asks: show descending so best ask is nearest the spread
+        # Show asks descending so the best ask is nearest the spread.
         asks = list(reversed(depth.asks[:_DEPTH_LEVELS]))
         bids = depth.bids[:_DEPTH_LEVELS]
 
@@ -62,6 +67,7 @@ class OrderBookWidget(Widget):
             spread_label.update('── empty ──')
 
     def _fill_table(self, table: DataTable, levels: tp.List, side: str) -> None:
+        """Fill a table with order book depth data."""
         table.clear()
         color = '#ff4444' if side == 'ASK' else '#00e676'
         for lvl in levels:

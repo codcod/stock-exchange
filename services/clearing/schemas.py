@@ -8,6 +8,8 @@ from pydantic import BaseModel
 
 
 class RegisterAccountRequest(BaseModel):
+    """Request model for registering a new trading account."""
+
     account_id: str
     name: str
     cash_balance: float
@@ -17,6 +19,11 @@ class RegisterAccountRequest(BaseModel):
 
 
 class TradeExecutedEvent(BaseModel):
+    """
+    Event model sent from the Matching Engine to Clearing when a trade
+    has been executed and needs to be settled.
+    """
+
     trade_id: str
     buy_order_id: str
     sell_order_id: str
@@ -28,4 +35,9 @@ class TradeExecutedEvent(BaseModel):
 
 
 class ReserveRequest(BaseModel):
+    """
+    Request model for reserving or releasing cash or shares. A positive
+    delta increases the reservation, while a negative delta decreases it.
+    """
+
     delta: float

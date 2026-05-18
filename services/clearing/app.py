@@ -84,6 +84,12 @@ async def health() -> dict:
 
 @app.post('/accounts', status_code=201)
 async def register_account(req: RegisterAccountRequest) -> dict:
+    """
+    Register a new trading account or update an existing one.
+
+    The account state is persisted to the database and synchronized with
+    the in-memory cache of the Risk Engine.
+    """
     account = Account(
         account_id=req.account_id,
         name=req.name,
@@ -106,6 +112,7 @@ async def register_account(req: RegisterAccountRequest) -> dict:
 
 @app.get('/accounts/{account_id}')
 async def get_account(account_id: str) -> dict:
+    """Retrieve the current state of a single trading account."""
     account = _state.svc.get_account(account_id)
     if account is None:
         raise HTTPException(status_code=404, detail='Account not found')
@@ -127,6 +134,13 @@ async def get_account(account_id: str) -> dict:
 
 @app.post('/accounts/{account_id}/reserve/cash')
 async def reserve_cash(account_id: str, req: ReserveRequest) -> dict:
+    """
+    Reserve or release cash for an account.
+
+    This endpoint is called by the Order Management Service when an order
+    is submitted or cancelled. The updated account state is then synced
+    to the Risk Engine.
+    """
     account = await _state.svc.reserve_cash(account_id, req.delta)
     if account is None:
         raise HTTPException(status_code=404, detail='Account not found')
@@ -139,6 +153,13 @@ async def reserve_cash(account_id: str, req: ReserveRequest) -> dict:
 
 @app.post('/accounts/{account_id}/reserve/shares/{ticker}')
 async def reserve_shares(account_id: str, ticker: str, req: ReserveRequest) -> dict:
+    """
+    Reserve or release shares for an account.
+
+    This endpoint is called by the Order Management Service when an order
+    is submitted or cancelled. The updated account state is then synced
+    to the Risk Engine.
+    """
     account = await _state.svc.reserve_shares(account_id, ticker, int(req.delta))
     if account is None:
         raise HTTPException(status_code=404, detail='Account not found')
@@ -156,6 +177,10 @@ async def reserve_shares(account_id: str, ticker: str, req: ReserveRequest) -> d
 
 @app.post('/events/trade-executed')
 async def on_trade_executed(req: TradeExecutedEvent) -> dict:
+    """
+    Endpoint for the Matching Engine to report that a trade has been
+    executed and needs to be settled.
+    """
     event = TradeExecuted(
         trade_id=req.trade_id,
         buy_order_id=req.buy_order_id,

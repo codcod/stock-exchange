@@ -17,10 +17,13 @@ def _f(val) -> tp.Optional[float]:
 
 
 class OrderRepository:
+    """Repository for Order persistence."""
+
     def __init__(self, engine: AsyncEngine) -> None:
         self._engine = engine
 
     async def save(self, order: Order) -> None:
+        """Save a new Order to the database."""
         async with self._engine.begin() as conn:
             await conn.execute(
                 insert(orders_t).values(
@@ -41,6 +44,7 @@ class OrderRepository:
             )
 
     async def update(self, order: Order) -> None:
+        """Update an existing Order in the database."""
         order.updated_at = datetime.now(timezone.utc)
         async with self._engine.begin() as conn:
             await conn.execute(
@@ -56,6 +60,7 @@ class OrderRepository:
             )
 
     async def load_all(self) -> tp.List[Order]:
+        """Load all orders from the database."""
         async with self._engine.connect() as conn:
             rows = (await conn.execute(select(orders_t))).mappings().all()
         return [_row_to_order(r) for r in rows]
@@ -83,6 +88,7 @@ class OrderRepository:
 
 
 def _row_to_order(r) -> Order:
+    """Convert a database row to an Order domain object."""
     return Order(
         account_id=r['account_id'],
         ticker=r['ticker'],

@@ -1,4 +1,9 @@
-"""Backward-compatible re-exports of repository classes from shared.db.repos."""
+"""
+This module provides a backward-compatible re-export of all repository
+classes from the `shared.db.repos` submodule.
+
+New code should import directly from the `repos` submodule.
+"""
 
 from shared.db.repos import (  # noqa: F401
     AccountRepository,

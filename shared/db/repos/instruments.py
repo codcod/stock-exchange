@@ -17,10 +17,13 @@ def _f(val) -> tp.Optional[float]:
 
 
 class InstrumentRepository:
+    """Repository for Instrument persistence."""
+
     def __init__(self, engine: AsyncEngine) -> None:
         self._engine = engine
 
     async def save(self, instrument: Instrument) -> None:
+        """Save an Instrument, inserting or updating as necessary."""
         async with self._engine.begin() as conn:
             await conn.execute(
                 pg_insert(instruments_t)
@@ -45,6 +48,7 @@ class InstrumentRepository:
             )
 
     async def update_last_price(self, ticker: str, last_price: float) -> None:
+        """Update the last traded price for a single instrument."""
         async with self._engine.begin() as conn:
             await conn.execute(
                 update(instruments_t)
@@ -53,6 +57,7 @@ class InstrumentRepository:
             )
 
     async def load_all(self) -> tp.List[Instrument]:
+        """Load all instruments from the database."""
         async with self._engine.connect() as conn:
             rows = (await conn.execute(select(instruments_t))).mappings().all()
         return [

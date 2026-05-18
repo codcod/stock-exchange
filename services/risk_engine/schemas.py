@@ -8,6 +8,8 @@ from pydantic import BaseModel
 
 
 class RegisterAccountRequest(BaseModel):
+    """Request model for registering a new trading account."""
+
     account_id: str
     name: str
     cash_balance: float
@@ -17,6 +19,8 @@ class RegisterAccountRequest(BaseModel):
 
 
 class RegisterInstrumentRequest(BaseModel):
+    """Request model for registering a new tradeable instrument."""
+
     ticker: str
     name: str
     lot_size: int = 1

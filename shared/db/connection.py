@@ -11,6 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_en
 
 @functools.lru_cache(maxsize=1)
 def get_engine() -> AsyncEngine:
+    """
+    Create and return a new asynchronous SQLAlchemy engine.
+
+    The engine is cached, so subsequent calls will return the same instance.
+    The database URL is read from the `DATABASE_URL` environment variable.
+    """
     url = os.getenv('DATABASE_URL')
     if not url:
         raise RuntimeError('DATABASE_URL environment variable is required')
@@ -24,6 +30,7 @@ def get_engine() -> AsyncEngine:
 
 @asynccontextmanager
 async def get_connection() -> AsyncConnection:
+    """Acquire a database connection from the engine's connection pool."""
     engine = get_engine()
     async with engine.acquire() as conn:
         yield conn

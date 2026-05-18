@@ -10,10 +10,13 @@ from shared.models.domain import Trade
 
 
 class TradeRepository:
+    """Repository for Trade persistence."""
+
     def __init__(self, engine: AsyncEngine) -> None:
         self._engine = engine
 
     async def save(self, trade: Trade) -> None:
+        """Save a new Trade to the database."""
         async with self._engine.begin() as conn:
             await conn.execute(
                 insert(trades_t).values(

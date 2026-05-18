@@ -1,8 +1,7 @@
 """
-clients/tui/screens/help_screen.py
-
-Modal help screen (F1).  Displays a Markdown table of all key bindings.
-Dismissed with Escape.
+This module defines the modal help screen, which is displayed when the user
+presses the F1 key. It shows a Markdown table of all available key bindings
+and is dismissed by pressing the Escape key.
 """
 
 from textual.app import ComposeResult
@@ -35,7 +34,10 @@ _HELP_TEXT = """# Exchange Terminal — Key Bindings
 
 
 class HelpScreen(ModalScreen):
+    """A modal screen that displays a list of all key bindings."""
+
     BINDINGS = [Binding('escape', 'dismiss', 'Close')]
 
     def compose(self) -> ComposeResult:
+        """Render the help text as a Markdown widget."""
         yield Markdown(_HELP_TEXT, id='help-dialog')

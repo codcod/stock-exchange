@@ -1,11 +1,11 @@
 """
-clients/tui/widgets/market_watch.py
+This module defines the `MarketWatchWidget`, a scrollable ticker list that
+displays live bid, ask, last price, and volume data.
 
-MarketWatchWidget — scrollable ticker list with live bid/ask/last/volume.
-
-Posts TickerSelected(ticker) when the user presses Enter on a row.
-Color-codes the Last column green (▲) or red (▼) based on price direction
-relative to the previous poll.
+When a user selects a row by pressing Enter, this widget posts a
+`TickerSelected` message containing the selected ticker. The `Last` price
+column is color-coded green (▲) or red (▼) to indicate the price
+direction relative to the previous update.
 """
 
 import typing as tp
@@ -20,17 +20,23 @@ from clients.tui.models import QuoteRow
 
 
 class MarketWatchWidget(Widget):
+    """A widget that displays a live-updating list of tickers."""
+
     BORDER_TITLE = 'MARKET WATCH'
 
     class TickerSelected(Message):
+        """Posted when the user selects a ticker from the list."""
+
         def __init__(self, ticker: str) -> None:
             super().__init__()
             self.ticker = ticker
 
     def compose(self) -> ComposeResult:
+        """Compose the widget's layout."""
         yield DataTable(cursor_type='row', zebra_stripes=True, id='mw-table')
 
     def on_mount(self) -> None:
+        """Called when the widget is mounted."""
         table = self.query_one('#mw-table', DataTable)
         table.add_column('Ticker', key='ticker')
         table.add_column('Bid', key='bid')
@@ -40,10 +46,12 @@ class MarketWatchWidget(Widget):
         table.add_column('Chg', key='chg')
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Handle a row selection event."""
         if event.data_table.id == 'mw-table' and event.row_key.value:
             self.post_message(self.TickerSelected(str(event.row_key.value)))
 
     def update(self, quotes: tp.List[QuoteRow], selected: str) -> None:
+        """Update the widget with new quote data."""
         table = self.query_one('#mw-table', DataTable)
         for q in quotes:
             bid = Text(f'{q.bid:.2f}', style='#00e676')
@@ -71,6 +79,7 @@ class MarketWatchWidget(Widget):
                 table.update_cell(q.ticker, 'chg', chg)
 
     def _row_exists(self, table: DataTable, key: str) -> bool:
+        """Check if a row with the given key exists in the table."""
         try:
             table.get_row(key)
             return True

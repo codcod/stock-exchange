@@ -1,3 +1,5 @@
+"""Market data endpoints."""
+
 import typing as tp
 from datetime import datetime
 
@@ -12,11 +14,13 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 
 @router.get('/tickers', response_model=tp.List[str])
 async def list_tickers(clients: ServiceClients = Depends(get_clients)):
+    """Get a list of all tickers with available market data."""
     return await clients.market_data.all_tickers()
 
 
 @router.get('/{ticker}/quote', response_model=QuoteResponse)
 async def get_quote(ticker: str, clients: ServiceClients = Depends(get_clients)):
+    """Fetch the latest quote for a ticker."""
     quote = await clients.market_data.get_quote(ticker)
     if quote is None:
         raise HTTPException(status_code=404, detail='No quote data for ticker')
@@ -36,6 +40,7 @@ async def get_depth(
     levels: int = Query(10, ge=1, le=25),
     clients: ServiceClients = Depends(get_clients),
 ):
+    """Get a snapshot of the order book depth."""
     depth = await clients.matching.snapshot(ticker, levels)
     if depth is None:
         raise HTTPException(status_code=404, detail='No order book for ticker')
@@ -53,6 +58,7 @@ async def get_trades(
     limit: int = Query(20, le=200),
     clients: ServiceClients = Depends(get_clients),
 ):
+    """Retrieve the most recent trades for a ticker."""
     trades = await clients.market_data.get_trade_history(ticker, limit)
     return [
         TradeItem(

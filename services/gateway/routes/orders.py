@@ -1,3 +1,5 @@
+"""Order submission, cancellation, and retrieval endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from services.gateway.auth import require_api_key
@@ -17,6 +19,7 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 async def submit_order(
     req: SubmitOrderRequest, clients: ServiceClients = Depends(get_clients)
 ):
+    """Submit a new order to the exchange."""
     order = Order(
         account_id=req.account_id,
         ticker=req.ticker,
@@ -30,6 +33,7 @@ async def submit_order(
 
 @router.get('/{order_id}', response_model=OrderResponse)
 async def get_order(order_id: str, clients: ServiceClients = Depends(get_clients)):
+    """Retrieve the current status of a single order."""
     order = await clients.oms.get_order(order_id)
     if order is None:
         raise HTTPException(status_code=404, detail='Order not found')
@@ -42,6 +46,7 @@ async def cancel_order(
     account_id: str = Query(...),
     clients: ServiceClients = Depends(get_clients),
 ):
+    """Cancel an open order."""
     return CancelledResponse(
         cancelled=await clients.oms.cancel_order(order_id, account_id)
     )

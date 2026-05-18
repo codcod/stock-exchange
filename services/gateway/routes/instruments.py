@@ -1,3 +1,5 @@
+"""Instrument registration endpoint."""
+
 from fastapi import APIRouter, Depends, status
 
 from services.gateway.auth import require_api_key
@@ -12,6 +14,7 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 async def register_instrument(
     req: RegisterInstrumentRequest, clients: ServiceClients = Depends(get_clients)
 ):
+    """Register a new tradeable instrument."""
     instrument = Instrument(
         ticker=req.ticker,
         name=req.name,

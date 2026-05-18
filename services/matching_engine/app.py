@@ -81,6 +81,10 @@ _RELAY_POLL_INTERVAL = 0.5
 
 
 async def _enqueue_events(conn, events: list) -> None:
+    """
+    Serialize a list of domain events and write them to the outbox table
+    within a single database transaction.
+    """
     now = datetime.now(timezone.utc)
     rows = []
     for event in events:
@@ -106,6 +110,10 @@ async def _enqueue_events(conn, events: list) -> None:
 
 
 async def _outbox_relay() -> None:
+    """
+    A background task that polls the outbox for unpublished events and
+    relays them to their destinations via HTTP.
+    """
     repo = OutboxRepository(_state.db)
     while True:
         try:
@@ -143,6 +151,13 @@ async def _outbox_relay() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Application startup and shutdown logic.
+
+    - Initializes HTTP and database clients.
+    - Restores open orders from the Order Management Service.
+    - Starts the outbox relay background task.
+    """
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.db = get_engine()
     await ensure_tables(_state.db)
@@ -173,6 +188,7 @@ app = FastAPI(title='Matching Engine', version='0.1.0', lifespan=lifespan)
 
 @app.get('/health')
 async def health() -> dict:
+    """Health check endpoint."""
     return {'status': 'ok'}
 
 
@@ -183,6 +199,7 @@ async def health() -> dict:
 
 @app.post('/orders', status_code=201)
 async def submit_order(req: OrderRequest) -> dict:
+    """Submit a new order to the matching engine."""
     trades, events = await _engine_svc.submit(req.to_domain())
     if events:
         async with _state.db.begin() as conn:
@@ -207,12 +224,19 @@ async def submit_order(req: OrderRequest) -> dict:
 
 @app.post('/orders/restore', status_code=201)
 async def restore_order(req: OrderRequest) -> dict:
+    """
+    Restore a resting order into the book without triggering matching.
+
+    This is used during startup to rebuild the book from active orders
+    that existed before a service restart.
+    """
     _engine_svc.restore_order(req.to_domain())
     return {}
 
 
 @app.delete('/orders/{order_id}')
 async def cancel_order(order_id: str) -> dict:
+    """Cancel an active order."""
     book_order = _find_order(order_id)
     if book_order is None:
         return {'cancelled': False}
@@ -222,6 +246,7 @@ async def cancel_order(order_id: str) -> dict:
 
 @app.get('/books/{ticker}/depth')
 async def get_depth(ticker: str, levels: int = Query(10, ge=1, le=25)) -> dict:
+    """Get a snapshot of the order book depth for a given ticker."""
     depth = _engine_svc.snapshot(ticker, levels)
     if depth is None:
         return {'ticker': ticker, 'bids': [], 'asks': [], 'last_price': None}

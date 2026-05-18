@@ -34,29 +34,31 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PriceLevel:
     """
-    Represents all resting orders at a single price on one side of the order book.
+    A collection of resting orders at a single price on one side of the book.
+    Orders are processed in FIFO (first-in, first-out) order.
     """
 
     price: float
     orders: tp.Deque[Order] = field(default_factory=deque)
 
     def total_quantity(self) -> int:
+        """Return the total quantity of all orders at this price level."""
         return sum(o.remaining_quantity for o in self.orders)
 
 
 class OrderBook:
     """
-    A single-ticker order book with the following internal structure:
-    - `bids`: A list of `PriceLevel` objects, sorted in descending order
-      (best bid first).
-    - `asks`: A list of `PriceLevel` objects, sorted in ascending order
-      (best ask first).
+    A single-ticker order book that matches trades on price-time priority.
+
+    The book is structured with two sorted lists of price levels:
+    - `bids`: A list of `PriceLevel` objects, sorted descending (best bid first).
+    - `asks`: A list of `PriceLevel` objects, sorted ascending (best ask first).
     """
 
     def __init__(self, ticker: str) -> None:
         self.ticker = ticker
-        self.bids: tp.List[PriceLevel] = []  # buy orders
-        self.asks: tp.List[PriceLevel] = []  # sell orders
+        self.bids: tp.List[PriceLevel] = []
+        self.asks: tp.List[PriceLevel] = []
         self.last_price: tp.Optional[float] = None
 
     # ------------------------------------------------------------------
@@ -65,8 +67,12 @@ class OrderBook:
 
     def add_order(self, order: Order) -> tp.List[Trade]:
         """
-        Adds a new order to the book and attempts to match it. Returns
-        the list of trades produced during matching.
+        Add a new order to the book and attempt to match it.
+
+        If the order is a limit order and is not fully filled, it will be
+        added to the resting orders in the book.
+
+        Returns the list of trades produced during matching.
         """
         assert order.ticker == self.ticker
         trades = self._match(order)
@@ -80,21 +86,34 @@ class OrderBook:
         return trades
 
     def restore_order(self, order: Order) -> None:
-        """Re-insert a resting order from storage without triggering matching."""
+        """
+        Re-insert a resting order from storage without triggering matching.
+
+        This is used during service startup to rebuild the order book from
+        any orders that were active before a shutdown.
+        """
         assert order.ticker == self.ticker
         self._rest(order)
 
     def cancel_order(self, order_id: str) -> bool:
-        """Removes an order from the book. Returns True if found and removed."""
+        """Remove an order from the book. Returns True if found and removed."""
         return self._remove_resting_order(order_id)
 
     def best_bid(self) -> tp.Optional[float]:
+        """Return the highest bid price, or None if no bids exist."""
         return self.bids[0].price if self.bids else None
 
     def best_ask(self) -> tp.Optional[float]:
+        """Return the lowest ask price, or None if no asks exist."""
         return self.asks[0].price if self.asks else None
 
     def depth_snapshot(self, levels: int = 10) -> dict:
+        """
+        Return a snapshot of the order book depth.
+
+        The snapshot includes the top N price levels for both bids and asks,
+        along with the total quantity at each level.
+        """
         return {
             'ticker': self.ticker,
             'bids': [
@@ -113,6 +132,9 @@ class OrderBook:
     # ------------------------------------------------------------------
 
     def _match(self, incoming: Order) -> tp.List[Trade]:  # noqa: C901
+        """
+        Attempt to match an incoming order against resting orders in the book.
+        """
         trades = []
 
         if incoming.side == Side.BUY:
@@ -159,6 +181,13 @@ class OrderBook:
         qty: int,
         price: float,
     ) -> Trade:
+        """
+        Create a trade and update the state of the involved orders.
+
+        This method updates the filled quantity and average fill price for both
+        the incoming and resting orders, sets their status, and creates a
+        `Trade` object to represent the execution.
+        """
         # Update quantities and VWAP average fill price
         for order in (incoming, resting):
             old_filled = order.filled_quantity
@@ -218,14 +247,12 @@ class OrderBook:
 
     @staticmethod
     def _cleanup(book_side: list[PriceLevel]) -> None:
-        """
-        Removes empty price levels from the specified side of the book.
-        """
+        """Remove empty price levels from the specified side of the book."""
         if len(book_side) > 0 and len(book_side[0].orders) == 0:
             book_side.pop(0)
 
     def _remove_resting_order(self, order_id: str) -> bool:
-        """Removes an order by ID. Returns True if found and removed."""
+        """Remove an order by ID. Returns True if found and removed."""
         for book_side in (self.bids, self.asks):
             for level in book_side:
                 if level.orders and level.orders[0].order_id == order_id:
@@ -237,19 +264,31 @@ class OrderBook:
 
 class MatchingEngine:
     """
-    Manages one OrderBook per ticker. Returns events from submit() so the
-    caller can persist them (outbox pattern) rather than pushing via a bus.
+    A multi-ticker matching engine that manages one `OrderBook` per ticker.
+
+    This class is the main entry point for submitting and canceling orders.
+    It returns events from `submit()` so the caller can persist them using
+    the outbox pattern, rather than pushing directly to a message bus.
     """
 
     def __init__(self) -> None:
         self._books: tp.Dict[str, OrderBook] = {}
 
     def get_or_create_book(self, ticker: str) -> OrderBook:
+        """Return the order book for a ticker, creating it if it doesn't exist."""
         if ticker not in self._books:
             self._books[ticker] = OrderBook(ticker)
         return self._books[ticker]
 
     async def submit(self, order: Order) -> tp.Tuple[tp.List[Trade], tp.List]:
+        """
+        Submit an order to the appropriate order book and generate events.
+
+        This method returns a tuple containing:
+        - A list of `Trade` objects that were executed.
+        - A list of events (`TradeExecuted`, `OrderFilled`, `MarketDataUpdate`)
+          to be sent to downstream services.
+        """
         book = self.get_or_create_book(order.ticker)
         trades = book.add_order(order)
         events: tp.List = []
@@ -302,11 +341,13 @@ class MatchingEngine:
         book.restore_order(order)
 
     async def cancel(self, order: Order) -> bool:
+        """Cancel an active order in the corresponding order book."""
         book = self._books.get(order.ticker)
         if book:
             return book.cancel_order(order.order_id)
         return False
 
     def snapshot(self, ticker: str, levels: int = 10) -> tp.Optional[dict]:
+        """Return a depth snapshot for a given ticker's order book."""
         book = self._books.get(ticker)
         return book.depth_snapshot(levels) if book else None

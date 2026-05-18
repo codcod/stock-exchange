@@ -46,6 +46,13 @@ app = FastAPI(title='Stock Exchange API', version='0.1.0', lifespan=lifespan)
 
 @app.middleware('http')
 async def correlation_id_middleware(request: Request, call_next) -> Response:
+    """
+    Inject a correlation ID into the request context.
+
+    If a `X-Request-ID` header is present, it will be used; otherwise, a new
+    UUID will be generated. This ID is then propagated to all downstream
+    service calls.
+    """
     rid = request.headers.get('X-Request-ID') or str(uuid.uuid4())
     token = _request_id_ctx.set(rid)
     logger.info('Request %s %s [request_id=%s]', request.method, request.url.path, rid)

@@ -21,6 +21,8 @@ if tp.TYPE_CHECKING:
 
 
 class SubmitOrderRequest(BaseModel):
+    """Request model for submitting a new order."""
+
     account_id: str
     ticker: str
     side: Side
@@ -30,6 +32,8 @@ class SubmitOrderRequest(BaseModel):
 
 
 class RegisterAccountRequest(BaseModel):
+    """Request model for registering a new trading account."""
+
     account_id: str
     name: str
     cash_balance: float = 0.0
@@ -37,6 +41,8 @@ class RegisterAccountRequest(BaseModel):
 
 
 class RegisterInstrumentRequest(BaseModel):
+    """Request model for registering a new tradeable instrument."""
+
     ticker: str
     name: str
     lot_size: int = 1
@@ -50,6 +56,8 @@ class RegisterInstrumentRequest(BaseModel):
 
 
 class OrderResponse(BaseModel):
+    """Response model for an order."""
+
     order_id: str
     account_id: str
     ticker: str
@@ -67,6 +75,8 @@ class OrderResponse(BaseModel):
 
 
 class AccountResponse(BaseModel):
+    """Response model for a trading account."""
+
     account_id: str
     name: str
     cash_balance: float
@@ -78,6 +88,8 @@ class AccountResponse(BaseModel):
 
 
 class QuoteResponse(BaseModel):
+    """Response model for a market quote."""
+
     ticker: str
     bid: float
     ask: float
@@ -87,11 +99,15 @@ class QuoteResponse(BaseModel):
 
 
 class DepthLevel(BaseModel):
+    """A single price level in the order book depth."""
+
     price: float
     quantity: int
 
 
 class DepthResponse(BaseModel):
+    """Response model for order book depth."""
+
     ticker: str
     bids: tp.List[DepthLevel]
     asks: tp.List[DepthLevel]
@@ -99,6 +115,8 @@ class DepthResponse(BaseModel):
 
 
 class TradeItem(BaseModel):
+    """A single trade in the trade history."""
+
     ticker: str
     price: float
     quantity: int
@@ -106,6 +124,8 @@ class TradeItem(BaseModel):
 
 
 class CancelledResponse(BaseModel):
+    """Response model for a cancellation request."""
+
     cancelled: bool
 
 
@@ -115,6 +135,7 @@ class CancelledResponse(BaseModel):
 
 
 def order_to_response(order: 'Order') -> OrderResponse:
+    """Convert an Order domain object to a Pydantic response model."""
     return OrderResponse(
         order_id=order.order_id,
         account_id=order.account_id,
@@ -134,6 +155,7 @@ def order_to_response(order: 'Order') -> OrderResponse:
 
 
 def account_to_response(account: 'Account') -> AccountResponse:
+    """Convert an Account domain object to a Pydantic response model."""
     return AccountResponse(
         account_id=account.account_id,
         name=account.name,

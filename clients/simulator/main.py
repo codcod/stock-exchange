@@ -1,12 +1,12 @@
 """
-clients/simulator/main.py
+A standalone client that generates synthetic order traffic for the exchange.
 
-Generates synthetic order traffic via the exchange HTTP gateway, exercising
-the full microservice stack: gateway → OMS → risk → matching → clearing → market-data.
+This script exercises the full microservice stack by sending a configurable
+number of random orders through the HTTP gateway.
 
-Configure with environment variables:
-  GATEWAY_URL  — base URL of the gateway   (default: http://localhost:8000)
-  API_KEY      — value for X-Api-Key header (default: empty / no auth)
+It can be configured with the following environment variables:
+- `GATEWAY_URL`: Base URL of the gateway (default: http://localhost:8000)
+- `API_KEY`: Value for the `X-Api-Key` header (default: none)
 """
 
 from __future__ import annotations
@@ -34,21 +34,24 @@ ORDERS_TO_SIMULATE = 50
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# HTTP helpers
 # ---------------------------------------------------------------------------
 
 
 def _headers() -> dict:
+    """Return authentication headers if an API key is configured."""
     return {'X-Api-Key': API_KEY} if API_KEY else {}
 
 
 async def _post(http: httpx.AsyncClient, path: str, body: dict) -> dict:
+    """Send a POST request to the gateway."""
     r = await http.post(f'{GATEWAY_URL}{path}', json=body, headers=_headers())
     r.raise_for_status()
     return r.json() if r.content else {}
 
 
 async def _get(http: httpx.AsyncClient, path: str) -> dict:
+    """Send a GET request to the gateway."""
     r = await http.get(f'{GATEWAY_URL}{path}', headers=_headers())
     r.raise_for_status()
     return r.json()
@@ -60,6 +63,10 @@ async def _get(http: httpx.AsyncClient, path: str) -> dict:
 
 
 async def setup(http: httpx.AsyncClient) -> None:
+    """
+    Register the initial set of instruments and trading accounts that will
+    be used in the simulation.
+    """
     for ticker, price in TICKERS:
         await _post(
             http,
@@ -91,6 +98,7 @@ async def setup(http: httpx.AsyncClient) -> None:
 
 
 def _random_order() -> dict:
+    """Generate a single random limit order."""
     ticker, ref_price = random.choice(TICKERS)
     spread = ref_price * 0.02
     price = round(ref_price + random.uniform(-spread, spread), 2)
@@ -110,6 +118,10 @@ def _random_order() -> dict:
 
 
 async def print_state(http: httpx.AsyncClient) -> None:
+    """
+    Fetch and display the current market state and account balances at the
+    end of the simulation.
+    """
     print('\n--- Market snapshot ---')
     for ticker, _ in TICKERS:
         try:
@@ -149,6 +161,13 @@ async def print_state(http: httpx.AsyncClient) -> None:
 
 
 async def run() -> None:
+    """
+    Main entry point for the simulation.
+
+    This function connects to the gateway, sets up the initial state,
+    submits a series of random orders, and then prints a summary of the
+    final market and account states.
+    """
     print(f'Connecting to gateway at {GATEWAY_URL} ...')
     async with httpx.AsyncClient(timeout=10.0) as http:
         try:
@@ -202,7 +221,7 @@ async def run() -> None:
                 resting += 1
 
         print(
-            f'\nSummary: {filled} filled, {resting} resting/partial, {rejected} rejecd'
+            f'\nSummary: {filled} filled, {resting} resting/partial, {rejected} reject'
         )
         await print_state(http)
 
