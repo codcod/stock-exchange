@@ -67,10 +67,8 @@ class MarketDataService:
             event.ticker,
             Quote(ticker=event.ticker),
         )
-        if event.bid:
-            quote.bid = event.bid
-        if event.ask:
-            quote.ask = event.ask
+        quote.bid = event.bid
+        quote.ask = event.ask
         if event.last_price:
             quote.last_price = event.last_price
         quote.volume_today += event.volume
