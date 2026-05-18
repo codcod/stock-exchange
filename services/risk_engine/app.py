@@ -1,12 +1,15 @@
 """
-services/risk_engine/app.py
+A standalone FastAPI service that wraps the RiskEngine, providing
+endpoints for risk checks, account and instrument registration, and
+trading halts.
 
-Standalone FastAPI service wrapping RiskEngine.
-Exposes risk checks, account/instrument registration, and trading halts.
+This service is responsible for ensuring that all trading activities
+comply with the defined risk rules before they are processed by the
+matching engine.
 
 Environment variables:
-  DATABASE_URL  — Postgres URL (required)
-  PORT          — HTTP port (default 8002)
+- `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `PORT`: The HTTP port on which the service will run (default: 8002).
 """
 
 from __future__ import annotations

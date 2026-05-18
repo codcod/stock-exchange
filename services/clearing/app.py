@@ -1,18 +1,13 @@
 """
-services/clearing/app.py
+A standalone FastAPI service that wraps the ClearingService.
 
-Standalone FastAPI service wrapping ClearingService.
-Settles trades (via HTTP event callbacks from the Matching Engine) and
-manages account registration, queries, and reservation updates.
-
-Clearing is the single owner of account state: it persists cash balances,
-positions, and reservations to the DB. When a new account is registered
-it also notifies the Risk Engine so its in-memory cache stays current.
+This service is responsible for settling trades by updating account
+balances for cash and shares. It also manages reservations to ensure
+that funds and securities are held appropriately while orders are open.
 
 Environment variables:
-  DATABASE_URL      — Postgres URL (required)
-  RISK_ENGINE_URL   — default http://localhost:8002
-  PORT              — default 8004
+- `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `PORT`: The HTTP port on which the service will run (default: `8004`).
 """
 
 from __future__ import annotations

@@ -1,7 +1,12 @@
+"""
+This module provides a simple asynchronous database connection manager.
+"""
+
 import functools
 import os
+from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 
 
 @functools.lru_cache(maxsize=1)
@@ -15,3 +20,10 @@ def get_engine() -> AsyncEngine:
             url = 'postgresql+asyncpg://' + url[len(prefix) :]
             break
     return create_async_engine(url)
+
+
+@asynccontextmanager
+async def get_connection() -> AsyncConnection:
+    engine = get_engine()
+    async with engine.acquire() as conn:
+        yield conn

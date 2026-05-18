@@ -27,25 +27,24 @@ flowchart TD
     Matching -->|"POST /events/market-data-update"| MarketData
 ```
 
-All synchronous inter-service calls are HTTP (httpx). Trade events are delivered asynchronously via the outbox pattern: the matching engine writes events to a Postgres table, and a background relay polls every 0.5 s to forward them to downstream services.
+All synchronous inter-service calls are performed over HTTP using `httpx`. Trade events are delivered asynchronously via the outbox pattern, where the matching engine writes events to a PostgreSQL table. A background relay polls this table every 0.5 seconds to forward the events to downstream services.
 
 ## Service responsibilities
 
 | Service | Port | Owns | Calls | Writes to DB |
 |---|---|---|---|---|
-| Gateway | 8000 | HTTP interface, request/response translation | OMS, MarketData | no |
-| OrderManagement | 8001 | Order lifecycle, routing | RiskEngine, MatchingEngine | orders |
-| RiskEngine | 8002 | Account state cache, pre-trade rules | — | instruments |
-| MatchingEngine | 8003 | Order books, trade execution, outbox relay | Clearing, OMS, MarketData | outbox |
-| Clearing | 8004 | Account balances, positions | — | accounts, positions, trades |
-| MarketData | 8005 | Quote snapshots, trade history (memory only) | — | no |
+| Gateway | 8000 | Manages the HTTP interface and translates requests/responses. | OMS, MarketData | No |
+| OrderManagement | 8001 | Handles the order lifecycle and routing. | RiskEngine, MatchingEngine | `orders` |
+| RiskEngine | 8002 | Maintains an account state cache and enforces pre-trade rules. | — | `instruments` |
+| MatchingEngine | 8003 | Manages order books, trade execution, and the outbox relay. | Clearing, OMS, MarketData | `outbox` |
+| Clearing | 8004 | Manages account balances and positions. | — | `accounts`, `positions`, `trades` |
+| MarketData | 8005 | Provides in-memory quote snapshots and trade history. | — | No |
 
 `services/account/` and `services/notifications/` are scaffolded but not yet implemented.
 
 ## HTTP gateway (`services/gateway/`)
 
-The gateway is a thin FastAPI layer that routes requests to downstream services via `ServiceClients`.
-It contains no business logic — it translates HTTP requests into service calls and maps results back to JSON.
+The gateway serves as a lightweight FastAPI layer that directs incoming requests to the appropriate downstream services via `ServiceClients`. It does not contain any business logic; instead, it is responsible for translating HTTP requests into service calls and mapping the results back to JSON responses.
 
 ```text
 services/gateway/
@@ -66,8 +65,7 @@ When unset, the API is open (suitable for local development).
 
 ## Inter-service communication (`shared/service_clients.py`)
 
-Each service exposes HTTP clients that mirror the Python interface of the target service.
-All clients share a pooled `httpx.AsyncClient` (timeout 10s).
+Each service provides HTTP clients that mirror the Python interface of the target service. All clients share a single, pooled `httpx.AsyncClient` with a 10-second timeout.
 
 | Client | Calls |
 |---|---|
@@ -82,7 +80,7 @@ Default values assume localhost with the standard port assignment above.
 
 ## Persistence layer (`shared/db/`)
 
-All persistence uses SQLAlchemy Core (async) — no ORM. Tables are split across three Postgres schemas.
+All data persistence is managed using SQLAlchemy Core (async), without the use of an ORM. The database tables are distributed across three distinct PostgreSQL schemas.
 
 ```text
 shared/db/
@@ -107,25 +105,25 @@ shared/db/
 **Startup DDL** uses a Postgres advisory lock (key `20260516`) to serialise `CREATE TABLE IF NOT EXISTS`
 across concurrent service instances so only one runs DDL at startup.
 
-**`DATABASE_URL` is required** for all stateful services (risk_engine, order_management, matching_engine, clearing). Stateless services (gateway, market_data) do not need it. The connection layer (`shared/db/connection.py`) returns an `AsyncEngine` using the `postgresql+asyncpg://` URL scheme and raises immediately if the variable is absent.
+The `DATABASE_URL` is essential for all stateful services, including `risk_engine`, `order_management`, `matching_engine`, and `clearing`. In contrast, stateless services such as `gateway` and `market_data` do not require it. The connection layer, located at `shared/db/connection.py`, provides an `AsyncEngine` using the `postgresql+asyncpg://` URL scheme and will raise an error immediately if the environment variable is not set.
 
-**Write-through pattern.** For OMS and Clearing, in-memory state is authoritative at runtime and every mutation immediately writes through to Postgres. The matching engine's order book is the exception: resting orders are held purely in memory and are **not** written to a dedicated table. The engine reconstructs its book from `order_management.orders` on startup (see *Startup recovery* below).
+For the Order Management Service (OMS) and Clearing service, the in-memory state is considered authoritative at runtime, and every mutation is immediately written through to PostgreSQL. The matching engine's order book is an exception to this rule, as resting orders are held exclusively in memory and are not persisted to a dedicated table. On startup, the engine reconstructs its order book from the `order_management.orders` table (see *Startup recovery* below).
 
 ## Startup recovery
 
-Both stateful services that hold in-memory caches reload them from Postgres on startup.
+Both stateful services that maintain in-memory caches reload their data from PostgreSQL upon startup.
 
-**Matching engine** — the lifespan hook queries `order_management.orders` for every order whose status is `OPEN` or `PARTIALLY_FILLED` and calls `restore_order()` for each. `restore_order()` re-inserts the order into the appropriate price level at its correct remaining quantity without triggering the matching logic, so no phantom trades are generated. This means the order book survives a process restart as long as the database is intact.
+**Matching engine** — The lifespan hook queries the `order_management.orders` table for all orders with a status of `OPEN` or `PARTIALLY_FILLED` and calls `restore_order()` for each one. This function re-inserts the order into the appropriate price level with its correct remaining quantity, without triggering the matching logic, ensuring that no phantom trades are generated. As a result, the order book can survive a process restart, provided the database remains intact.
 
-**OMS** — the lifespan hook loads all orders from `order_management.orders` into its `_orders` in-memory cache. Fill events arriving after restart are therefore processed correctly regardless of whether the orders were submitted in a previous process lifetime.
+**OMS** — The lifespan hook loads all orders from the `order_management.orders` table into its `_orders` in-memory cache. This ensures that fill events arriving after a restart are processed correctly, regardless of whether the orders were submitted in a previous session.
 
-Note: the matching engine reads from `order_management.orders` — a cross-schema dependency at startup. The two schemas share the same Postgres instance, so this is a read-only coupling rather than a service call.
+Note: The matching engine reads from `order_management.orders`, creating a cross-schema dependency at startup. Since both schemas reside in the same PostgreSQL instance, this is a read-only coupling rather than a service call.
 
 ## Outbox event relay (`services/matching_engine/`)
 
-After each match the matching engine writes event rows to the `matching_engine.outbox` Postgres table — one row per event per destination — and immediately returns a response to the caller. A background coroutine (`_outbox_relay`) polls the table every 0.5 s, delivers each unpublished row via HTTP POST to the target service, and marks the row as published.
+After each match, the matching engine writes event rows to the `matching_engine.outbox` PostgreSQL table—one row for each event and destination—and immediately returns a response to the caller. A background coroutine, `_outbox_relay`, polls the table every 0.5 seconds, delivers each unpublished row via an HTTP POST request to the target service, and marks the row as published.
 
-This outbox pattern decouples trade execution from downstream delivery and guarantees at-least-once delivery without a message broker.
+This outbox pattern decouples trade execution from downstream delivery and guarantees at-least-once delivery without requiring a message broker.
 
 **Event routing:**
 
@@ -186,12 +184,12 @@ The TUI polls the gateway every 2 s (market data) and 3 s (account/orders). Bloc
 
 ## What's intentionally simplified
 
-- **MarketData not persisted** — quote snapshots, trade history, and the last traded price are in-memory only and reset on restart. `instruments.last_price` reflects the price at instrument registration, not the last trade. Intraday volume is also lost.
-- **No WebSocket** — market data requires polling. Add a push feed later.
-- **No real authentication** — API key auth is a single shared secret. Add JWT / OAuth later.
-- **Instant settlement (T+0)** — real exchanges settle T+1 or T+2.
-- **Outbox relay, not a message broker** — the matching engine persists events to Postgres and a polling relay delivers them via HTTP. Replace the relay with Kafka or Redis Streams for lower latency and multi-consumer fan-out.
-- **At-least-once delivery** — the relay retries failed rows on the next poll. There is no deduplication on the consumer side; idempotent handlers are assumed.
-- **Order book not independently persisted** — resting orders live only in the matching engine's in-memory book. Recovery on restart works by reading from OMS's `order_management.orders` table, so the engine has no self-contained persistence. If the database is wiped without restarting the services, the in-memory book will contain orders that no longer exist in OMS, and any trades they generate will reference unknown order IDs.
-- **Risk reservation state not durable** — the risk engine tracks reserved cash and shares in memory to enforce pre-trade limits. If both the risk engine and OMS restart simultaneously, the engine starts with zero reservations for any orders that were resting before the restart. Those funds are effectively unconstrained against new orders until the old orders fill or are cancelled.
-- **No service discovery** — service URLs are hardcoded env vars. Add Consul or Kubernetes service DNS for dynamic discovery.
+- **MarketData Not Persisted** — Quote snapshots, trade history, and the last traded price are stored in-memory only and will be lost upon restart. The `instruments.last_price` field reflects the price at the time of instrument registration, not the most recent trade. Intraday volume is also not retained.
+- **No WebSocket** — Market data must be retrieved by polling. A push-based feed can be added in the future.
+- **No Real Authentication** — API key authentication relies on a single shared secret. This can be upgraded to a more secure method like JWT or OAuth.
+- **Instant Settlement (T+0)** — In a real-world exchange, settlement typically occurs on a T+1 or T+2 basis.
+- **Outbox Relay, Not a Message Broker** — The matching engine persists events to PostgreSQL, and a polling relay delivers them via HTTP. For lower latency and multi-consumer fan-out, this can be replaced with a dedicated message broker such as Kafka or Redis Streams.
+- **At-Least-Once Delivery** — The relay retries failed deliveries on the next poll. There is no deduplication on the consumer side, so idempotent handlers are required.
+- **Order Book Not Independently Persisted** — Resting orders are held exclusively in the matching engine's in-memory order book. Recovery on restart is achieved by reading from the OMS's `order_management.orders` table, meaning the engine has no self-contained persistence. If the database is wiped without restarting the services, the in-memory book will contain orders that no longer exist in the OMS, and any trades they generate will reference unknown order IDs.
+- **Risk Reservation State Not Durable** — The risk engine tracks reserved cash and shares in memory to enforce pre-trade limits. If both the risk engine and OMS restart simultaneously, the engine will initialize with zero reservations for any orders that were resting before the restart. These funds will be unconstrained for new orders until the old orders are filled or cancelled.
+- **No Service Discovery** — Service URLs are hardcoded as environment variables. For dynamic discovery, a tool like Consul or Kubernetes service DNS can be integrated.

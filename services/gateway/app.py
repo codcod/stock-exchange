@@ -1,22 +1,22 @@
 """
-services/gateway/app.py
+Public HTTP entry point for the exchange, responsible for delegating
+requests to the appropriate downstream services via ServiceClients.
 
-Public HTTP entry point for the exchange.
-Delegates every request to the appropriate downstream service via ServiceClients:
-  - Orders  → OrderManagementService (:8001)
-  - Accounts / instruments → RiskEngine (:8002) and ClearingService (:8004)
-  - Market data → MarketDataService (:8005)
+This service routes orders to the OrderManagementService, account and
+instrument-related requests to the RiskEngine and ClearingService, and
+market data queries to the MarketDataService.
 
-Authentication is opt-in: when EXCHANGE_API_KEY is set every request must
-include the matching X-API-Key header.
+Authentication is optional and can be enabled by setting the
+`EXCHANGE_API_KEY` environment variable. If set, all incoming requests
+must include a matching `X-API-Key` header.
 
 Environment variables:
-  ORDER_MANAGEMENT_URL  — default http://localhost:8001
-  RISK_ENGINE_URL       — default http://localhost:8002
-  CLEARING_URL          — default http://localhost:8004
-  MARKET_DATA_URL       — default http://localhost:8005
-  PORT                  — default 8000
-  EXCHANGE_API_KEY      — optional; enables X-API-Key authentication
+- `ORDER_MANAGEMENT_URL`: The URL for the Order Management Service (default: `http://localhost:8001`).
+- `RISK_ENGINE_URL`: The URL for the Risk Engine Service (default: `http://localhost:8002`).
+- `CLEARING_URL`: The URL for the Clearing Service (default: `http://localhost:8004`).
+- `MARKET_DATA_URL`: The URL for the Market Data Service (default: `http://localhost:8005`).
+- `PORT`: The port on which the gateway service will run (default: `8000`).
+- `EXCHANGE_API_KEY`: An optional API key to enable authentication.
 """
 
 import logging

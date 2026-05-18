@@ -1,12 +1,17 @@
 """
-services/order_management/service.py
+Manages the entire lifecycle of every order, from submission to final
+settlement.
 
-Owns the lifecycle of every order:
-  - Persists incoming orders (IDs are assigned by the Order constructor)
-  - Routes to the risk engine, then the matching engine
-  - Reserves cash or shares via the Clearing service while an order is open
-  - Processes cancellation requests
-  - Listens for fill events to update order status
+This service is responsible for:
+- Persisting incoming orders, with order IDs assigned by the `Order`
+  constructor.
+- Routing orders to the risk engine for pre-trade checks and then to
+  the matching engine for execution.
+- Reserving cash or shares through the Clearing service for the
+  duration that an order is open.
+- Processing cancellation requests for open orders.
+- Listening for fill events from the matching engine to update the
+  order status accordingly.
 """
 
 from __future__ import annotations
@@ -24,8 +29,10 @@ logger = logging.getLogger(__name__)
 
 class OrderManagementService:
     """
-    Central coordinator: receives orders, runs risk, sends to matching engine.
-    Delegates reservation management to the Clearing service.
+    A central coordinator that receives orders, performs risk checks,
+    and sends them to the matching engine. It also delegates reservation
+    management to the Clearing service to ensure that funds and shares
+    are appropriately handled.
     """
 
     def __init__(
@@ -47,7 +54,8 @@ class OrderManagementService:
 
     async def submit_order(self, order: Order) -> Order:
         """
-        Main entry point. Returns the order with its final status set.
+        The main entry point for order submission. This method returns
+        the order with its final status set after processing.
         """
         logger.info(
             'Received order %s | %s %s %d @ %s',

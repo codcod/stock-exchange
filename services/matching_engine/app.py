@@ -1,19 +1,22 @@
 """
-services/matching_engine/app.py
+A standalone FastAPI service that wraps the MatchingEngine.
 
-Standalone FastAPI service wrapping MatchingEngine.
-After each match, events are written to the outbox table (matching_engine.outbox)
-and a background relay delivers them via HTTP to downstream services:
-  - TradeExecuted  → ClearingService + MarketDataService
-  - OrderFilled    → OrderManagementService
-  - MarketDataUpdate → MarketDataService
+After each match, this service writes events to the
+`matching_engine.outbox` table. A background relay then delivers these
+events via HTTP to the appropriate downstream services, ensuring that
+trade and market data are updated across the system.
+
+The events are routed as follows:
+- `TradeExecuted`: Sent to `ClearingService` and `MarketDataService`.
+- `OrderFilled`: Sent to `OrderManagementService`.
+- `MarketDataUpdate`: Sent to `MarketDataService`.
 
 Environment variables:
-  DATABASE_URL          — Postgres URL (required)
-  CLEARING_URL          — default http://localhost:8004
-  ORDER_MANAGEMENT_URL  — default http://localhost:8001
-  MARKET_DATA_URL       — default http://localhost:8005
-  PORT                  — default 8003
+- `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `CLEARING_URL`: The URL for the Clearing Service (default: `http://localhost:8004`).
+- `ORDER_MANAGEMENT_URL`: The URL for the Order Management Service (default: `http://localhost:8001`).
+- `MARKET_DATA_URL`: The URL for the Market Data Service (default: `http://localhost:8005`).
+- `PORT`: The HTTP port on which the service will run (default: `8003`).
 """
 
 from __future__ import annotations

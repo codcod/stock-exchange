@@ -1,11 +1,15 @@
 """
-services/clearing/service.py
+The clearing service is responsible for the settlement of trades and
+the management of reservations.
 
-Post-trade clearing and settlement.
-Listens for TradeExecuted events and updates account balances and positions.
+Settlement involves updating the cash and share balances of the buyer
+and seller accounts after a trade is executed.
 
-In a real exchange this is a multi-day process involving a central counterparty (CCP).
-Here we settle instantly (T+0) for simplicity.
+Reservations are temporary holds on cash or shares that are created
+when an order is submitted. This ensures that the assets remain
+available while the order is open and prevents them from being used in
+other transactions. When an order is filled or canceled, the
+corresponding reservation is released.
 """
 
 from __future__ import annotations
@@ -13,6 +17,7 @@ from __future__ import annotations
 import logging
 import typing as tp
 
+from shared.db.repositories import AccountRepository
 from shared.models.domain import Account, Trade, TradeExecuted
 
 if tp.TYPE_CHECKING:
@@ -122,6 +127,32 @@ class ClearingService:
             await self._account_repo.save(seller)
 
         return buyer, seller
+
+    async def settle_trade(self, trade: Trade) -> None:
+        """
+        Settles a trade by adjusting the cash and share balances of
+        the buyer and seller.
+        """
+        # Retrieve buyer and seller account IDs from the trade
+        buy_order, sell_order = await self.accounts.get_orders_for_trade(trade.trade_id)
+
+        if not buy_order or not sell_order:
+            logger.warning(
+                'Trade %s has no buy or sell order. Cannot settle.',
+                trade.trade_id,
+            )
+            return
+
+        # Calculate the total cost of the trade
+        trade_cost = trade.price * trade.quantity
+
+        # Atomically update account balances
+        await self.accounts.update_balances_for_trade(
+            buy_order.account_id,
+            sell_order.account_id,
+            trade_cost,
+            trade.quantity,
+        )
 
     def get_account(self, account_id: str) -> Account | None:
         return self._accounts.get(account_id)

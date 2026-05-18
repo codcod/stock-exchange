@@ -24,7 +24,8 @@ async def register_account(
         account_id=req.account_id, name=req.name, cash_balance=req.cash_balance
     )
     account.positions = dict(req.positions)
-    # Clearing owns account state and will notify Risk Engine internally.
+    # The Clearing service is the authoritative source for account state
+    # and notifies the Risk Engine of any updates.
     await clients.clearing.register_account(account)
     return account_to_response(account)
 

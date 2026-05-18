@@ -1,11 +1,10 @@
 """
-services/risk_engine/engine.py
+Performs pre-trade risk checks on every order before it is sent to
+the order book. To ensure fast checks without the need for a database
+round-trip, account state is cached in-memory.
 
-Performs pre-trade risk checks on every order before it enters the book.
-Account state is cached in-memory for fast checks (no DB round-trip).
-The check() entry point is async; individual check methods are synchronous.
-
-If any check fails, the order is rejected with a reason.
+If any of the checks fail, the order is rejected, and a reason for
+the rejection is provided.
 """
 
 from __future__ import annotations
@@ -18,10 +17,10 @@ from shared.models.domain import Account, Instrument, Order, OrderType, Side
 
 logger = logging.getLogger(__name__)
 
-# Default limits — in a real system these are per-account config
-MAX_ORDER_VALUE = 1_000_000.0  # max notional per single order
-MAX_POSITION_CONCENTRATION = 0.50  # max 50% of portfolio in one stock
-MIN_CASH_BUFFER = 0.0  # no naked positions
+# In a production system, these limits would be configurable on a per-account basis.
+MAX_ORDER_VALUE = 1_000_000.0  # Maximum notional value for a single order.
+MAX_POSITION_CONCENTRATION = 0.50  # Maximum of 50% of the portfolio in a single stock.
+MIN_CASH_BUFFER = 0.0  # No naked positions are allowed.
 
 
 @dataclass
@@ -32,9 +31,11 @@ class RiskResult:
 
 class RiskEngine:
     """
-    Holds a local cache of account state so checks are fast (no DB round-trip).
-    State is updated via direct method calls: register_account/register_instrument
-    at startup, and update_reserved_cash/update_reserved_shares on each order.
+    Maintains a local cache of the account state to ensure that risk
+    checks are performed quickly, without the need for a database
+    round-trip. The state is updated at startup through direct method
+    calls to `register_account` and `register_instrument`, and is also
+    updated whenever an order is submitted.
     """
 
     def __init__(self) -> None:
@@ -131,7 +132,7 @@ class RiskEngine:
             instrument = self._instruments.get(order.ticker)
             if instrument and instrument.last_price:
                 ratio = order.price / instrument.last_price
-                if ratio > 3.0 or ratio < 0.1:
+                if not (0.1 < ratio < 3.0):
                     return RiskResult(
                         False,
                         f'Price {order.price:.2f} is too far from last price '

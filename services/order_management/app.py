@@ -1,15 +1,16 @@
 """
-services/order_management/app.py
+A standalone FastAPI service that wraps the OrderManagementService,
+responsible for handling the lifecycle of orders.
 
-Standalone FastAPI service wrapping OrderManagementService.
-Receives orders from the gateway, calls Risk Engine and Matching Engine via HTTP,
-and accepts fill-event callbacks from the Matching Engine.
+This service receives orders from the gateway, communicates with the
+Risk Engine and Matching Engine via HTTP, and processes fill-event
+callbacks from the Matching Engine.
 
 Environment variables:
-  DATABASE_URL          — Postgres URL (required)
-  RISK_ENGINE_URL       — default http://localhost:8002
-  MATCHING_ENGINE_URL   — default http://localhost:8003
-  PORT                  — default 8001
+- `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `RISK_ENGINE_URL`: The URL for the Risk Engine Service (default: `http://localhost:8002`).
+- `MATCHING_ENGINE_URL`: The URL for the Matching Engine Service (default: `http://localhost:8003`).
+- `PORT`: The HTTP port on which the service will run (default: `8001`).
 """
 
 from __future__ import annotations
@@ -93,7 +94,11 @@ async def submit_order(req: OrderRequest) -> dict:
 
 @app.get('/orders/open')
 async def list_open_orders() -> tp.List[dict]:
-    """Return all OPEN and PARTIALLY_FILLED orders (used by Match Eng on startup)."""
+    """
+    Returns a list of all `OPEN` and `PARTIALLY_FILLED` orders. This
+    endpoint is intended for use by the Matching Engine during startup
+    to synchronize its state.
+    """
     return [_order_to_dict(o) for o in _state.svc.get_open_orders()]
 
 

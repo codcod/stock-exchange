@@ -1,8 +1,7 @@
 """
-services/gateway/dependencies.py
-
-FastAPI dependency providing service HTTP clients.
-Each client calls the relevant downstream service over HTTP.
+Provides a FastAPI dependency for accessing service HTTP clients.
+Each client is responsible for communicating with a downstream service
+over HTTP.
 """
 
 from __future__ import annotations

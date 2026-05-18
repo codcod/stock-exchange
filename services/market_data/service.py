@@ -1,9 +1,13 @@
 """
-services/market_data/service.py
+The market data service is responsible for maintaining the current
+state of the market and persisting all trades.
 
-Subscribes to MarketDataUpdate events and maintains the latest
-price / depth snapshot for each ticker. Clients poll this service
-for quotes and trade history.
+It stores the following information in memory:
+- The last trade price for each ticker.
+- The best bid and ask for each ticker.
+
+This service also provides access to the complete history of trades,
+which is stored in the database.
 """
 
 from __future__ import annotations
@@ -14,7 +18,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from shared.models.domain import MarketDataUpdate, TradeExecuted
+from shared.models.domain import MarketDataUpdate, Trade, TradeExecuted
 
 logger = logging.getLogger(__name__)
 
@@ -62,17 +66,13 @@ class MarketDataService:
     # Event handlers
     # ------------------------------------------------------------------
 
-    async def on_market_data_update(self, event: MarketDataUpdate) -> None:
-        quote = self._quotes.setdefault(
-            event.ticker,
-            Quote(ticker=event.ticker),
-        )
-        quote.bid = event.bid
-        quote.ask = event.ask
-        if event.last_price:
-            quote.last_price = event.last_price
-        quote.volume_today += event.volume
-        quote.updated_at = datetime.now(timezone.utc)
+    async def handle_market_data_update(self, md: MarketDataUpdate) -> None:
+        """
+        Updates the in-memory market data state with the latest top-of-book information.
+        """
+        self.last_prices[md.ticker] = md.last_price
+        self.best_bids[md.ticker] = md.best_bid
+        self.best_asks[md.ticker] = md.best_ask
 
     async def on_trade_executed(self, event: TradeExecuted) -> None:
         if event.ticker not in self._trade_history:
@@ -85,3 +85,10 @@ class MarketDataService:
                 executed_at=datetime.now(timezone.utc),
             )
         )
+
+    async def handle_trade(self, trade: Trade) -> None:
+        """
+        Persists a trade to the database and updates the last trade price.
+        """
+        await self.trades.add_trade(trade)
+        self.last_prices[trade.ticker] = trade.price

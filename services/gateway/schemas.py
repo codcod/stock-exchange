@@ -1,7 +1,5 @@
 """
-services/gateway/schemas.py
-
-Pydantic request/response models for the HTTP layer.
+Defines the Pydantic request and response models for the HTTP layer.
 """
 
 from __future__ import annotations

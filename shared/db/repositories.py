@@ -1,4 +1,4 @@
-"""Backward-compatibility shim — import from shared.db.repos instead."""
+"""Backward-compatible re-exports of repository classes from shared.db.repos."""
 
 from shared.db.repos import (  # noqa: F401
     AccountRepository,

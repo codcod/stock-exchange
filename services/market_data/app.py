@@ -1,12 +1,14 @@
 """
-services/market_data/app.py
+A standalone FastAPI service that wraps the MarketDataService.
 
-Standalone FastAPI service wrapping MarketDataService.
-Receives market data and trade events from the Matching Engine via HTTP,
-and serves quotes, depth, and trade history to the Gateway.
+This service is responsible for two main functions:
+1.  Receiving `MarketDataUpdate` and `TradeExecuted` events from the Matching Engine.
+2.  Providing endpoints for clients to query the latest market data,
+    including top-of-book, last trade price, and the daily trade feed.
 
 Environment variables:
-  PORT  — default 8005
+- `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `PORT`: The HTTP port on which the service will run (default: `8005`).
 """
 
 from __future__ import annotations

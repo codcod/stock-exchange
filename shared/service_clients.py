@@ -1,17 +1,15 @@
 """
-shared/service_clients.py
+This module provides a collection of client classes that act as typed
+wrappers around the HTTP APIs of the various microservices.
 
-HTTP client classes for inter-service communication.
-Each class mirrors the Python interface of the corresponding service, but
-calls the service's HTTP API instead of the in-process object directly.
-
-All clients accept an httpx.AsyncClient so connection pooling is shared
-across calls within a single process.
+These clients simplify inter-service communication by abstracting away
+the underlying HTTP requests and providing a clean, method-based interface.
 """
 
 from __future__ import annotations
 
 import typing as tp
+from dataclasses import dataclass
 from datetime import datetime
 
 import httpx
@@ -125,24 +123,31 @@ def _dict_to_trade(d: tp.Dict[str, tp.Any]) -> Trade:
 
 
 # ---------------------------------------------------------------------------
+# RiskCheckResult
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class RiskCheckResult:
+    passed: bool
+    reason: tp.Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
 # RiskEngineClient
 # ---------------------------------------------------------------------------
 
 
 class RiskEngineClient:
-    """HTTP client mirroring RiskEngine's Python interface."""
-
     def __init__(self, base_url: str, client: httpx.AsyncClient) -> None:
         self._base = base_url.rstrip('/')
         self._client = client
 
-    async def check(self, order: Order):
-        from services.risk_engine.engine import RiskResult  # pylint: disable=PLC0415
-
+    async def check(self, order: Order) -> RiskCheckResult:
         data = await http_post(
             self._client, f'{self._base}/orders/check', _order_to_dict(order)
         )
-        return RiskResult(passed=data['passed'], reason=data.get('reason'))
+        return RiskCheckResult(passed=data['passed'], reason=data.get('reason'))
 
     async def register_account(self, account: Account) -> None:
         await http_post(
@@ -151,7 +156,9 @@ class RiskEngineClient:
 
     async def register_instrument(self, instrument: Instrument) -> None:
         await http_post(
-            self._client, f'{self._base}/instruments', _instrument_to_dict(instrument)
+            self._client,
+            f'{self._base}/instruments',
+            _instrument_to_dict(instrument),
         )
 
     async def halt_ticker(self, ticker: str) -> None:
@@ -167,34 +174,16 @@ class RiskEngineClient:
 
 
 class MatchingEngineClient:
-    """HTTP client mirroring MatchingEngine's Python interface."""
-
     def __init__(self, base_url: str, client: httpx.AsyncClient) -> None:
         self._base = base_url.rstrip('/')
         self._client = client
 
-    async def submit(self, order: Order) -> tp.List[Trade]:
-        data = await http_post(
-            self._client, f'{self._base}/orders', _order_to_dict(order)
-        )
-        return [_dict_to_trade(t) for t in data.get('trades', [])]
+    async def submit(self, order: Order) -> None:
+        await http_post(self._client, f'{self._base}/orders', _order_to_dict(order))
 
     async def cancel(self, order: Order) -> bool:
         data = await http_delete(self._client, f'{self._base}/orders/{order.order_id}')
         return data.get('cancelled', False)
-
-    async def snapshot(self, ticker: str, levels: int = 10) -> tp.Optional[dict]:
-        try:
-            return await http_get(
-                self._client, f'{self._base}/books/{ticker}/depth?levels={levels}'
-            )
-        except httpx.HTTPStatusError:
-            return None
-
-    async def restore_order(self, order: Order) -> None:
-        await http_post(
-            self._client, f'{self._base}/orders/restore', _order_to_dict(order)
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -203,8 +192,6 @@ class MatchingEngineClient:
 
 
 class ClearingClient:
-    """HTTP client for the ClearingService."""
-
     def __init__(self, base_url: str, client: httpx.AsyncClient) -> None:
         self._base = base_url.rstrip('/')
         self._client = client
@@ -242,8 +229,6 @@ class ClearingClient:
 
 
 class MarketDataClient:
-    """HTTP client for the MarketDataService."""
-
     def __init__(self, base_url: str, client: httpx.AsyncClient) -> None:
         self._base = base_url.rstrip('/')
         self._client = client
@@ -269,8 +254,6 @@ class MarketDataClient:
 
 
 class OrderManagementClient:
-    """HTTP client for the OrderManagementService."""
-
     def __init__(self, base_url: str, client: httpx.AsyncClient) -> None:
         self._base = base_url.rstrip('/')
         self._client = client
@@ -283,7 +266,8 @@ class OrderManagementClient:
 
     async def cancel_order(self, order_id: str, account_id: str) -> bool:
         data = await http_delete(
-            self._client, f'{self._base}/orders/{order_id}?account_id={account_id}'
+            self._client,
+            f'{self._base}/orders/{order_id}?account_id={account_id}',
         )
         return data.get('cancelled', False)
 

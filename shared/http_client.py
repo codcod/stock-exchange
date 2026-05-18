@@ -1,10 +1,10 @@
 """
-shared/http_client.py
+This module provides a shared, asynchronous HTTP client for making
+requests between microservices.
 
-Async HTTP helpers for inter-service communication.
-Each service creates one httpx.AsyncClient (in its lifespan) and passes it here.
-
-X-Request-ID is forwarded automatically when set in the current request context.
+It is configured with a connection pool, reasonable timeouts, and
+automatic retries for transient failures, making it a robust choice
+for inter-service communication.
 """
 
 from __future__ import annotations
