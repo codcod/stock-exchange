@@ -1,3 +1,5 @@
+# flake8: noqa E501
+
 """
 scripts/validate_trade.py
 
@@ -67,6 +69,7 @@ CLEARING_SETTLE_WAIT = 2.0
 # Helpers
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def _ok(msg: str) -> None:
     print(f'  ✓  {msg}')
 
@@ -78,7 +81,12 @@ def _fail(msg: str) -> None:
 async def _ensure_instrument(http: httpx.AsyncClient) -> None:
     r = await http.post(
         f'{GATEWAY_URL}/instruments',
-        json={'ticker': TICKER, 'name': TICKER, 'max_order_size': 500, 'last_price': 175.0},
+        json={
+            'ticker': TICKER,
+            'name': TICKER,
+            'max_order_size': 500,
+            'last_price': 175.0,
+        },
     )
     if r.status_code in (200, 201, 409):
         return
@@ -168,6 +176,7 @@ async def _poll_order(
 # ──────────────────────────────────────────────────────────────────────────────
 # DB snapshot / validation
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 async def _snapshot(conn: asyncpg.Connection, accounts: list[str]) -> dict[str, dict]:
     """Return {account_id: {cash, qty}} for each account, read from clearing."""
@@ -300,7 +309,9 @@ async def _validate_db(
         passed = False
 
     # ── 6. Seller cash delta ──────────────────────────────────────────────────
-    actual_seller_cash_delta = after[SELL_ACCOUNT]['cash'] - before[SELL_ACCOUNT]['cash']
+    actual_seller_cash_delta = (
+        after[SELL_ACCOUNT]['cash'] - before[SELL_ACCOUNT]['cash']
+    )
     if abs(actual_seller_cash_delta - expected_seller_cash_delta) < 0.01:
         _ok(
             f'clearing.accounts — {SELL_ACCOUNT} cash Δ={actual_seller_cash_delta:+,.2f} '
@@ -322,7 +333,11 @@ async def _validate_db(
     oms_by_id = {row['order_id']: row for row in oms_orders}
 
     sell_row = oms_by_id.get(sell_order_id)
-    if sell_row and sell_row['status'] == 'FILLED' and sell_row['filled_quantity'] == SELL_QTY:
+    if (
+        sell_row
+        and sell_row['status'] == 'FILLED'
+        and sell_row['filled_quantity'] == SELL_QTY
+    ):
         _ok(
             f'order_management.orders — SELL status=FILLED  '
             f'filled_qty={sell_row["filled_quantity"]}'
@@ -338,7 +353,11 @@ async def _validate_db(
 
     buy_row = oms_by_id.get(buy_order_id)
     # BUY may match more than SELL_QTY shares if other resting asks exist.
-    if buy_row and buy_row['status'] == 'PARTIALLY_FILLED' and buy_row['filled_quantity'] >= SELL_QTY:
+    if (
+        buy_row
+        and buy_row['status'] == 'PARTIALLY_FILLED'
+        and buy_row['filled_quantity'] >= SELL_QTY
+    ):
         _ok(
             f'order_management.orders — BUY status=PARTIALLY_FILLED  '
             f'filled_qty={buy_row["filled_quantity"]} (≥{SELL_QTY})'
@@ -359,6 +378,7 @@ async def _validate_db(
 # ──────────────────────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 async def run() -> None:
     print(f'Gateway : {GATEWAY_URL}')
@@ -395,7 +415,10 @@ async def run() -> None:
             conn = await asyncpg.connect(DATABASE_URL)
         except Exception as exc:
             print(f'ERROR: cannot connect to database — {exc}', file=sys.stderr)
-            print('  Set DATABASE_URL=postgresql://exchange:exchange@localhost:5432/exchange', file=sys.stderr)
+            print(
+                '  Set DATABASE_URL=postgresql://exchange:exchange@localhost:5432/exchange',
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         before = await _snapshot(conn, [BUY_ACCOUNT, SELL_ACCOUNT])
@@ -407,26 +430,40 @@ async def run() -> None:
         # ── Orders ───────────────────────────────────────────────────────────
         print('── Order submission ──────────────────────────────────────────────────')
 
-        sell_order = await _submit_order(http, SELL_ACCOUNT, 'SELL', SELL_QTY, SELL_PRICE)
+        sell_order = await _submit_order(
+            http, SELL_ACCOUNT, 'SELL', SELL_QTY, SELL_PRICE
+        )
         sell_id = sell_order['order_id']
-        print(f'  submitted SELL {SELL_QTY} {TICKER} @ {SELL_PRICE}  by {SELL_ACCOUNT}  id={sell_id[:8]}…')
+        print(
+            f'  submitted SELL {SELL_QTY} {TICKER} @ {SELL_PRICE}  by {SELL_ACCOUNT}  id={sell_id[:8]}…'
+        )
 
         buy_order = await _submit_order(http, BUY_ACCOUNT, 'BUY', BUY_QTY, BUY_PRICE)
         buy_id = buy_order['order_id']
-        print(f'  submitted BUY  {BUY_QTY} {TICKER} @ {BUY_PRICE}  by {BUY_ACCOUNT}  id={buy_id[:8]}…\n')
+        print(
+            f'  submitted BUY  {BUY_QTY} {TICKER} @ {BUY_PRICE}  by {BUY_ACCOUNT}  id={buy_id[:8]}…\n'
+        )
 
         # ── Poll for settlement ───────────────────────────────────────────────
         print('── Waiting for settlement ────────────────────────────────────────────')
         try:
-            sell_final = await _poll_order(http, sell_id, {'FILLED', 'CANCELLED', 'REJECTED'})
-            buy_final = await _poll_order(http, buy_id, {'FILLED', 'PARTIALLY_FILLED', 'CANCELLED', 'REJECTED'})
+            sell_final = await _poll_order(
+                http, sell_id, {'FILLED', 'CANCELLED', 'REJECTED'}
+            )
+            buy_final = await _poll_order(
+                http, buy_id, {'FILLED', 'PARTIALLY_FILLED', 'CANCELLED', 'REJECTED'}
+            )
         except TimeoutError as exc:
             print(f'ERROR: {exc}', file=sys.stderr)
             await conn.close()
             sys.exit(1)
 
-        print(f'  SELL {sell_id[:8]}… → {sell_final["status"]}  filled={sell_final["filled_quantity"]}/{SELL_QTY}')
-        print(f'  BUY  {buy_id[:8]}… → {buy_final["status"]}  filled={buy_final["filled_quantity"]}/{BUY_QTY}\n')
+        print(
+            f'  SELL {sell_id[:8]}… → {sell_final["status"]}  filled={sell_final["filled_quantity"]}/{SELL_QTY}'
+        )
+        print(
+            f'  BUY  {buy_id[:8]}… → {buy_final["status"]}  filled={buy_final["filled_quantity"]}/{BUY_QTY}\n'
+        )
 
     # ── DB validation ─────────────────────────────────────────────────────────
     try:
