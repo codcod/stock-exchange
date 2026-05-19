@@ -13,7 +13,7 @@ from services.gateway.schemas import (
     account_to_response,
     order_to_response,
 )
-from shared.models.domain import Account
+from shared.domain.models import Account
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 

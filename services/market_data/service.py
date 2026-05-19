@@ -18,7 +18,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from shared.models.domain import MarketDataUpdate, TradeExecuted
+from shared.domain.events import MarketDataUpdate, TradeExecuted
 
 logger = logging.getLogger(__name__)
 

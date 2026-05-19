@@ -1,7 +1,3 @@
-"""Request/response models for the Matching Engine."""
+"""Matching Engine wire schemas — re-exported from shared inter-service contracts."""
 
-from __future__ import annotations
-
-# The matching engine accepts orders via the shared OrderRequest model.
-# Re-export it here so the app only needs to import from this module.
-from shared.schemas import OrderRequest  # noqa: F401
+from shared.domain.api_schemas import OrderRequest  # noqa: F401

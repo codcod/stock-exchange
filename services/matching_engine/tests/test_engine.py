@@ -6,14 +6,8 @@ Covers: basic match, partial fill, price priority, no match, market order.
 import pytest
 
 from services.matching_engine.engine import MatchingEngine, OrderBook
-from shared.models.domain import (
-    Order,
-    OrderFilled,
-    OrderStatus,
-    OrderType,
-    Side,
-    TradeExecuted,
-)
+from shared.domain.events import OrderFilled, TradeExecuted
+from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 
 @pytest.fixture

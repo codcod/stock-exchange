@@ -21,16 +21,17 @@ from dataclasses import dataclass
 import httpx
 from fastapi import FastAPI, HTTPException
 
+from services.clearing.repository import AccountRepository, TradeRepository
 from services.clearing.schemas import (
     RegisterAccountRequest,
     ReserveRequest,
     TradeExecutedEvent,
 )
 from services.clearing.service import ClearingService
-from shared.db.connection import get_engine
-from shared.db.repos import AccountRepository, TradeRepository
-from shared.db.tables import ensure_tables
-from shared.models.domain import Account, TradeExecuted
+from services.clearing.tables import ensure_tables
+from shared.domain.events import TradeExecuted
+from shared.domain.models import Account
+from shared.platform.db.connection import get_engine
 from shared.service_clients import RiskEngineClient
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,23 @@ async def health() -> dict:
 # ---------------------------------------------------------------------------
 # Account management
 # ---------------------------------------------------------------------------
+
+
+@app.get('/accounts')
+async def list_accounts() -> tp.List[dict]:
+    """Return all registered trading accounts."""
+    return [
+        {
+            'account_id': a.account_id,
+            'name': a.name,
+            'cash_balance': a.cash_balance,
+            'reserved_cash': a.reserved_cash,
+            'positions': a.positions,
+            'reserved_shares': a.reserved_shares,
+            'created_at': a.created_at.isoformat(),
+        }
+        for a in _state.svc.list_accounts()
+    ]
 
 
 @app.post('/accounts', status_code=201)

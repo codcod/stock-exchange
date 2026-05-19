@@ -3,7 +3,7 @@
 import pytest
 
 from services.risk_engine.engine import RiskEngine
-from shared.models.domain import Account, Instrument, Order, OrderType, Side
+from shared.domain.models import Account, Instrument, Order, OrderType, Side
 
 
 @pytest.fixture

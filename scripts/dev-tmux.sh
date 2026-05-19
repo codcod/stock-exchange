@@ -17,7 +17,7 @@ tmux select-layout -t "$SESSION" tiled
 
 # Show pane title bar at the top of each pane border
 tmux set-option -t "$SESSION" pane-border-status top
-tmux set-option -t "$SESSION" pane-border-format " #{pane_title} "
+tmux set-option -t "$SESSION" pane-border-format "#{?pane_active,#[fg=red],} #{pane_title} #[default]"
 
 # Pane layout (tiled, 3 rows × 3 cols on a wide terminal):
 # 0: postgres     1: risk         2: oms

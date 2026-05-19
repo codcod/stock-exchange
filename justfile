@@ -58,7 +58,7 @@ infra-logs:
 # Open a psql shell against the local exchange DB
 [group('infra')]
 db-shell:
-    docker exec -it $({{ infra }} ps -q postgres) psql -U exchange exchange
+    {{ infra }} exec postgres psql -U exchange exchange
 
 # Build all service images
 [group('services')]

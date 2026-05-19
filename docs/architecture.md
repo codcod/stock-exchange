@@ -85,7 +85,7 @@ graph TD
         MatchingClient["Matching Engine Client"]
         ClearingClient["Clearing Client"]
     end
-    
+
     subgraph "Database"
         OrderTable["orders table"]
     end
@@ -119,18 +119,18 @@ sequenceDiagram
     Client->>+Gateway: POST /orders
     Gateway->>+OMS: submit_order()
     OMS->>+DB: INSERT INTO orders (status=PENDING)
-    DB-->>-OMS: 
+    DB-->>-OMS:
     OMS->>+Risk: check()
     Risk-->>-OMS: { passed: true }
     OMS->>+Clearing: reserve_cash() / reserve_shares()
-    Clearing-->>-OMS: 
+    Clearing-->>-OMS:
     OMS->>+Matching: submit()
     Note over Matching: Order matches, trades created
     Matching->>+DB: INSERT INTO outbox (TradeExecuted, OrderFilled, MarketDataUpdate)
-    DB-->>-Matching: 
-    Matching-->>-OMS: 
+    DB-->>-Matching:
+    Matching-->>-OMS:
     OMS->>+DB: UPDATE orders (status=OPEN)
-    DB-->>-OMS: 
+    DB-->>-OMS:
     OMS-->>-Gateway: { order_id, status: 'OPEN' }
     Gateway-->>-Client: 201 Created
 ```

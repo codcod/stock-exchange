@@ -1,14 +1,3 @@
-"""
-Per-request context variables.
-
-Set by gateway middleware and read by HTTP client helpers to propagate
-correlation headers across all downstream service calls.
-"""
-
-from __future__ import annotations
-
-import contextvars
-
-request_id: contextvars.ContextVar[str] = contextvars.ContextVar(
-    'request_id', default=''
-)
+# Re-export from new location for backward compatibility.
+# New code should import from shared.platform.request_context.
+from shared.platform.request_context import request_id  # noqa: F401

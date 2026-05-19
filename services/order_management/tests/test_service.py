@@ -11,7 +11,8 @@ import pytest
 
 from services.order_management.service import OrderManagementService
 from services.risk_engine.engine import RiskResult
-from shared.models.domain import Order, OrderFilled, OrderStatus, OrderType, Side
+from shared.domain.events import OrderFilled
+from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 # ---------------------------------------------------------------------------
 # Stubs

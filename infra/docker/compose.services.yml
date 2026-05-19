@@ -22,6 +22,7 @@ services:
     command: python -m services.risk_engine
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+      CLEARING_URL: http://clearing:8004
       PORT: "8002"
     ports:
       - "8002:8002"
@@ -33,6 +34,8 @@ services:
       start_period: 10s
     depends_on:
       postgres:
+        condition: service_healthy
+      clearing:
         condition: service_healthy
 
   market-data:
@@ -74,8 +77,6 @@ services:
       start_period: 10s
     depends_on:
       postgres:
-        condition: service_healthy
-      risk-engine:
         condition: service_healthy
 
   # ---------------------------------------------------------------------------

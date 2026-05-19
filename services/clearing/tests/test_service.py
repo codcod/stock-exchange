@@ -9,7 +9,8 @@ are never negative after settlement.
 import pytest
 
 from services.clearing.service import ClearingService
-from shared.models.domain import Account, Trade, TradeExecuted
+from shared.domain.events import TradeExecuted
+from shared.domain.models import Account, Trade
 
 # ---------------------------------------------------------------------------
 # Stubs

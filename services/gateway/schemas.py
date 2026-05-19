@@ -9,10 +9,10 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from shared.models.domain import OrderStatus, OrderType, Side
+from shared.domain.models import OrderStatus, OrderType, Side
 
 if tp.TYPE_CHECKING:
-    from shared.models.domain import Account, Order
+    from shared.domain.models import Account, Order
 
 
 # ---------------------------------------------------------------------------

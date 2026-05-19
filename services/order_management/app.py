@@ -23,12 +23,12 @@ from dataclasses import dataclass
 import httpx
 from fastapi import FastAPI, HTTPException, Query
 
+from services.order_management.repository import OrderRepository
 from services.order_management.schemas import OrderFilledEvent
 from services.order_management.service import OrderManagementService
-from shared.db.connection import get_engine
-from shared.db.repos import OrderRepository
-from shared.db.tables import ensure_tables
-from shared.models.domain import OrderFilled
+from services.order_management.tables import ensure_tables
+from shared.domain.events import OrderFilled
+from shared.platform.db.connection import get_engine
 from shared.schemas import OrderRequest
 from shared.service_clients import (
     ClearingClient,
