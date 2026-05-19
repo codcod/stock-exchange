@@ -14,13 +14,11 @@ from dataclasses import dataclass
 
 import httpx
 
-from shared.service_clients import (
-    ClearingClient,
-    MarketDataClient,
-    MatchingEngineClient,
-    OrderManagementClient,
-    RiskEngineClient,
-)
+from shared.platform.clients.clearing import ClearingClient
+from shared.platform.clients.market_data import MarketDataClient
+from shared.platform.clients.matching_engine import MatchingEngineClient
+from shared.platform.clients.order_management import OrderManagementClient
+from shared.platform.clients.risk_engine import RiskEngineClient
 
 _clients: tp.Optional['ServiceClients'] = None
 

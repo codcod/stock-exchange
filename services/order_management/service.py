@@ -24,11 +24,9 @@ from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 if tp.TYPE_CHECKING:
     from services.order_management.repository import OrderRepository
-    from shared.service_clients import (
-        ClearingClient,
-        MatchingEngineClient,
-        RiskEngineClient,
-    )
+    from shared.platform.clients.clearing import ClearingClient
+    from shared.platform.clients.matching_engine import MatchingEngineClient
+    from shared.platform.clients.risk_engine import RiskEngineClient
 
 logger = logging.getLogger(__name__)
 

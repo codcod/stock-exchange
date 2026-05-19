@@ -26,15 +26,15 @@ from fastapi import FastAPI
 
 from services.risk_engine.engine import RiskEngine
 from services.risk_engine.repository import InstrumentRepository
-from services.risk_engine.schemas import (
+from services.risk_engine.tables import ensure_tables
+from shared.domain.api_schemas import (
+    OrderRequest,
     RegisterAccountRequest,
     RegisterInstrumentRequest,
 )
-from services.risk_engine.tables import ensure_tables
 from shared.domain.models import Account, Instrument
+from shared.platform.clients.clearing import ClearingClient
 from shared.platform.db.connection import get_engine
-from shared.schemas import OrderRequest
-from shared.service_clients import ClearingClient
 
 logger = logging.getLogger(__name__)
 

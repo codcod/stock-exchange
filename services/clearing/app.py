@@ -22,17 +22,17 @@ import httpx
 from fastapi import FastAPI, HTTPException
 
 from services.clearing.repository import AccountRepository, TradeRepository
-from services.clearing.schemas import (
+from services.clearing.service import ClearingService
+from services.clearing.tables import ensure_tables
+from shared.domain.api_schemas import (
     RegisterAccountRequest,
     ReserveRequest,
     TradeExecutedEvent,
 )
-from services.clearing.service import ClearingService
-from services.clearing.tables import ensure_tables
 from shared.domain.events import TradeExecuted
 from shared.domain.models import Account
+from shared.platform.clients.risk_engine import RiskEngineClient
 from shared.platform.db.connection import get_engine
-from shared.service_clients import RiskEngineClient
 
 logger = logging.getLogger(__name__)
 

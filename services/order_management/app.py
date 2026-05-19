@@ -24,18 +24,15 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query
 
 from services.order_management.repository import OrderRepository
-from services.order_management.schemas import OrderFilledEvent
 from services.order_management.service import OrderManagementService
 from services.order_management.tables import ensure_tables
+from shared.domain.api_schemas import OrderFilledEvent, OrderRequest
 from shared.domain.events import OrderFilled
+from shared.platform.clients.clearing import ClearingClient
+from shared.platform.clients.converters import order_to_dict
+from shared.platform.clients.matching_engine import MatchingEngineClient
+from shared.platform.clients.risk_engine import RiskEngineClient
 from shared.platform.db.connection import get_engine
-from shared.schemas import OrderRequest
-from shared.service_clients import (
-    ClearingClient,
-    MatchingEngineClient,
-    RiskEngineClient,
-    _order_to_dict,
-)
 
 _RISK_URL = os.getenv('RISK_ENGINE_URL', 'http://localhost:8002')
 _MATCHING_URL = os.getenv('MATCHING_ENGINE_URL', 'http://localhost:8003')
@@ -90,7 +87,7 @@ async def health() -> dict:
 async def submit_order(req: OrderRequest) -> dict:
     """Submit a new order for processing."""
     result = await _state.svc.submit_order(req.to_domain())
-    return _order_to_dict(result)
+    return order_to_dict(result)
 
 
 @app.get('/orders/open')
@@ -101,7 +98,7 @@ async def list_open_orders() -> tp.List[dict]:
     This endpoint is intended for use by the Matching Engine during startup
     to synchronize its state with any orders that were active before a restart.
     """
-    return [_order_to_dict(o) for o in _state.svc.get_open_orders()]
+    return [order_to_dict(o) for o in _state.svc.get_open_orders()]
 
 
 @app.get('/orders/{order_id}')
@@ -110,7 +107,7 @@ async def get_order(order_id: str) -> dict:
     order = _state.svc.get_order(order_id)
     if order is None:
         raise HTTPException(status_code=404, detail='Order not found')
-    return _order_to_dict(order)
+    return order_to_dict(order)
 
 
 @app.delete('/orders/{order_id}')
@@ -123,7 +120,7 @@ async def cancel_order(order_id: str, account_id: str = Query(...)) -> dict:
 @app.get('/accounts/{account_id}/orders')
 async def list_orders(account_id: str) -> tp.List[dict]:
     """Retrieve all orders, active or inactive, for a specific account."""
-    return [_order_to_dict(o) for o in _state.svc.get_orders_for_account(account_id)]
+    return [order_to_dict(o) for o in _state.svc.get_orders_for_account(account_id)]
 
 
 # ---------------------------------------------------------------------------

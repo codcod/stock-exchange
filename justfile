@@ -137,7 +137,9 @@ run-oms:
 # Risk Engine
 [group('run locally')]
 run-risk:
-    DATABASE_URL={{ db_url }} uv run python -m services.risk_engine
+    DATABASE_URL={{ db_url }} \
+    CLEARING_URL=http://localhost:8004 \
+    uv run python -m services.risk_engine
 
 # Matching Engine
 [group('run locally')]
