@@ -8,13 +8,11 @@ from datetime import datetime, timezone
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from shared.db.tables import outbox as outbox_t
+from services.matching_engine.tables import outbox as outbox_t
 
 
 async def write_outbox_rows(conn, rows: tp.List[dict]) -> None:
-    """
-    Insert rows into the outbox table within an existing transaction.
-    """
+    """Insert rows into the outbox table within an existing transaction."""
     if rows:
         await conn.execute(insert(outbox_t), rows)
 

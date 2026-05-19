@@ -6,7 +6,7 @@ Covers: quote updates, stale bid/ask cleared when book side empties.
 import pytest
 
 from services.market_data.service import MAX_TRADE_HISTORY, MarketDataService
-from shared.models.domain import MarketDataUpdate, TradeExecuted
+from shared.domain.events import MarketDataUpdate, TradeExecuted
 
 
 @pytest.fixture

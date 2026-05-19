@@ -1,9 +1,7 @@
 """
-shared/models/domain.py
+shared/domain/models.py
 
-Core domain types shared across all services.
-These are plain dataclasses with minimal derived properties (available cash/shares,
-remaining quantity, active status) co-located with the data they describe.
+Core domain entities shared across all services: the exchange's universal vocabulary.
 """
 
 from __future__ import annotations
@@ -13,10 +11,6 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-
-# ---------------------------------------------------------------------------
-# Enumerations
-# ---------------------------------------------------------------------------
 
 
 class Side(str, Enum):
@@ -42,11 +36,6 @@ class OrderStatus(str, Enum):
     FILLED = 'FILLED'  # fully executed
     CANCELLED = 'CANCELLED'
     REJECTED = 'REJECTED'  # failed risk check or validation
-
-
-# ---------------------------------------------------------------------------
-# Core domain objects
-# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -130,83 +119,3 @@ class Instrument:
     max_order_size: int = 10_000
     is_tradeable: bool = True
     last_price: tp.Optional[float] = None
-
-
-# ---------------------------------------------------------------------------
-# Domain events
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class Event:
-    """Base class for all domain events."""
-
-    event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-@dataclass
-class OrderSubmitted(Event):
-    """Fired when an order is first submitted to the exchange."""
-
-    order_id: str = ''
-    account_id: str = ''
-    ticker: str = ''
-
-
-@dataclass
-class OrderAccepted(Event):
-    """Fired when an order passes risk checks and is sent to the matching engine."""
-
-    order_id: str = ''
-
-
-@dataclass
-class OrderRejected(Event):
-    """Fired when an order fails risk checks."""
-
-    order_id: str = ''
-    reason: str = ''
-
-
-@dataclass
-class OrderCancelled(Event):
-    """Fired when an order is successfully cancelled."""
-
-    order_id: str = ''
-
-
-@dataclass
-class TradeExecuted(Event):
-    """Fired by the matching engine when two orders are matched."""
-
-    trade_id: str = ''
-    buy_order_id: str = ''
-    sell_order_id: str = ''
-    buyer_account_id: str = ''
-    seller_account_id: str = ''
-    ticker: str = ''
-    quantity: int = 0
-    price: float = 0.0
-
-
-@dataclass
-class OrderFilled(Event):
-    """Fired by the matching engine to report a full or partial fill."""
-
-    order_id: str = ''
-    account_id: str = ''
-    fill_quantity: int = 0
-    fill_price: float = 0.0
-    is_fully_filled: bool = False
-
-
-@dataclass
-class MarketDataUpdate(Event):
-    """Fired by the matching engine after a trade or book change."""
-
-    ticker: str = ''
-    bid: float = 0.0
-    ask: float = 0.0
-    last_price: float = 0.0
-    volume: int = 0

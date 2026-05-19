@@ -1,10 +1,7 @@
 """
-This module provides a shared, asynchronous HTTP client for making requests
-between microservices.
+Shared async HTTP client helpers for inter-service calls.
 
-It is configured with a connection pool, reasonable timeouts, and automatic
-retries for transient failures, making it a robust choice for inter-service
-communication. It also automatically propagates the `X-Request-ID` header.
+Propagates the X-Request-ID correlation header automatically.
 """
 
 from __future__ import annotations
@@ -13,7 +10,7 @@ import typing as tp
 
 import httpx
 
-from shared.request_context import request_id as _request_id_ctx
+from shared.platform.request_context import request_id as _request_id_ctx
 
 
 def _correlation_headers() -> tp.Dict[str, str]:

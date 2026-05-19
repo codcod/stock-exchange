@@ -10,7 +10,7 @@ from services.gateway.schemas import (
     SubmitOrderRequest,
     order_to_response,
 )
-from shared.models.domain import Order
+from shared.domain.models import Order
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 

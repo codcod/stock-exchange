@@ -1,4 +1,4 @@
-"""Repository for Account persistence (cash, positions, reserved amounts)."""
+"""Repositories for Account and Trade persistence."""
 
 from __future__ import annotations
 
@@ -8,10 +8,11 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from shared.db.tables import accounts as accounts_t
-from shared.db.tables import positions as positions_t
-from shared.db.tables import reserved_shares as reserved_shares_t
-from shared.models.domain import Account
+from services.clearing.tables import accounts as accounts_t
+from services.clearing.tables import positions as positions_t
+from services.clearing.tables import reserved_shares as reserved_shares_t
+from services.clearing.tables import trades as trades_t
+from shared.domain.models import Account, Trade
 
 
 class AccountRepository:
@@ -97,3 +98,27 @@ class AccountRepository:
             acct.reserved_shares = reserved.get(r['account_id'], {})
             result.append(acct)
         return result
+
+
+class TradeRepository:
+    """Repository for Trade persistence."""
+
+    def __init__(self, engine: AsyncEngine) -> None:
+        self._engine = engine
+
+    async def save(self, trade: Trade) -> None:
+        """Save a new Trade to the database."""
+        async with self._engine.begin() as conn:
+            await conn.execute(
+                insert(trades_t).values(
+                    trade_id=trade.trade_id,
+                    ticker=trade.ticker,
+                    buy_order_id=trade.buy_order_id,
+                    sell_order_id=trade.sell_order_id,
+                    buyer_account_id=trade.buyer_account_id,
+                    seller_account_id=trade.seller_account_id,
+                    quantity=trade.quantity,
+                    price=trade.price,
+                    executed_at=trade.executed_at,
+                )
+            )

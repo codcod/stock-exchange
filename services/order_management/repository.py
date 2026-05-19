@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from shared.db.tables import orders as orders_t
-from shared.models.domain import Order, OrderStatus, OrderType, Side
+from services.order_management.tables import orders as orders_t
+from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 
 def _f(val) -> tp.Optional[float]:

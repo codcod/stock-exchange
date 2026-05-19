@@ -19,9 +19,9 @@ from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException, Query
 
-from services.market_data.schemas import MarketDataUpdateEvent, TradeExecutedEvent
 from services.market_data.service import MarketDataService
-from shared.models.domain import MarketDataUpdate, TradeExecuted
+from shared.domain.api_schemas import MarketDataUpdateEvent, TradeExecutedEvent
+from shared.domain.events import MarketDataUpdate, TradeExecuted
 
 
 @dataclass

@@ -22,30 +22,26 @@ Environment variables:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass
 
 import httpx
 from fastapi import FastAPI, Query
 
-from services.matching_engine.engine import MatchingEngine
-from services.matching_engine.schemas import OrderRequest
-from shared.db.connection import get_engine
-from shared.db.repos import OutboxRepository, write_outbox_rows
-from shared.db.tables import ensure_tables
-from shared.service_clients import OrderManagementClient
+from services.matching_engine.matching import MatchingEngine
+from services.matching_engine.outbox_relay import enqueue_events, run_relay
+from services.matching_engine.tables import ensure_tables
+from shared.domain.api_schemas import OrderRequest
+from shared.platform.clients.order_management import OrderManagementClient
+from shared.platform.db.connection import get_engine
 
 logger = logging.getLogger(__name__)
 
 _engine_svc = MatchingEngine()
 
-_CLEARING_URL = os.getenv('CLEARING_URL', 'http://localhost:8004')
 _OMS_URL = os.getenv('ORDER_MANAGEMENT_URL', 'http://localhost:8001')
-_MARKET_DATA_URL = os.getenv('MARKET_DATA_URL', 'http://localhost:8005')
 
 
 @dataclass
@@ -55,98 +51,6 @@ class _AppState:
 
 
 _state = _AppState()
-
-_EVENT_DESTINATIONS: dict = {
-    'TradeExecuted': ['clearing', 'market_data'],
-    'OrderFilled': ['order_management'],
-    'MarketDataUpdate': ['market_data'],
-}
-_DESTINATION_URLS: dict = {
-    'clearing': _CLEARING_URL,
-    'order_management': _OMS_URL,
-    'market_data': _MARKET_DATA_URL,
-}
-_ENDPOINT_FOR_EVENT_TYPE: dict = {
-    'TradeExecuted': '/events/trade-executed',
-    'OrderFilled': '/events/order-filled',
-    'MarketDataUpdate': '/events/market-data-update',
-}
-
-_RELAY_POLL_INTERVAL = 0.5
-
-
-# ---------------------------------------------------------------------------
-# Outbox write helper
-# ---------------------------------------------------------------------------
-
-
-async def _enqueue_events(conn, events: list) -> None:
-    """
-    Serialize a list of domain events and write them to the outbox table
-    within a single database transaction.
-    """
-    now = datetime.now(timezone.utc)
-    rows = []
-    for event in events:
-        event_type = type(event).__name__
-        payload = json.dumps(asdict(event), default=str)
-        for dest in _EVENT_DESTINATIONS.get(event_type, []):
-            rows.append(
-                {
-                    'event_id': event.event_id,
-                    'event_type': event_type,
-                    'destination': dest,
-                    'payload': payload,
-                    'created_at': now,
-                    'published_at': None,
-                }
-            )
-    await write_outbox_rows(conn, rows)
-
-
-# ---------------------------------------------------------------------------
-# Outbox relay background task
-# ---------------------------------------------------------------------------
-
-
-async def _outbox_relay() -> None:
-    """
-    A background task that polls the outbox for unpublished events and
-    relays them to their destinations via HTTP.
-    """
-    repo = OutboxRepository(_state.db)
-    while True:
-        try:
-            rows = await repo.fetch_unpublished()
-            for row in rows:
-                dest_url = _DESTINATION_URLS.get(row['destination'])
-                endpoint = _ENDPOINT_FOR_EVENT_TYPE.get(row['event_type'])
-                if not dest_url or not endpoint:
-                    logger.warning(
-                        'Unknown destination/event: %s / %s',
-                        row['destination'],
-                        row['event_type'],
-                    )
-                    continue
-                try:
-                    resp = await _state.http.post(
-                        f'{dest_url}{endpoint}',
-                        json=json.loads(row['payload']),
-                    )
-                    resp.raise_for_status()
-                    await repo.mark_published(row['id'])
-                except Exception:
-                    logger.exception('Relay failed for outbox row %d', row['id'])
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            logger.exception('Outbox relay poll error')
-        await asyncio.sleep(_RELAY_POLL_INTERVAL)
-
-
-# ---------------------------------------------------------------------------
-# App lifecycle
-# ---------------------------------------------------------------------------
 
 
 @asynccontextmanager
@@ -171,7 +75,7 @@ async def lifespan(app: FastAPI):
             'Could not restore open orders from OMS — starting with empty books'
         )
 
-    relay_task = asyncio.create_task(_outbox_relay())
+    relay_task = asyncio.create_task(run_relay(_state.http, _state.db))
     try:
         yield
     finally:
@@ -203,7 +107,7 @@ async def submit_order(req: OrderRequest) -> dict:
     trades, events = await _engine_svc.submit(req.to_domain())
     if events:
         async with _state.db.begin() as conn:
-            await _enqueue_events(conn, events)
+            await enqueue_events(conn, events)
     return {
         'trades': [
             {

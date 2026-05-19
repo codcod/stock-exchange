@@ -9,27 +9,36 @@ matching engine.
 
 Environment variables:
 - `DATABASE_URL`: The URL for the PostgreSQL database (required).
+- `CLEARING_URL`: The URL for the Clearing Service (default: `http://localhost:8004`).
 - `PORT`: The HTTP port on which the service will run (default: 8002).
 """
 
 from __future__ import annotations
 
+import logging
+import os
 import typing as tp
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
+import httpx
 from fastapi import FastAPI
 
 from services.risk_engine.engine import RiskEngine
-from services.risk_engine.schemas import (
+from services.risk_engine.repository import InstrumentRepository
+from services.risk_engine.tables import ensure_tables
+from shared.domain.api_schemas import (
+    OrderRequest,
     RegisterAccountRequest,
     RegisterInstrumentRequest,
 )
-from shared.db.connection import get_engine
-from shared.db.repos import AccountRepository, InstrumentRepository
-from shared.db.tables import ensure_tables
-from shared.models.domain import Account, Instrument
-from shared.schemas import OrderRequest
+from shared.domain.models import Account, Instrument
+from shared.platform.clients.clearing import ClearingClient
+from shared.platform.db.connection import get_engine
+
+logger = logging.getLogger(__name__)
+
+_CLEARING_URL = os.getenv('CLEARING_URL', 'http://localhost:8004')
 
 _engine_svc: RiskEngine = RiskEngine()
 
@@ -37,6 +46,7 @@ _engine_svc: RiskEngine = RiskEngine()
 @dataclass
 class _AppState:
     instrument_repo: tp.Optional[InstrumentRepository] = None
+    http: tp.Optional[httpx.AsyncClient] = None
 
 
 _state = _AppState()
@@ -44,15 +54,23 @@ _state = _AppState()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _state.http = httpx.AsyncClient(timeout=10.0)
     db = get_engine()
     await ensure_tables(db)
     _state.instrument_repo = InstrumentRepository(db)
     for instrument in await _state.instrument_repo.load_all():
         _engine_svc.register_instrument(instrument)
-    for account in await AccountRepository(db).load_all():
-        _engine_svc.register_account(account)
+    clearing = ClearingClient(_CLEARING_URL, _state.http)
+    try:
+        for account in await clearing.list_accounts():
+            _engine_svc.register_account(account)
+    except Exception:
+        logger.warning(
+            'Could not load accounts from Clearing — starting with empty account cache'
+        )
 
     yield
+    await _state.http.aclose()
 
 
 app = FastAPI(title='Risk Engine', version='0.1.0', lifespan=lifespan)

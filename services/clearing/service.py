@@ -17,10 +17,11 @@ from __future__ import annotations
 import logging
 import typing as tp
 
-from shared.models.domain import Account, Trade, TradeExecuted
+from shared.domain.events import TradeExecuted
+from shared.domain.models import Account, Trade
 
 if tp.TYPE_CHECKING:
-    from shared.db.repos import AccountRepository, TradeRepository
+    from services.clearing.repository import AccountRepository, TradeRepository
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,10 @@ class ClearingService:
     def register_account(self, account: Account) -> None:
         """Add or update an account in the local cache."""
         self._accounts[account.account_id] = account
+
+    def list_accounts(self) -> tp.List[Account]:
+        """Return all registered accounts."""
+        return list(self._accounts.values())
 
     # ------------------------------------------------------------------
     # Reservation management (called by Order Management on order submit/cancel)

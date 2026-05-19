@@ -58,7 +58,7 @@ infra-logs:
 # Open a psql shell against the local exchange DB
 [group('infra')]
 db-shell:
-    docker exec -it $({{ infra }} ps -q postgres) psql -U exchange exchange
+    {{ infra }} exec postgres psql -U exchange exchange
 
 # Build all service images
 [group('services')]
@@ -137,7 +137,9 @@ run-oms:
 # Risk Engine
 [group('run locally')]
 run-risk:
-    DATABASE_URL={{ db_url }} uv run python -m services.risk_engine
+    DATABASE_URL={{ db_url }} \
+    CLEARING_URL=http://localhost:8004 \
+    uv run python -m services.risk_engine
 
 # Matching Engine
 [group('run locally')]
