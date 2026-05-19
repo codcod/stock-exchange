@@ -42,6 +42,7 @@ fresh: clean-all install
 # Start Postgres
 [group('infra')]
 infra-up:
+    docker network inspect exchange >/dev/null 2>&1 || docker network create exchange
     {{ infra }} up -d
 
 # Stop Postgres
@@ -156,6 +157,17 @@ run-clearing:
 [group('run locally')]
 run-market-data:
     uv run python -m services.market_data
+
+# Start a tmux session (2×4 panes) with infra + all six services
+[group('run locally')]
+dev:
+    bash scripts/dev-tmux.sh
+
+# Stop all local services and kill the dev tmux session
+[group('run locally')]
+dev-down:
+    {{ infra }} down
+    tmux kill-session -t exchange 2>/dev/null || true
 
 # Run the simulator (generates synthetic order traffic against the gateway)
 [group('demo')]
