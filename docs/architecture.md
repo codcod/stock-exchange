@@ -1,30 +1,166 @@
 # Architecture
 
-## Data flow for a single order
+## C4 Model: System Context
+
+This diagram shows the overall system landscape. The Stock Exchange is a self-contained system that interacts with traders through a command-line interface or a load-generating simulator.
 
 ```mermaid
-flowchart TD
-    HttpClient["HTTP Client"]
-    Simulator["clients/simulator\n(load generator)"]
-    Gateway["services/gateway :8000\nFastAPI — validates · routes"]
-    OMS["services/order_management :8001\nOrder lifecycle · persists orders"]
-    Risk["services/risk_engine :8002\nPre-trade checks · account state cache"]
-    Matching["services/matching_engine :8003\nOrder book · price-time priority matching"]
-    Clearing["services/clearing :8004\nPost-trade settlement\nUpdates cash + positions"]
-    MarketData["services/market_data :8005\nQuote snapshots · trade history"]
+graph TD
+    subgraph "Stock Exchange System"
+        direction LR
+        style Stock Exchange System fill:#1168bd,stroke:#0b4884,color:#fff
+        A["<div style='font-weight:bold'>Stock Exchange</div><div style='font-size:80%'>A simplified model of a stock exchange</div>"]
+    end
 
-    HttpClient -->|HTTP| Gateway
-    Simulator -->|HTTP| Gateway
-    Gateway -->|POST /orders| OMS
-    OMS -->|POST /orders/check| Risk
-    Risk -->|response| OMS
-    OMS -->|FAIL: status=REJECTED| Gateway
-    OMS -->|"PASS: POST /accounts/:id/reserve/cash\nPOST /accounts/:id/reserve/shares"| Risk
-    OMS -->|PASS: POST /orders| Matching
-    Matching -->|no match: order rests in book| Matching
-    Matching -->|"POST /events/trade-executed"| Clearing
-    Matching -->|"POST /events/order-filled"| OMS
-    Matching -->|"POST /events/market-data-update"| MarketData
+    User(Trader)
+    Simulator["Simulator"]
+
+    User -- "Manages portfolio, submits orders" --> A
+    A -- "Publishes market data, fills, and account updates" --> User
+    Simulator -- "Generates synthetic order traffic" --> A
+
+    style User fill:#08427b,stroke:#052e56,color:#fff
+    style Simulator fill:#08427b,stroke:#052e56,color:#fff
+```
+
+## C4 Model: Container Diagram
+
+This diagram zooms into the Stock Exchange system to show its constituent containers (services) and the primary data store.
+
+```mermaid
+graph TD
+    subgraph "Trader's Machine"
+        TUI["<div style='font-weight:bold'>TUI Client</div><div style='font-size:80%'>Textual-based trading terminal</div>"]
+    end
+
+    subgraph "Stock Exchange System"
+        Gateway["<div style='font-weight:bold'>Gateway</div><div style='font-size:80%'>FastAPI: Entry point, auth, routing</div>"]
+        OMS["<div style='font-weight:bold'>Order Management</div><div style='font-size:80%'>FastAPI: Order lifecycle</div>"]
+        Risk["<div style='font-weight:bold'>Risk Engine</div><div style='font-size:80%'>FastAPI: Pre-trade checks</div>"]
+        Matching["<div style='font-weight:bold'>Matching Engine</div><div style='font-size:80%'>FastAPI: Order book matching</div>"]
+        Clearing["<div style='font-weight:bold'>Clearing</div><div style='font-size:80%'>FastAPI: Post-trade settlement</div>"]
+        MarketData["<div style='font-weight:bold'>Market Data</div><div style='font-size:80%'>FastAPI: Quotes & trades</div>"]
+        DB["<div style='font-weight:bold'>PostgreSQL DB</div><div style='font-size:80%'>Stores all persistent state</div>"]
+    end
+
+    TUI -- "HTTP API calls" --> Gateway
+    Gateway -- "HTTP" --> OMS
+    Gateway -- "HTTP" --> MarketData
+    OMS -- "HTTP" --> Risk
+    OMS -- "HTTP" --> Matching
+    OMS -- "HTTP" --> Clearing
+    Matching -- "Writes events to" --> DB
+    Matching -- "Reads resting orders from" --> DB
+    OMS -- "Reads/writes" --> DB
+    Risk -- "Reads/writes" --> DB
+    Clearing -- "Reads/writes" --> DB
+
+    style TUI fill:#85bbf0,stroke:#0b4884,color:#000
+    style Gateway fill:#85bbf0,stroke:#0b4884,color:#000
+    style OMS fill:#85bbf0,stroke:#0b4884,color:#000
+    style Risk fill:#85bbf0,stroke:#0b4884,color:#000
+    style Matching fill:#85bbf0,stroke:#0b4884,color:#000
+    style Clearing fill:#85bbf0,stroke:#0b4884,color:#000
+    style MarketData fill:#85bbf0,stroke:#0b4884,color:#000
+    style DB fill:#85bbf0,stroke:#0b4884,color:#000
+```
+
+## C4 Model: Component Diagram (Order Management Service)
+
+This diagram shows the internal components of the `OrderManagementService`, illustrating how it separates HTTP handling from core business logic.
+
+```mermaid
+graph TD
+    subgraph "Order Management Service"
+        direction LR
+        style OMS fill:#1168bd,stroke:#0b4884,color:#fff
+
+        FastAPI["<div style='font-weight:bold'>FastAPI App</div><div style='font-size:80%'>app.py: HTTP endpoints</div>"]
+        Service["<div style='font-weight:bold'>OrderManagementService</div><div style='font-size:80%'>service.py: Core logic</div>"]
+        Repo["<div style='font-weight:bold'>OrderRepository</div><div style='font-size:80%'>repositories.py: DB access</div>"]
+    end
+
+    subgraph "External Services"
+        RiskClient["Risk Engine Client"]
+        MatchingClient["Matching Engine Client"]
+        ClearingClient["Clearing Client"]
+    end
+    
+    subgraph "Database"
+        OrderTable["orders table"]
+    end
+
+    FastAPI -- "Calls" --> Service
+    Service -- "Uses" --> Repo
+    Service -- "Calls" --> RiskClient
+    Service -- "Calls" --> MatchingClient
+    Service -- "Calls" --> ClearingClient
+    Repo -- "Reads/writes" --> OrderTable
+
+    style FastAPI fill:#85bbf0,stroke:#0b4884,color:#000
+    style Service fill:#85bbf0,stroke:#0b4884,color:#000
+    style Repo fill:#85bbf0,stroke:#0b4884,color:#000
+```
+
+## Sequence Diagram: New Order Submission
+
+This diagram details the sequence of calls made when a new order is submitted.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant OMS as Order Management
+    participant Risk as Risk Engine
+    participant Clearing
+    participant Matching as Matching Engine
+    participant DB as PostgreSQL
+
+    Client->>+Gateway: POST /orders
+    Gateway->>+OMS: submit_order()
+    OMS->>+DB: INSERT INTO orders (status=PENDING)
+    DB-->>-OMS: 
+    OMS->>+Risk: check()
+    Risk-->>-OMS: { passed: true }
+    OMS->>+Clearing: reserve_cash() / reserve_shares()
+    Clearing-->>-OMS: 
+    OMS->>+Matching: submit()
+    Note over Matching: Order matches, trades created
+    Matching->>+DB: INSERT INTO outbox (TradeExecuted, OrderFilled, MarketDataUpdate)
+    DB-->>-Matching: 
+    Matching-->>-OMS: 
+    OMS->>+DB: UPDATE orders (status=OPEN)
+    DB-->>-OMS: 
+    OMS-->>-Gateway: { order_id, status: 'OPEN' }
+    Gateway-->>-Client: 201 Created
+```
+
+## Logical Data Flow
+
+This diagram illustrates how data flows between the services, with a focus on the events published by the matching engine.
+
+```mermaid
+graph TD
+    subgraph "Order Flow"
+        Gateway["Gateway"] --> OMS["Order Management"]
+        OMS --> Risk["Risk Engine"]
+        Risk --> OMS
+        OMS --> Matching["Matching Engine"]
+    end
+
+    subgraph "Post-Trade Event Flow"
+        Matching -- "TradeExecuted" --> Clearing["Clearing Service"]
+        Matching -- "OrderFilled" --> OMS
+        Matching -- "MarketDataUpdate" --> MarketData["Market Data Service"]
+    end
+
+    Clearing -- "Updates" --> AccountState[("Account Balances & Positions")]
+    OMS -- "Updates" --> OrderState[("Order Status")]
+    MarketData -- "Updates" --> MarketState[("Quotes & Trade Feed")]
+
+    style AccountState fill:#222,stroke:#fff,color:#fff
+    style OrderState fill:#222,stroke:#fff,color:#fff
+    style MarketState fill:#222,stroke:#fff,color:#fff
 ```
 
 All synchronous inter-service calls are performed over HTTP using `httpx`. Trade events are delivered asynchronously via the outbox pattern, where the matching engine writes events to a PostgreSQL table. A background relay polls this table every 0.5 seconds to forward the events to downstream services.
@@ -34,9 +170,9 @@ All synchronous inter-service calls are performed over HTTP using `httpx`. Trade
 | Service | Port | Owns | Calls | Writes to DB |
 |---|---|---|---|---|
 | Gateway | 8000 | Manages the HTTP interface and translates requests/responses. | OMS, MarketData | No |
-| OrderManagement | 8001 | Handles the order lifecycle and routing. | RiskEngine, MatchingEngine | `orders` |
+| OrderManagement | 8001 | Handles the order lifecycle and routing. | RiskEngine, MatchingEngine, Clearing | `orders` |
 | RiskEngine | 8002 | Maintains an account state cache and enforces pre-trade rules. | — | `instruments` |
-| MatchingEngine | 8003 | Manages order books, trade execution, and the outbox relay. | Clearing, OMS, MarketData | `outbox` |
+| MatchingEngine | 8003 | Manages order books, trade execution, and the outbox relay. | (none directly; via outbox) | `outbox` |
 | Clearing | 8004 | Manages account balances and positions. | — | `accounts`, `positions`, `trades` |
 | MarketData | 8005 | Provides in-memory quote snapshots and trade history. | — | No |
 
@@ -70,9 +206,9 @@ Each service provides HTTP clients that mirror the Python interface of the targe
 | Client | Calls |
 |---|---|
 | `OrderManagementClient` | `submit_order()`, `cancel_order()`, `get_order()`, `get_orders_for_account()` |
-| `RiskEngineClient` | `check()`, `register_account()`, `register_instrument()`, `update_reserved_cash()`, `update_reserved_shares()`, `halt_ticker()`, `resume_ticker()` |
+| `RiskEngineClient` | `check()`, `register_account()`, `register_instrument()`, `halt_ticker()`, `resume_ticker()` |
 | `MatchingEngineClient` | `submit()`, `cancel()`, `snapshot()`, `restore_order()` |
-| `ClearingClient` | `register_account()`, `get_account()` |
+| `ClearingClient` | `register_account()`, `get_account()`, `reserve_cash()`, `reserve_shares()` |
 | `MarketDataClient` | `all_tickers()`, `get_quote()`, `get_trade_history()` |
 
 Service base URLs are configured via environment variables (e.g. `ORDER_MANAGEMENT_URL`).
@@ -80,14 +216,13 @@ Default values assume localhost with the standard port assignment above.
 
 ## Persistence layer (`shared/db/`)
 
-All data persistence is managed using SQLAlchemy Core (async), without the use of an ORM. The database tables are distributed across three distinct PostgreSQL schemas.
+All data persistence is managed using SQLAlchemy Core (async), without the use of an ORM. The database tables are distributed across four distinct PostgreSQL schemas.
 
 ```text
 shared/db/
 ├── connection.py    # get_engine() singleton; reads DATABASE_URL env var
-├── tables.py        # MetaData + 7 Table definitions across 3 schemas (+ outbox)
-└── repositories.py  # OrderRepository, AccountRepository,
-                     # InstrumentRepository, TradeRepository, OutboxRepository
+├── tables.py        # MetaData + Table definitions across 4 schemas
+└── repositories.py  # OrderRepository, AccountRepository, etc.
 ```
 
 **Tables:**
@@ -96,13 +231,12 @@ shared/db/
 |---|---|---|
 | `orders` | `order_management` | OrderManagementService (on submit, fill, cancel, reject) |
 | `accounts` | `clearing` | ClearingService (on registration via POST /accounts; on each trade) |
-| `positions` | `clearing` | ClearingService (on each trade, full replace per account) |
-| `reserved_shares` | `clearing` | ClearingService (on each trade, full replace per account) |
-| `instruments` | `risk_engine` | RiskEngine (on registration via POST /instruments) |
+| `positions` | `clearing` | ClearingService (on each trade) |
 | `trades` | `clearing` | ClearingService (on each trade) |
+| `instruments` | `risk_engine` | RiskEngine (on registration via POST /instruments) |
 | `outbox` | `matching_engine` | MatchingEngine (one row per event per destination; relay marks rows published) |
 
-**Startup DDL** uses a Postgres advisory lock (key `20260516`) to serialise `CREATE TABLE IF NOT EXISTS`
+**Startup DDL** uses a Postgres advisory lock (key `20260516`) to serialize `CREATE TABLE IF NOT EXISTS`
 across concurrent service instances so only one runs DDL at startup.
 
 The `DATABASE_URL` is essential for all stateful services, including `risk_engine`, `order_management`, `matching_engine`, and `clearing`. In contrast, stateless services such as `gateway` and `market_data` do not require it. The connection layer, located at `shared/db/connection.py`, provides an `AsyncEngine` using the `postgresql+asyncpg://` URL scheme and will raise an error immediately if the environment variable is not set.
@@ -117,7 +251,9 @@ Both stateful services that maintain in-memory caches reload their data from Pos
 
 **OMS** — The lifespan hook loads all orders from the `order_management.orders` table into its `_orders` in-memory cache. This ensures that fill events arriving after a restart are processed correctly, regardless of whether the orders were submitted in a previous session.
 
-Note: The matching engine reads from `order_management.orders`, creating a cross-schema dependency at startup. Since both schemas reside in the same PostgreSQL instance, this is a read-only coupling rather than a service call.
+**Risk Engine** - The lifespan hook loads all accounts from `clearing.accounts` and all instruments from `risk_engine.instruments` into its in-memory caches.
+
+Note: The matching engine reads from `order_management.orders`, and the risk engine reads from `clearing.accounts`, creating cross-schema dependencies at startup. Since all schemas reside in the same PostgreSQL instance, this is a read-only coupling rather than a service call.
 
 ## Outbox event relay (`services/matching_engine/`)
 
@@ -129,7 +265,7 @@ This outbox pattern decouples trade execution from downstream delivery and guara
 
 | Event | Destinations | Endpoint |
 |---|---|---|
-| `TradeExecuted` | Clearing, MarketData | `/events/trade-executed` |
+| `TradeExecuted` | Clearing | `/events/trade-executed` |
 | `OrderFilled` | OMS | `/events/order-filled` |
 | `MarketDataUpdate` | MarketData | `/events/market-data-update` |
 
