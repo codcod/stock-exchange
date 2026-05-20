@@ -28,16 +28,20 @@ logger = logging.getLogger(__name__)
 _CLEARING_URL = os.getenv('CLEARING_URL', 'http://localhost:8004')
 _OMS_URL = os.getenv('ORDER_MANAGEMENT_URL', 'http://localhost:8001')
 _MARKET_DATA_URL = os.getenv('MARKET_DATA_URL', 'http://localhost:8005')
+_ACCOUNT_URL = os.getenv('ACCOUNT_URL', 'http://localhost:8006')
+_NOTIFICATIONS_URL = os.getenv('NOTIFICATIONS_URL', 'http://localhost:8007')
 
 EVENT_DESTINATIONS: dict = {
-    'TradeExecuted': ['clearing', 'market_data'],
-    'OrderFilled': ['order_management'],
+    'TradeExecuted': ['clearing', 'market_data', 'account', 'notifications'],
+    'OrderFilled': ['order_management', 'notifications'],
     'MarketDataUpdate': ['market_data'],
 }
 DESTINATION_URLS: dict = {
     'clearing': _CLEARING_URL,
     'order_management': _OMS_URL,
     'market_data': _MARKET_DATA_URL,
+    'account': _ACCOUNT_URL,
+    'notifications': _NOTIFICATIONS_URL,
 }
 ENDPOINT_FOR_EVENT_TYPE: dict = {
     'TradeExecuted': '/events/trade-executed',

@@ -161,3 +161,39 @@ class MarketDataUpdateEvent(BaseModel):
     ask: float = 0.0
     last_price: float = 0.0
     volume: int = 0
+
+
+class AccountUpdatedEvent(BaseModel):
+    """Account → Risk Engine. Full account snapshot after any state mutation."""
+
+    account_id: str
+    name: str
+    cash_balance: float
+    reserved_cash: float = 0.0
+    positions: tp.Dict[str, int] = {}
+    reserved_shares: tp.Dict[str, int] = {}
+
+
+class OrderAcceptedEvent(BaseModel):
+    """OMS → Notifications. Order passed risk checks and entered the book."""
+
+    order_id: str
+    account_id: str
+    ticker: str
+
+
+class OrderRejectedEvent(BaseModel):
+    """OMS → Notifications. Order failed pre-trade risk checks."""
+
+    order_id: str
+    account_id: str
+    ticker: str
+    reason: str
+
+
+class OrderCancelledEvent(BaseModel):
+    """OMS → Notifications. Order was successfully cancelled."""
+
+    order_id: str
+    account_id: str
+    ticker: str

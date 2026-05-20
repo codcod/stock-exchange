@@ -38,7 +38,7 @@ class FakeMatchingEngine:
         return True
 
 
-class FakeClearingEngine:
+class FakeAccountClient:
     async def reserve_cash(self, account_id: str, delta: float) -> None:
         pass
 
@@ -98,7 +98,7 @@ def make_svc(
         risk_engine=risk or FakeRiskEngine(),
         matching_engine=FakeMatchingEngine(),
         order_repo=repo,
-        clearing_engine=FakeClearingEngine(),
+        account_client=FakeAccountClient(),
     )
     return svc, repo
 

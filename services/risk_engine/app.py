@@ -1,16 +1,14 @@
 """
-A standalone FastAPI service that wraps the RiskEngine, providing
-endpoints for risk checks, account and instrument registration, and
-trading halts.
+Risk Engine — pre-trade validation service.
 
-This service is responsible for ensuring that all trading activities
-comply with the defined risk rules before they are processed by the
-matching engine.
+Caches account and instrument state in memory for fast order checks.
+The cache is warmed at startup from the Account service and kept current
+via AccountUpdated events delivered through the Account outbox relay.
 
 Environment variables:
-- `DATABASE_URL`: The URL for the PostgreSQL database (required).
-- `CLEARING_URL`: The URL for the Clearing Service (default: `http://localhost:8004`).
-- `PORT`: The HTTP port on which the service will run (default: 8002).
+- `DATABASE_URL`: PostgreSQL connection string (required).
+- `ACCOUNT_URL`: URL for the Account service (default: http://localhost:8006).
+- `PORT`: HTTP port (default: 8002).
 """
 
 from __future__ import annotations
@@ -28,17 +26,18 @@ from services.risk_engine.engine import RiskEngine
 from services.risk_engine.repository import InstrumentRepository
 from services.risk_engine.tables import ensure_tables
 from shared.domain.api_schemas import (
+    AccountUpdatedEvent,
     OrderRequest,
     RegisterAccountRequest,
     RegisterInstrumentRequest,
 )
 from shared.domain.models import Account, Instrument
-from shared.platform.clients.clearing import ClearingClient
+from shared.platform.clients.account import AccountClient
 from shared.platform.db.connection import get_engine
 
 logger = logging.getLogger(__name__)
 
-_CLEARING_URL = os.getenv('CLEARING_URL', 'http://localhost:8004')
+_ACCOUNT_URL = os.getenv('ACCOUNT_URL', 'http://localhost:8006')
 
 _engine_svc: RiskEngine = RiskEngine()
 
@@ -60,13 +59,13 @@ async def lifespan(app: FastAPI):
     _state.instrument_repo = InstrumentRepository(db)
     for instrument in await _state.instrument_repo.load_all():
         _engine_svc.register_instrument(instrument)
-    clearing = ClearingClient(_CLEARING_URL, _state.http)
+    account_client = AccountClient(_ACCOUNT_URL, _state.http)
     try:
-        for account in await clearing.list_accounts():
+        for account in await account_client.list_accounts():
             _engine_svc.register_account(account)
     except Exception:
         logger.warning(
-            'Could not load accounts from Clearing — starting with empty account cache'
+            'Could not load accounts from Account service — starting with empty cache'
         )
 
     yield
@@ -114,6 +113,26 @@ async def register_instrument(req: RegisterInstrumentRequest) -> dict:
     )
     await _state.instrument_repo.save(instrument)
     _engine_svc.register_instrument(instrument)
+    return {}
+
+
+# ---------------------------------------------------------------------------
+# Account updates from Account service outbox
+# ---------------------------------------------------------------------------
+
+
+@app.post('/events/account-updated')
+async def on_account_updated(req: AccountUpdatedEvent) -> dict:
+    """Update the risk engine's account cache from an AccountUpdated event."""
+    account = Account(
+        account_id=req.account_id,
+        name=req.name,
+        cash_balance=req.cash_balance,
+        reserved_cash=req.reserved_cash,
+    )
+    account.positions = dict(req.positions)
+    account.reserved_shares = dict(req.reserved_shares)
+    _engine_svc.register_account(account)
     return {}
 
 

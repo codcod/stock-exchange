@@ -14,9 +14,10 @@ from dataclasses import dataclass
 
 import httpx
 
-from shared.platform.clients.clearing import ClearingClient
+from shared.platform.clients.account import AccountClient
 from shared.platform.clients.market_data import MarketDataClient
 from shared.platform.clients.matching_engine import MatchingEngineClient
+from shared.platform.clients.notifications import NotificationsClient
 from shared.platform.clients.order_management import OrderManagementClient
 from shared.platform.clients.risk_engine import RiskEngineClient
 
@@ -28,10 +29,11 @@ class ServiceClients:
     """A container for all downstream service clients."""
 
     oms: OrderManagementClient
-    clearing: ClearingClient
+    account: AccountClient
     market_data: MarketDataClient
     risk: RiskEngineClient
     matching: MatchingEngineClient
+    notifications: NotificationsClient
 
 
 def init_clients(http: httpx.AsyncClient) -> 'ServiceClients':
@@ -45,9 +47,7 @@ def init_clients(http: httpx.AsyncClient) -> 'ServiceClients':
         oms=OrderManagementClient(
             os.getenv('ORDER_MANAGEMENT_URL', 'http://localhost:8001'), http
         ),
-        clearing=ClearingClient(
-            os.getenv('CLEARING_URL', 'http://localhost:8004'), http
-        ),
+        account=AccountClient(os.getenv('ACCOUNT_URL', 'http://localhost:8006'), http),
         market_data=MarketDataClient(
             os.getenv('MARKET_DATA_URL', 'http://localhost:8005'), http
         ),
@@ -56,6 +56,9 @@ def init_clients(http: httpx.AsyncClient) -> 'ServiceClients':
         ),
         matching=MatchingEngineClient(
             os.getenv('MATCHING_ENGINE_URL', 'http://localhost:8003'), http
+        ),
+        notifications=NotificationsClient(
+            os.getenv('NOTIFICATIONS_URL', 'http://localhost:8007'), http
         ),
     )
 

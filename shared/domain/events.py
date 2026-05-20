@@ -84,3 +84,15 @@ class MarketDataUpdate(Event):
     ask: float = 0.0
     last_price: float = 0.0
     volume: int = 0
+
+
+@dataclass
+class AccountUpdated(Event):
+    """Fired by the Account service after every state mutation."""
+
+    account_id: str = ''
+    name: str = ''
+    cash_balance: float = 0.0
+    reserved_cash: float = 0.0
+    positions: dict = field(default_factory=dict)
+    reserved_shares: dict = field(default_factory=dict)
