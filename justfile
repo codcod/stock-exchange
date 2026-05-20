@@ -132,13 +132,15 @@ run-oms:
     DATABASE_URL={{ db_url }} \
     RISK_ENGINE_URL=http://localhost:8002 \
     MATCHING_ENGINE_URL=http://localhost:8003 \
+    ACCOUNT_URL=http://localhost:8006 \
+    NOTIFICATIONS_URL=http://localhost:8007 \
     uv run python -m services.order_management
 
 # Risk Engine
 [group('run locally')]
 run-risk:
     DATABASE_URL={{ db_url }} \
-    CLEARING_URL=http://localhost:8004 \
+    ACCOUNT_URL=http://localhost:8006 \
     uv run python -m services.risk_engine
 
 # Matching Engine
@@ -148,12 +150,26 @@ run-matching:
     CLEARING_URL=http://localhost:8004 \
     ORDER_MANAGEMENT_URL=http://localhost:8001 \
     MARKET_DATA_URL=http://localhost:8005 \
+    ACCOUNT_URL=http://localhost:8006 \
+    NOTIFICATIONS_URL=http://localhost:8007 \
     uv run python -m services.matching_engine
 
 # Clearing Service
 [group('run locally')]
 run-clearing:
     DATABASE_URL={{ db_url }} uv run python -m services.clearing
+
+# Account Service
+[group('run locally')]
+run-account:
+    DATABASE_URL={{ db_url }} \
+    RISK_ENGINE_URL=http://localhost:8002 \
+    uv run python -m services.account
+
+# Notifications Service
+[group('run locally')]
+run-notifications:
+    DATABASE_URL={{ db_url }} uv run python -m services.notifications
 
 # Market Data Service
 [group('run locally')]

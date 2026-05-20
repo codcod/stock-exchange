@@ -24,7 +24,7 @@ from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 if tp.TYPE_CHECKING:
     from services.order_management.repository import OrderRepository
-    from shared.platform.clients.clearing import ClearingClient
+    from shared.platform.clients.account import AccountClient
     from shared.platform.clients.matching_engine import MatchingEngineClient
     from shared.platform.clients.risk_engine import RiskEngineClient
 
@@ -44,13 +44,13 @@ class OrderManagementService:
         risk_engine: 'RiskEngineClient',
         matching_engine: 'MatchingEngineClient',
         order_repo: 'OrderRepository',
-        clearing_engine: 'ClearingClient',
+        account_client: 'AccountClient',
     ) -> None:
         self._risk = risk_engine
         self._matching = matching_engine
         self._orders: tp.Dict[str, Order] = {}
         self._order_repo = order_repo
-        self._clearing = clearing_engine
+        self._account = account_client
 
     # ------------------------------------------------------------------
     # Public API
@@ -116,6 +116,7 @@ class OrderManagementService:
 
         cancelled = await self._matching.cancel(order)
         if cancelled:
+            order.status = OrderStatus.CANCELLED
             await self._release(order)
             await self._order_repo.update(order)
         return cancelled
@@ -176,11 +177,11 @@ class OrderManagementService:
         if order.order_type != OrderType.LIMIT:
             return
         if order.side == Side.BUY and order.price:
-            await self._clearing.reserve_cash(
+            await self._account.reserve_cash(
                 order.account_id, order.price * order.quantity
             )
         elif order.side == Side.SELL:
-            await self._clearing.reserve_shares(
+            await self._account.reserve_shares(
                 order.account_id, order.ticker, order.quantity
             )
 
@@ -195,10 +196,10 @@ class OrderManagementService:
         if remaining <= 0 or order.order_type != OrderType.LIMIT:
             return
         if order.side == Side.BUY and order.price:
-            await self._clearing.reserve_cash(
+            await self._account.reserve_cash(
                 order.account_id, -(order.price * remaining)
             )
         elif order.side == Side.SELL:
-            await self._clearing.reserve_shares(
+            await self._account.reserve_shares(
                 order.account_id, order.ticker, -remaining
             )
