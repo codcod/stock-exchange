@@ -38,6 +38,7 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | high | medium | M | [] |  |
 
 ## TO DO (impact order, per child)
 
@@ -45,20 +46,19 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
-| EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | high | medium | M | [] |  |
-| EXC-005 | Migrate services/gateway into platform/gateway package | medium | low | S | [] |  |
-| EXC-006 | Migrate services/market_data into platform/market_data package | medium | low | S | [] |  |
+| EXC-005 | Migrate services/gateway into platform/gateway package | medium | low | S | [EXC-004] |  |
+| EXC-006 | Migrate services/market_data into platform/market_data package | medium | low | S | [EXC-004] |  |
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | S-M | [] |  |
 | EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + matching_engine | medium | medium | M | [] |  |
-| EXC-007 | Migrate services/account into platform/account package with own Alembic history | medium | medium | M | [] |  |
-| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [] |  |
-| EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [] |  |
-| EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [] |  |
-| EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | medium | medium | M | [] |  |
-| EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | medium | medium | M | [] |  |
-| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | medium | medium | M | [] |  |
-| EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [] |  |
-| EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [] |  |
+| EXC-007 | Migrate services/account into platform/account package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | medium | medium | M | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
+| EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
+| EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012, EXC-013, EXC-014] |  |
 
 ## DONE
 
