@@ -38,6 +38,7 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | high | medium | M | [] |  |
 
 ## TO DO (impact order, per child)
 
@@ -45,7 +46,6 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
-| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | high | medium | M | [] |  |
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | S-M | [] |  |
 | EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + matching_engine | medium | medium | M | [] |  |
 
