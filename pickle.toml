@@ -22,3 +22,4 @@ ticket_prefix = "EXC"
 branch_prefix = "feat/"
 wip_in_development = 1
 wip_in_review = 1
+review_addendum = "development/review-addendum.md"
