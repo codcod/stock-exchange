@@ -7,6 +7,19 @@ from shared.platform.db.tables import ensure_tables as _ensure_tables
 metadata = MetaData()
 _SCHEMAS = ('order_management',)
 
+outbox = Table(
+    'outbox',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('event_id', String, nullable=False),
+    Column('event_type', String, nullable=False),
+    Column('destination', String, nullable=False),
+    Column('payload', Text, nullable=False),
+    Column('created_at', DateTime(timezone=True), nullable=False),
+    Column('published_at', DateTime(timezone=True), nullable=True),
+    schema='order_management',
+)
+
 orders = Table(
     'orders',
     metadata,
