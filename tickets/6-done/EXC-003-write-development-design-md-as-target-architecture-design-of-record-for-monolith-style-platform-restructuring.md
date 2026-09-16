@@ -276,3 +276,4 @@ references it. No assumption invalidated; no patch needed.
 - 2026-09-16 — READY → IN DEVELOPMENT
 - 2026-09-16 — IN DEVELOPMENT → IN REVIEW
 - 2026-09-16 — IN REVIEW → DONE: review clean; 3 non-blocking findings, 2 fixed inline, 1 noted
+- 2026-09-16 — merged to main (PR #18, 53104bc)
