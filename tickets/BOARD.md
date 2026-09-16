@@ -13,10 +13,11 @@ Last updated: 2026-09-16
 
 ## IN DEVELOPMENT
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | [] |
 
 ## IN REVIEW
 
@@ -38,7 +39,6 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
-| EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | high | medium | M | [] |  |
 
 ## TO DO (impact order, per child)
 
