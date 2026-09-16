@@ -45,8 +45,20 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | high | medium | M | [] |  |
+| EXC-005 | Migrate services/gateway into platform/gateway package | medium | low | S | [] |  |
+| EXC-006 | Migrate services/market_data into platform/market_data package | medium | low | S | [] |  |
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | S-M | [] |  |
 | EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + matching_engine | medium | medium | M | [] |  |
+| EXC-007 | Migrate services/account into platform/account package with own Alembic history | medium | medium | M | [] |  |
+| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [] |  |
+| EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [] |  |
+| EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [] |  |
+| EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | medium | medium | M | [] |  |
+| EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | medium | medium | M | [] |  |
+| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | medium | medium | M | [] |  |
+| EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [] |  |
+| EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [] |  |
 
 ## DONE
 
@@ -54,7 +66,7 @@ Last updated: 2026-09-16
 
 | id | title | merged |
 |---|---|---|
-| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | no — publish-gated |
+| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | yes — merged to main (PR #18, 53104bc) |
 
 ## DROPPED
 
