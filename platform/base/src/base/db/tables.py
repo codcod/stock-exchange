@@ -1,5 +1,5 @@
 """
-shared/platform/db/tables.py
+platform/base/src/base/db/tables.py
 
 DDL helper — creates schemas and tables for one service at startup.
 Each service calls this with its own MetaData and schema list.

@@ -6,9 +6,9 @@ import typing as tp
 
 import httpx
 
-from shared.domain.models import Order
-from shared.platform.clients.converters import dict_to_order, order_to_dict
-from shared.platform.http_client import http_delete, http_get, http_post
+from base.clients.converters import dict_to_order, order_to_dict
+from base.domain.models import Order
+from base.http_client import http_delete, http_get, http_post
 
 
 class OrderManagementClient:

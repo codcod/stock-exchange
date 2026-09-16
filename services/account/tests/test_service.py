@@ -6,10 +6,10 @@ Covers settlement (apply_settlement), reservation management
 """
 
 import pytest
+from base.domain.events import TradeExecuted
+from base.domain.models import Account
 
 from services.account.service import AccountService
-from shared.domain.events import TradeExecuted
-from shared.domain.models import Account
 
 # ---------------------------------------------------------------------------
 # Stubs

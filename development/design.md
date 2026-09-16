@@ -24,7 +24,7 @@ services/clearing      → post-trade trade-record keeper (audit ledger only)
 services/account       → source of truth for cash, positions, and reservations
 services/notifications → per-account event feed; WebSocket push + HTTP backfill
 services/market_data   → publishes prices, depth, and trade feed
-shared/                → domain models, HTTP service clients, outbox event routing, db layer
+platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
 infra/                 → docker-compose files and helper scripts
 ```
 
@@ -62,10 +62,10 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 - Each service exposes a plain Python class interface. HTTP-specific logic is confined to the `app.py` file, keeping the core service logic clean and framework-agnostic.
 - Services communicate with each other via synchronous HTTP calls using `httpx`. After a match, the matching engine writes events to a PostgreSQL outbox table. A background relay process then delivers these events to downstream services.
 - Three services run outbox relays: `matching_engine` (TradeExecuted/OrderFilled/MarketDataUpdate), `account` (AccountUpdated → Risk Engine), and `order_management` (OrderAccepted/Rejected/Cancelled → Notifications).
-- Persistence is handled using SQLAlchemy Core (async) without an ORM. See the `shared/db/` directory for more details.
+- Persistence is handled using SQLAlchemy Core (async) without an ORM. See the `platform/base/src/base/` directory for more details.
 - Stateful services (require `DATABASE_URL`): `risk_engine`, `order_management`, `matching_engine`, `clearing`, `account`, `notifications`. Stateless: `gateway`, `market_data`.
 - Tests are located alongside each service in its corresponding `tests/` directory.
-- Domain models are defined as dataclasses in `shared/domain/models.py`.
+- Domain models are defined as dataclasses in `platform/base/src/base/domain/models.py`.
 - To maintain readability, each service file should ideally be kept under 200 lines. If a file grows beyond this, consider splitting it into submodules.
 - All services are built with `async def`, as both FastAPI and `asyncpg` require it.
 - The client-side code in `clients/tui/` is synchronous. For blocking I/O operations, use `@work(thread=True)` instead of coroutines.
@@ -79,7 +79,7 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 
 ## When modifying a service
 
-1. Check `shared/domain/` first — domain models and events are shared across all services
+1. Check `platform/base/` first — domain models and events are shared across all services
 2. Update the service logic
 3. If the change produces new events, update the relevant outbox relay's `EVENT_DESTINATIONS` and `ENDPOINT_FOR_EVENT_TYPE` maps
 4. If the change affects persistent state, update the service's own `tables.py` and `repository.py`
@@ -94,10 +94,12 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 > becoming first-class (Clearing is shown owning balances/positions, with no Account/
 > Notifications containers), and it predates the `shared/` reorganization into `shared/platform/`
 > (its `shared/service_clients.py` and `shared/db/{connection,tables,repositories}.py` paths are
-> stale — the real modules live under `shared/platform/clients/` and `shared/platform/db/`). See
+> stale — the real modules live under `shared/platform/clients/` and `shared/platform/db/`), and
+> it further predates `shared/platform/`/`shared/domain/` moving into the `uv` workspace package
+> `platform/base/` (`base.{db,http_client,request_context,clients,domain}`). See
 > "Architecture overview" and "Account and Risk Engine freshness" above for the current,
-> authoritative service list and ownership split; read the actual `shared/` tree for current
-> module paths.
+> authoritative service list and ownership split; read the actual `platform/base/` tree for
+> current module paths.
 
 ### C4 Model: System Context
 

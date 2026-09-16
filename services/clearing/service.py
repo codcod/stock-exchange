@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import logging
 
-from shared.domain.events import TradeExecuted
-from shared.domain.models import Trade
+from base.domain.events import TradeExecuted
+from base.domain.models import Trade
 
 if __import__('typing').TYPE_CHECKING:
     from services.clearing.repository import TradeRepository

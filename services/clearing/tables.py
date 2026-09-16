@@ -1,5 +1,6 @@
 """Table definitions for the Clearing service — trade records only."""
 
+from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import (
     Column,
     DateTime,
@@ -9,8 +10,6 @@ from sqlalchemy import (
     String,
     Table,
 )
-
-from shared.platform.db.tables import ensure_tables as _ensure_tables
 
 metadata = MetaData()
 _SCHEMAS = ('clearing',)

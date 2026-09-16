@@ -1,8 +1,7 @@
 """Table definitions for the Risk Engine service."""
 
+from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import Boolean, Column, Integer, MetaData, Numeric, String, Table
-
-from shared.platform.db.tables import ensure_tables as _ensure_tables
 
 metadata = MetaData()
 _SCHEMAS = ('risk_engine',)

@@ -25,8 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 logging.disable(logging.CRITICAL)
 
 import httpx  # noqa: E402
-
-from shared.domain.models import Account  # noqa: E402
+from base.domain.models import Account  # noqa: E402
 
 random.seed(42)
 

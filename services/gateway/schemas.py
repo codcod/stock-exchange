@@ -7,12 +7,11 @@ from __future__ import annotations
 import typing as tp
 from datetime import datetime
 
+from base.domain.models import OrderStatus, OrderType, Side
 from pydantic import BaseModel
 
-from shared.domain.models import OrderStatus, OrderType, Side
-
 if tp.TYPE_CHECKING:
-    from shared.domain.models import Account, Order
+    from base.domain.models import Account, Order
 
 
 # ---------------------------------------------------------------------------

@@ -5,11 +5,11 @@ from __future__ import annotations
 import typing as tp
 from datetime import datetime, timezone
 
+from base.domain.models import Order, OrderStatus, OrderType, Side
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from services.order_management.tables import orders as orders_t
-from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 
 def _f(val) -> tp.Optional[float]:

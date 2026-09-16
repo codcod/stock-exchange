@@ -7,10 +7,10 @@ Settlement logic lives in services/account/tests/.
 """
 
 import pytest
+from base.domain.events import TradeExecuted
+from base.domain.models import Trade
 
 from services.clearing.service import ClearingService
-from shared.domain.events import TradeExecuted
-from shared.domain.models import Trade
 
 
 class FakeTradeRepo:

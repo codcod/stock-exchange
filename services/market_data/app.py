@@ -17,11 +17,11 @@ import typing as tp
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
+from base.domain.api_schemas import MarketDataUpdateEvent, TradeExecutedEvent
+from base.domain.events import MarketDataUpdate, TradeExecuted
 from fastapi import FastAPI, HTTPException, Query
 
 from services.market_data.service import MarketDataService
-from shared.domain.api_schemas import MarketDataUpdateEvent, TradeExecutedEvent
-from shared.domain.events import MarketDataUpdate, TradeExecuted
 
 
 @dataclass

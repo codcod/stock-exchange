@@ -1,9 +1,9 @@
 """Tests for the risk engine pre-trade checks."""
 
 import pytest
+from base.domain.models import Account, Instrument, Order, OrderType, Side
 
 from services.risk_engine.engine import RiskEngine
-from shared.domain.models import Account, Instrument, Order, OrderType, Side
 
 
 @pytest.fixture

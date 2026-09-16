@@ -20,20 +20,20 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 import httpx
-from fastapi import FastAPI
-
-from services.risk_engine.engine import RiskEngine
-from services.risk_engine.repository import InstrumentRepository
-from services.risk_engine.tables import ensure_tables
-from shared.domain.api_schemas import (
+from base.clients.account import AccountClient
+from base.db.connection import get_engine
+from base.domain.api_schemas import (
     AccountUpdatedEvent,
     OrderRequest,
     RegisterAccountRequest,
     RegisterInstrumentRequest,
 )
-from shared.domain.models import Account, Instrument
-from shared.platform.clients.account import AccountClient
-from shared.platform.db.connection import get_engine
+from base.domain.models import Account, Instrument
+from fastapi import FastAPI
+
+from services.risk_engine.engine import RiskEngine
+from services.risk_engine.repository import InstrumentRepository
+from services.risk_engine.tables import ensure_tables
 
 logger = logging.getLogger(__name__)
 

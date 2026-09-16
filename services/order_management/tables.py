@@ -1,8 +1,7 @@
 """Table definitions for the Order Management service."""
 
+from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import Column, DateTime, Integer, MetaData, Numeric, String, Table, Text
-
-from shared.platform.db.tables import ensure_tables as _ensure_tables
 
 metadata = MetaData()
 _SCHEMAS = ('order_management',)

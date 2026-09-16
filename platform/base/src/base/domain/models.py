@@ -1,5 +1,5 @@
 """
-shared/domain/models.py
+platform/base/src/base/domain/models.py
 
 Core domain entities shared across all services: the exchange's universal vocabulary.
 """

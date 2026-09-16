@@ -2,6 +2,7 @@
 
 import typing as tp
 
+from base.domain.models import Account
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from services.gateway.auth import require_api_key
@@ -13,7 +14,6 @@ from services.gateway.schemas import (
     account_to_response,
     order_to_response,
 )
-from shared.domain.models import Account
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 

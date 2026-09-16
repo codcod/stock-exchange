@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import typing as tp
 
+from base.domain.events import MarketDataUpdate, OrderFilled, TradeExecuted
+from base.domain.models import Order, Trade
+
 from services.matching_engine.order_book import OrderBook
-from shared.domain.events import MarketDataUpdate, OrderFilled, TradeExecuted
-from shared.domain.models import Order, Trade
 
 
 class MatchingEngine:

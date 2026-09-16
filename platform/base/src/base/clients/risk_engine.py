@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import httpx
 
-from shared.domain.api_schemas import RiskCheckResult
-from shared.domain.models import Account, Instrument, Order
-from shared.platform.clients.converters import (
+from base.clients.converters import (
     account_to_dict,
     instrument_to_dict,
     order_to_dict,
 )
-from shared.platform.http_client import http_post
+from base.domain.api_schemas import RiskCheckResult
+from base.domain.models import Account, Instrument, Order
+from base.http_client import http_post
 
 
 class RiskEngineClient:

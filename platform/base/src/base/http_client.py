@@ -10,7 +10,7 @@ import typing as tp
 
 import httpx
 
-from shared.platform.request_context import request_id as _request_id_ctx
+from base.request_context import request_id as _request_id_ctx
 
 
 def _correlation_headers() -> tp.Dict[str, str]:
