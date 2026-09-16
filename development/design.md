@@ -88,12 +88,16 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 
 ## Detailed architecture
 
-> Folded in from the former `docs/architecture.md`. It predates the `account` and
-> `notifications` services becoming first-class — the diagrams, service table, and tables list
-> below still describe the pre-account/notifications shape (Clearing shown as owning
-> balances/positions, no Account/Notifications containers). See "Architecture overview" and
-> "Account and Risk Engine freshness" above for the current, authoritative service list and
-> ownership split.
+> Folded in from the former `docs/architecture.md`, largely verbatim, and **not** re-audited
+> against the current tree as part of this fold — treat it as historical background, not a
+> current source of truth. Known gaps: it predates the `account` and `notifications` services
+> becoming first-class (Clearing is shown owning balances/positions, with no Account/
+> Notifications containers), and it predates the `shared/` reorganization into `shared/platform/`
+> (its `shared/service_clients.py` and `shared/db/{connection,tables,repositories}.py` paths are
+> stale — the real modules live under `shared/platform/clients/` and `shared/platform/db/`). See
+> "Architecture overview" and "Account and Risk Engine freshness" above for the current,
+> authoritative service list and ownership split; read the actual `shared/` tree for current
+> module paths.
 
 ### C4 Model: System Context
 
