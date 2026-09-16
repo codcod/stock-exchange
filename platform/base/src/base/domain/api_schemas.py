@@ -18,7 +18,7 @@ import typing as tp
 
 from pydantic import BaseModel
 
-from shared.domain.models import Order, OrderStatus, OrderType, Side
+from base.domain.models import Order, OrderStatus, OrderType, Side
 
 # ---------------------------------------------------------------------------
 # Account & instrument registration (inter-service)

@@ -28,14 +28,14 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 import httpx
+from base.clients.order_management import OrderManagementClient
+from base.db.connection import get_engine
+from base.domain.api_schemas import OrderRequest
 from fastapi import FastAPI, Query
 
 from services.matching_engine.matching import MatchingEngine
 from services.matching_engine.outbox_relay import enqueue_events, run_relay
 from services.matching_engine.tables import ensure_tables
-from shared.domain.api_schemas import OrderRequest
-from shared.platform.clients.order_management import OrderManagementClient
-from shared.platform.db.connection import get_engine
 
 logger = logging.getLogger(__name__)
 

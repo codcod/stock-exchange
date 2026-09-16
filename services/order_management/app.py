@@ -30,6 +30,14 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import httpx
+from base.clients.account import AccountClient
+from base.clients.converters import order_to_dict
+from base.clients.matching_engine import MatchingEngineClient
+from base.clients.risk_engine import RiskEngineClient
+from base.db.connection import get_engine
+from base.domain.api_schemas import OrderFilledEvent, OrderRequest
+from base.domain.events import OrderFilled
+from base.domain.models import OrderStatus
 from fastapi import FastAPI, HTTPException, Query
 
 from services.order_management.outbox_relay import run_relay
@@ -37,14 +45,6 @@ from services.order_management.outbox_repo import write_outbox_rows
 from services.order_management.repository import OrderRepository
 from services.order_management.service import OrderManagementService
 from services.order_management.tables import ensure_tables
-from shared.domain.api_schemas import OrderFilledEvent, OrderRequest
-from shared.domain.events import OrderFilled
-from shared.domain.models import OrderStatus
-from shared.platform.clients.account import AccountClient
-from shared.platform.clients.converters import order_to_dict
-from shared.platform.clients.matching_engine import MatchingEngineClient
-from shared.platform.clients.risk_engine import RiskEngineClient
-from shared.platform.db.connection import get_engine
 
 _RISK_URL = os.getenv('RISK_ENGINE_URL', 'http://localhost:8002')
 _MATCHING_URL = os.getenv('MATCHING_ENGINE_URL', 'http://localhost:8003')

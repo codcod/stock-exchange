@@ -8,11 +8,11 @@ of bug where OMS updates in-memory state but fails to persist it correctly.
 import typing as tp
 
 import pytest
+from base.domain.events import OrderFilled
+from base.domain.models import Order, OrderStatus, OrderType, Side
 
 from services.order_management.service import OrderManagementService
 from services.risk_engine.engine import RiskResult
-from shared.domain.events import OrderFilled
-from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 # ---------------------------------------------------------------------------
 # Stubs

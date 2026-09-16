@@ -53,10 +53,10 @@ services/
   order_management/ # Manages the lifecycle and routing of orders
   clearing/         # Handles post-trade settlement, updating cash and share balances
   market_data/      # Provides live quotes and trade history (in-memory)
-shared/
-  models/domain.py     # Contains dataclasses for Order, Trade, Account, and Instrument
-  service_clients.py   # Implements HTTP client classes for inter-service communication
-  db/                  # Manages the database schema, repositories, and connection factory using SQLAlchemy Core (async)
+platform/
+  base/             # Shared `uv` workspace package (see platform/base/README.md): domain
+                    # models/events/API schemas, DB engine, HTTP client, request context,
+                    # per-service HTTP clients
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual

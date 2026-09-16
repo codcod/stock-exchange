@@ -19,14 +19,15 @@ from __future__ import annotations
 import logging
 import typing as tp
 
-from shared.domain.events import OrderFilled
-from shared.domain.models import Order, OrderStatus, OrderType, Side
+from base.domain.events import OrderFilled
+from base.domain.models import Order, OrderStatus, OrderType, Side
 
 if tp.TYPE_CHECKING:
+    from base.clients.account import AccountClient
+    from base.clients.matching_engine import MatchingEngineClient
+    from base.clients.risk_engine import RiskEngineClient
+
     from services.order_management.repository import OrderRepository
-    from shared.platform.clients.account import AccountClient
-    from shared.platform.clients.matching_engine import MatchingEngineClient
-    from shared.platform.clients.risk_engine import RiskEngineClient
 
 logger = logging.getLogger(__name__)
 

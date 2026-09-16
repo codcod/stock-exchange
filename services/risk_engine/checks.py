@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import typing as tp
 
+from base.domain.models import Account, Instrument, Order, OrderType, Side
+
 from services.risk_engine.engine import RiskResult
-from shared.domain.models import Account, Instrument, Order, OrderType, Side
 
 MAX_ORDER_VALUE = 1_000_000.0
 MIN_CASH_BUFFER = 0.0

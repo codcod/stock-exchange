@@ -12,7 +12,7 @@ import logging
 import typing as tp
 from dataclasses import dataclass
 
-from shared.domain.models import Account, Instrument, Order
+from base.domain.models import Account, Instrument, Order
 
 logger = logging.getLogger(__name__)
 

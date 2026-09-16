@@ -7,7 +7,7 @@ from __future__ import annotations
 import typing as tp
 from datetime import datetime
 
-from shared.domain.models import (
+from base.domain.models import (
     Account,
     Instrument,
     Order,

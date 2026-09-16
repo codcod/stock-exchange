@@ -4,11 +4,11 @@ Covers: basic match, partial fill, price priority, no match, market order.
 """
 
 import pytest
+from base.domain.events import OrderFilled, TradeExecuted
+from base.domain.models import Order, OrderStatus, OrderType, Side
 
 from services.matching_engine.matching import MatchingEngine
 from services.matching_engine.order_book import OrderBook
-from shared.domain.events import OrderFilled, TradeExecuted
-from shared.domain.models import Order, OrderStatus, OrderType, Side
 
 
 @pytest.fixture

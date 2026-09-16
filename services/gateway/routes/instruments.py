@@ -1,11 +1,11 @@
 """Instrument registration endpoint."""
 
+from base.domain.models import Instrument
 from fastapi import APIRouter, Depends, status
 
 from services.gateway.auth import require_api_key
 from services.gateway.dependencies import ServiceClients, get_clients
 from services.gateway.schemas import RegisterInstrumentRequest
-from shared.domain.models import Instrument
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 

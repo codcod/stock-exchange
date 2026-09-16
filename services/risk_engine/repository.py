@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import typing as tp
 
+from base.domain.models import Instrument
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from services.risk_engine.tables import instruments as instruments_t
-from shared.domain.models import Instrument
 
 
 def _f(val) -> tp.Optional[float]:

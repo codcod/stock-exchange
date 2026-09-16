@@ -6,7 +6,7 @@ import typing as tp
 
 import httpx
 
-from shared.platform.http_client import http_get
+from base.http_client import http_get
 
 
 class MarketDataClient:

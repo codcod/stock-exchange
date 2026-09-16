@@ -25,19 +25,19 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
-
-from services.notifications.repository import NotificationRepository
-from services.notifications.service import NotificationService
-from services.notifications.tables import ensure_tables
-from shared.domain.api_schemas import (
+from base.db.connection import get_engine
+from base.domain.api_schemas import (
     OrderAcceptedEvent,
     OrderCancelledEvent,
     OrderFilledEvent,
     OrderRejectedEvent,
     TradeExecutedEvent,
 )
-from shared.platform.db.connection import get_engine
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
+
+from services.notifications.repository import NotificationRepository
+from services.notifications.service import NotificationService
+from services.notifications.tables import ensure_tables
 
 logger = logging.getLogger(__name__)
 

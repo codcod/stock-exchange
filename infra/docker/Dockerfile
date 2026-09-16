@@ -3,11 +3,15 @@ FROM python:3.14-slim
 WORKDIR /app
 
 # Install dependencies
-COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e ".[dev]" 2>/dev/null || pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir uv
 
 # Copy source
 COPY . .
+# ponytail: whole-repo COPY before install drops the old dep-layer cache split;
+# restore it (or drop this file) once EXC-005..012 give each service its own Dockerfile (EXC-015).
+RUN uv sync --frozen --no-dev
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Default port — overridden per-service via PORT env var
 EXPOSE 8000

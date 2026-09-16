@@ -15,13 +15,13 @@ import typing as tp
 from dataclasses import asdict
 from datetime import datetime, timezone
 
+from base.domain.events import AccountUpdated, TradeExecuted
+from base.domain.models import Account
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from services.account.outbox_repo import write_outbox_rows
 from services.account.tables import processed_events as processed_events_t
-from shared.domain.events import AccountUpdated, TradeExecuted
-from shared.domain.models import Account
 
 if tp.TYPE_CHECKING:
     from services.account.repository import AccountRepository

@@ -16,14 +16,14 @@ import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
+from base.db.connection import get_engine
+from base.domain.api_schemas import TradeExecutedEvent
+from base.domain.events import TradeExecuted
 from fastapi import FastAPI
 
 from services.clearing.repository import TradeRepository
 from services.clearing.service import ClearingService
 from services.clearing.tables import ensure_tables
-from shared.domain.api_schemas import TradeExecutedEvent
-from shared.domain.events import TradeExecuted
-from shared.platform.db.connection import get_engine
 
 logger = logging.getLogger(__name__)
 

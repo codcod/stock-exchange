@@ -6,9 +6,9 @@ import typing as tp
 
 import httpx
 
-from shared.domain.models import Account
-from shared.platform.clients.converters import account_to_dict, dict_to_account
-from shared.platform.http_client import http_get, http_post
+from base.clients.converters import account_to_dict, dict_to_account
+from base.domain.models import Account
+from base.http_client import http_get, http_post
 
 
 class ClearingClient:

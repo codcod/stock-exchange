@@ -12,7 +12,7 @@ import typing as tp
 from collections import deque
 from dataclasses import dataclass, field
 
-from shared.domain.models import Order, OrderStatus, OrderType, Side, Trade
+from base.domain.models import Order, OrderStatus, OrderType, Side, Trade
 
 logger = logging.getLogger(__name__)
 

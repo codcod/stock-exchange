@@ -1,5 +1,6 @@
 """Order submission, cancellation, and retrieval endpoints."""
 
+from base.domain.models import Order
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from services.gateway.auth import require_api_key
@@ -10,7 +11,6 @@ from services.gateway.schemas import (
     SubmitOrderRequest,
     order_to_response,
 )
-from shared.domain.models import Order
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 

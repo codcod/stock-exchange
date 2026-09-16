@@ -1,5 +1,6 @@
 """Table definitions for the Account service."""
 
+from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import (
     Column,
     DateTime,
@@ -11,8 +12,6 @@ from sqlalchemy import (
     Table,
     Text,
 )
-
-from shared.platform.db.tables import ensure_tables as _ensure_tables
 
 metadata = MetaData()
 _SCHEMAS = ('account',)

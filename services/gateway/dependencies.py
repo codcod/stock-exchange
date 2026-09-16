@@ -13,13 +13,12 @@ import typing as tp
 from dataclasses import dataclass
 
 import httpx
-
-from shared.platform.clients.account import AccountClient
-from shared.platform.clients.market_data import MarketDataClient
-from shared.platform.clients.matching_engine import MatchingEngineClient
-from shared.platform.clients.notifications import NotificationsClient
-from shared.platform.clients.order_management import OrderManagementClient
-from shared.platform.clients.risk_engine import RiskEngineClient
+from base.clients.account import AccountClient
+from base.clients.market_data import MarketDataClient
+from base.clients.matching_engine import MatchingEngineClient
+from base.clients.notifications import NotificationsClient
+from base.clients.order_management import OrderManagementClient
+from base.clients.risk_engine import RiskEngineClient
 
 _clients: tp.Optional['ServiceClients'] = None
 

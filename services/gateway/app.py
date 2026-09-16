@@ -24,11 +24,11 @@ import uuid
 from contextlib import asynccontextmanager
 
 import httpx
+from base.request_context import request_id as _request_id_ctx
 from fastapi import FastAPI, Request, Response
 
 from services.gateway import dependencies
 from services.gateway.routes import accounts, instruments, market_data, orders
-from shared.platform.request_context import request_id as _request_id_ctx
 
 logger = logging.getLogger(__name__)
 

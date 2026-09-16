@@ -26,21 +26,21 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 import httpx
+from base.clients.risk_engine import RiskEngineClient
+from base.db.connection import get_engine
+from base.domain.api_schemas import (
+    RegisterAccountRequest,
+    ReserveRequest,
+    TradeExecutedEvent,
+)
+from base.domain.events import TradeExecuted
+from base.domain.models import Account
 from fastapi import FastAPI, HTTPException
 
 from services.account.outbox_relay import run_relay
 from services.account.repository import AccountRepository
 from services.account.service import AccountService
 from services.account.tables import ensure_tables
-from shared.domain.api_schemas import (
-    RegisterAccountRequest,
-    ReserveRequest,
-    TradeExecutedEvent,
-)
-from shared.domain.events import TradeExecuted
-from shared.domain.models import Account
-from shared.platform.clients.risk_engine import RiskEngineClient
-from shared.platform.db.connection import get_engine
 
 logger = logging.getLogger(__name__)
 
