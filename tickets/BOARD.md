@@ -13,10 +13,11 @@ Last updated: 2026-09-16
 
 ## IN DEVELOPMENT
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | [] |
 
 ## IN REVIEW
 
@@ -38,7 +39,6 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
-| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | high | medium | M | [] |  |
 
 ## TO DO (impact order, per child)
 

@@ -228,3 +228,4 @@ of record; `CLAUDE.md` is reduced to a pointer at it; `docs/architecture.md` and
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-16 — TO DO → READY
+- 2026-09-16 — READY → IN DEVELOPMENT
