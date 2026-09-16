@@ -24,7 +24,7 @@ services/clearing      → post-trade trade-record keeper (audit ledger only)
 services/account       → source of truth for cash, positions, and reservations
 services/notifications → per-account event feed; WebSocket push + HTTP backfill
 services/market_data   → publishes prices, depth, and trade feed
-shared/                → domain models, HTTP service clients, outbox event routing, db layer
+platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
 infra/                 → docker-compose files and helper scripts
 ```
 

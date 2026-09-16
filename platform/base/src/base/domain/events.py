@@ -1,5 +1,5 @@
 """
-shared/domain/events.py
+platform/base/src/base/domain/events.py
 
 Domain events produced by the exchange and used for inter-service communication.
 """

@@ -1,8 +1,8 @@
 """
 Presentation-layer dataclasses for the TUI.
 
-These models are distinct from the core domain models found in the `shared/`
-directory. They are specifically designed for the terminal UI, containing only
+These models are distinct from the core domain models found in `platform/base/`.
+They are specifically designed for the terminal UI, containing only
 the data required by the widgets and adding display-oriented properties like
 `price_str`, `is_active`, and `direction`.
 """

@@ -1,5 +1,5 @@
 """
-shared/domain/api_schemas.py
+platform/base/src/base/domain/api_schemas.py
 
 Pydantic models for inter-service HTTP contracts.
 
