@@ -62,9 +62,9 @@ clients/
   tui/              # An interactive terminal-based trading application built with Textual
 infra/
   docker/           # Includes Docker Compose files for infrastructure (Postgres) and services
-docs/
-  architecture.md   # Provides detailed data flow diagrams and design notes
-CLAUDE.md           # Contains project context for the Claude Code project
+development/
+  design.md         # Single design-of-record doc: architecture, conventions, target architecture
+CLAUDE.md           # Pickle marker plus a pointer to development/design.md
 ```
 
 ## Concepts this project illustrates

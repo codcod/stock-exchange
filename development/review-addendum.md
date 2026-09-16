@@ -1,7 +1,7 @@
 # Review addendum — exchange project-specific rules
 
-**Version 1** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
-filed yet).
+**Version 2** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
+filed yet), updated same day by EXC-003 (docs/architecture.md → development/design.md).
 
 Applies **on top of** the brine review protocol
 (`.agents/skills/brine/resources/review-protocol.md`), keyed to that procedure's step numbers.
@@ -20,12 +20,13 @@ are already soft-violated.
 ## Step 1 — Load context (additions)
 
 Configured commands: `just services-build`, `just test`, `just lint`. There is no configured
-docs command — `docs/architecture.md` and `docs/lob_concepts_review.md` are hand-maintained
-prose, not a built doc site, so step 4a's "build the docs" sub-step has nothing to run.
+docs command — `development/design.md` is hand-maintained prose, not a built doc site, so step
+4a's "build the docs" sub-step has nothing to run.
 
-Governing documents for this project: `CLAUDE.md` (conventions) and `docs/architecture.md`
-(design of record, including its "What's intentionally simplified" section — see step 4a). There
-is no `DESIGN.md`, `PLAN.md`, or `CHANGELOG.md` in this repo; do not look for them.
+Governing documents for this project: `CLAUDE.md` (a pointer only, since EXC-003) and
+`development/design.md` (design of record — architecture, conventions, and its "What's
+intentionally simplified" section — see step 4a). There is no `PLAN.md` or `CHANGELOG.md` in
+this repo; do not look for them.
 
 ## Step 2 — Implementation audit (additions)
 
@@ -72,15 +73,16 @@ step most likely to be silently skipped:
 
 ## Step 4 / 4a — Consistency & documentation audit (additions)
 
-1. **`docs/architecture.md`'s "What's intentionally simplified" section is a list of accepted
+1. **`development/design.md`'s "What's intentionally simplified" section is a list of accepted
    limitations** (no market-data WebSocket, at-least-once outbox delivery with no consumer-side
    dedup, non-durable risk reservations, in-memory-only market data, etc.), not a backlog. Do not
    file any of them as a finding on their own. A ticket that touches one of these areas without
    updating or removing its entry is `stale-xref`; a ticket whose design assumes a listed
    limitation doesn't exist is `plan-wrong`.
-2. **Whole-tree docs sweep is small and exact here** — `docs/architecture.md` and
-   `docs/lob_concepts_review.md` are the entire shipped docs tree. Read both in full rather than
-   spot-checking; there is no docs build to catch what a skim misses (step 1).
+2. **Whole-tree docs sweep is small and exact here** — `development/design.md` is the entire
+   shipped docs tree (`docs/architecture.md` and `docs/lob_concepts_review.md` were folded into
+   it and deleted by EXC-003). Read it in full rather than spot-checking; there is no docs build
+   to catch what a skim misses (step 1).
 3. **`services/gateway/` has no test directory**, unlike every other service (each has its own
    `tests/`). This is a pre-existing gap, not itself a finding — but a ticket that changes gateway
    routing, auth, or rate-limiting without adding a test alongside is `test-gap`, not something to
@@ -89,11 +91,11 @@ step most likely to be silently skipped:
 
 ## Step 7 — Governing documents (additions)
 
-`CLAUDE.md`'s "When modifying a service" step 6 — *update `docs/architecture.md` if the data flow
-changed* — is this project's own reconciliation rule. A branch that changes which service emits,
-consumes, or relays an event without updating the architecture doc's diagram/prose has broken this
-project's own convention: file it as `stale-xref` per step 7, same disposition path as any other
-governing-document drift.
+`development/design.md`'s "When modifying a service" step 6 — *update this document's "Detailed
+architecture" section if the data flow changed* — is this project's own reconciliation rule. A
+branch that changes which service emits, consumes, or relays an event without updating that
+section's diagram/prose has broken this project's own convention: file it as `stale-xref` per
+step 7, same disposition path as any other governing-document drift.
 
 ## Step 9 — Finish (additions)
 
@@ -105,3 +107,6 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
 - **v1** (2026-09-16) — Written at pickle install time, before any ticket exists. Grounded
   against the actual tree (outbox maps, line-count guideline violations, gateway's missing
   `tests/`, ruff's lint selection) rather than restated from `CLAUDE.md` prose.
+- **v2** (2026-09-16) — EXC-003 folded `docs/architecture.md` and `docs/lob_concepts_review.md`
+  into `development/design.md` and deleted the originals; every governing-document reference
+  above moved from `docs/architecture.md` to `development/design.md`.
