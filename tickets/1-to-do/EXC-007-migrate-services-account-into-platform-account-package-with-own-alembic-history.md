@@ -25,7 +25,7 @@ in code via `services/account/tables.py`'s `schema=...`). Scope: move `services/
 `platform/account/src/account/`, give it its own `pyproject.toml` (hatchling, `src/` layout,
 depends on `platform/base/`), own two-stage Dockerfile, own versioning artifacts starting at
 `0.0.1`, and its own Alembic migration history scoped to its Postgres schema, replacing its share
-of `shared/platform/db/tables.py:25`'s `CREATE SCHEMA IF NOT EXISTS` bootstrap with an
+of `platform/base/src/base/db/tables.py:25`'s `CREATE SCHEMA IF NOT EXISTS` bootstrap with an
 `account-migrate` one-shot compose container gating startup. Depends on EXC-004 (`platform/base/`
 must exist first).
 
@@ -40,3 +40,5 @@ must exist first).
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
+- 2026-09-16 — Description corrected: line anchor `shared/platform/db/tables.py:25` →
+  `platform/base/src/base/db/tables.py:25` (EXC-004 impact sweep — file moved, line unchanged).

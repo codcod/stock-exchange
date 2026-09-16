@@ -31,7 +31,7 @@ doubles/fakes are loose by design and shouldn't be forced to type-check against 
 
 Scope for this ticket: add `ty` (or evaluate mypy if `ty` proves too immature for this codebase's
 patterns — e.g. SQLAlchemy Core's dynamic `Table`/`Column` typing) to `pyproject.toml`, wire it
-into `just lint`, scoped to `services/*/`, `shared/`, and `clients/` but excluding every `tests/`
+into `just lint`, scoped to `services/*/`, `platform/`, and `clients/` but excluding every `tests/`
 directory. Fix whatever violations turn up across the eight services — expect the fix-existing-
 violations pass to be the larger, harder-to-estimate part of this ticket, which is why cost is
 graded as a range rather than a single value pending that discovery.
@@ -47,3 +47,5 @@ graded as a range rather than a single value pending that discovery.
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
+- 2026-09-16 — Description corrected: scope `shared/` → `platform/` (EXC-004 impact sweep —
+  `shared/` no longer exists post-EXC-004).

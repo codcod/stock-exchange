@@ -35,7 +35,7 @@ repository in `__aenter__` — no generic SQLAlchemy repository is shared, since
 shape differs.
 
 Scope for this ticket: add `AbstractRepository`/`AbstractUnitOfWork` (plus a
-`SqlAlchemyUnitOfWork` base) to `shared/platform/`, then migrate `services/account/` and
+`SqlAlchemyUnitOfWork` base) to `platform/base/`, then migrate `services/account/` and
 `services/matching_engine/` — the two services with the most multi-table transactional writes —
 to use them. Other services (`order_management`, `risk_engine`, `clearing`, `notifications`) are
 explicitly out of scope here; migrate them in a follow-up once this pattern has proven itself on
@@ -52,3 +52,5 @@ two real services.
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
+- 2026-09-16 — Description corrected: target path `shared/platform/` → `platform/base/`
+  (EXC-004 impact sweep — `shared/` no longer exists post-EXC-004).

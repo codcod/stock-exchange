@@ -246,7 +246,78 @@ the "Detailed architecture" stale-paths disclaimer.
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): **independent** — this review runs in a fresh
+  session (post `/clear`) with no memory of writing the branch; the implementation commit
+  (`226f0b3`) was made in a prior session. No delegation needed.
+- [x] Implementation audit — acceptance test re-run, tasks & criteria verified (steps 1, 2)
+- [x] Quality audit (step 3)
+- [x] Consistency audit (step 4)
+- [x] Documentation audit — coverage, whole-tree sweep, docs build clean (step 4a; no docs
+  build command is configured for this project — `development/design.md` is hand-maintained
+  prose, per `development/review-addendum.md` step 1)
+- [x] Docs-readability pass — conscious skip: no docs-readability reviewer available in this
+  host environment
+- [x] Findings recorded with severity, class, and disposition; disposition summary + cost line
+  present (step 5)
+- [x] Ticket moved; `## History` appended (step 6)
+- [x] Other references updated; governing documents reconciled; board regenerated (step 7)
+- [x] Remaining-tickets impact sweep done (step 8)
+- [x] Summary + commit message & MR attributes presented for approval; overarching bookkeeping
+  committed per policy; next-ticket suggestion (step 9)
+
+### Implementation audit
+
+Acceptance test (ticket's own `### Acceptance test` block), re-run verbatim from the repo root
+on `feat/EXC-004-extract-platform-base-uv-workspace`:
+
+| step | result |
+|---|---|
+| `uv sync --extra dev` | ✅ resolved/checked, no errors |
+| `uv run python -c "import base.db, base.http_client, base.request_context, base.clients.account, base.domain.models, base.domain.events, base.domain.api_schemas"` | ✅ imports clean |
+| `just lint` (`ruff check .`) | ✅ all checks passed |
+| `just test` | ✅ 66 passed |
+| `just services-build` | ❌ fails: `service "account" depends on undefined service "postgres": invalid compose project` |
+| `grep -rn "shared\." services scripts platform --include='*.py'` | ✅ no output |
+| `test ! -d shared` | ✅ `shared/` gone |
+
+`just services-build`'s failure is **pre-existing and unrelated to this branch** — reproduced
+identically by checking out the parent commit (`226f0b3~1`) and re-running it; `EXC-004` never
+touches `infra/docker/compose.services.yml`. See F4 below.
+
+All Tasks 1–7 verified against the tree: `uv` workspace member + `base` dependency wired in
+root `pyproject.toml`; `platform/base/` scaffolded per the confirmed decisions (flat `base`
+package name, own `pyproject.toml`, `hatchling`, `src/` layout); all nine source files
+`git mv`-ed with `shared/` removed; every `shared.platform.`/`shared.domain.` import rewritten to
+`base.*`/`base.domain.*`; `uv.lock` regenerated and committed; `infra/docker/Dockerfile` patched
+exactly per decision 5 (including the required `ponytail:` comment); `README.md`,
+`platform/base/README.md`, and `development/design.md`'s live prose + stale-paths disclaimer
+updated per Task 7. `just check` (lint + fmt-check) also clean.
+
+### Findings
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | fixed inline | Four `platform/base/` module docstrings still opened with the old slash-style path header (`shared/domain/models.py`, `.../events.py`, `.../api_schemas.py`, `shared/platform/db/tables.py`) — missed by Task 4's dotted-path (`shared\.`) rewrite/verification, which doesn't match a slash-style header | `platform/base/src/base/domain/{models,events,api_schemas}.py:2`, `platform/base/src/base/db/tables.py:2` | Update each header to its new path |
+| F2 | non-blocking | stale-xref | fixed inline | `clients/tui/models.py`'s module docstring still says the domain models live in "the `shared/` directory" | `clients/tui/models.py:4` | Update to `platform/base/` |
+| F3 | non-blocking | stale-xref | fixed inline | `development/design.md`'s top-level "Architecture overview" tree (the current, authoritative diagram — not the disclaimed historical "Detailed architecture" fold) still lists a `shared/` line; Task 7 updated the disclaimer and two body lines but missed this diagram | `development/design.md:27` (pre-fix) | Replace `shared/` line with `platform/base/` |
+| F4 | non-blocking | other | new ticket (EXC-016) | `just services-build` fails (`service "<name>" depends on undefined service "postgres": invalid compose project`) — pre-existing, reproduced on the parent commit too; `compose.services.yml` declares `depends_on: postgres` but only ever runs standalone (`postgres` lives in the separate `compose.infra.yml`). Blocks this ticket's own acceptance-test line and every future ticket's `just services-build` step, so it passes the promotion test despite predating this branch | `infra/docker/compose.services.yml` | Filed as `EXC-016`, `spawned-by: EXC-004` |
+
+Impact sweep (step 8) — re-read every `1-to-do`/`2-ready` ticket listing EXC-004 in `depends-on`
+or referencing it in prose; three carried assumptions this branch invalidated, patched directly
+per the sweep's own instructions (not dispositioned — a same-theme correction, not a new
+finding against this ticket):
+
+- **EXC-001** — Description named `shared/platform/` as the target for the new UoW base
+  classes; `shared/` no longer exists. Corrected to `platform/base/`.
+- **EXC-002** — Description scoped the new type-checker to `services/*/`, `shared/`, and
+  `clients/`; corrected the middle term to `platform/`.
+- **EXC-007** — Description cited a line anchor `shared/platform/db/tables.py:25`; the file
+  moved with its line numbers intact, corrected to `platform/base/src/base/db/tables.py:25`.
+
+disposition summary: 3 fixed inline (F1–F3, commit `14616ae` on the ticket branch), 1 new ticket
+(F4 → EXC-016); 0 folded, 0 noted.
+
+cost: estimated M, actual M
 
 ## History
 
@@ -254,3 +325,6 @@ the "Detailed architecture" stale-paths disclaimer.
 - 2026-09-16 — TO DO → READY: plan complete
 - 2026-09-16 — READY → IN DEVELOPMENT: picked up
 - 2026-09-16 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-16 — reviewed: no blocking findings. 3 fixed inline (F1–F3, commit `14616ae`), 1
+  new ticket (F4 → EXC-016). Impact sweep patched EXC-001, EXC-002, EXC-007.
+- 2026-09-16 — IN REVIEW → DONE: no blocking findings; 3 fixed inline, 1 spawned (EXC-016)
