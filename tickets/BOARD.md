@@ -20,11 +20,10 @@ Last updated: 2026-09-16
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | [] |
 
 ## REWORK
 
@@ -55,6 +54,7 @@ Last updated: 2026-09-16
 
 | id | title | merged |
 |---|---|---|
+| EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | no — publish-gated |
 
 ## DROPPED
 

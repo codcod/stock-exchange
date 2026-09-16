@@ -222,7 +222,52 @@ of record; `CLAUDE.md` is reduced to a pointer at it; `docs/architecture.md` and
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): **delegated**. This session authored the branch, so
+  steps 2–4a were delegated to a freshly-spawned, adversarially-briefed independent agent
+  (no memory of writing the code); every one of its findings was re-verified by hand before
+  entering the table below (per step 0's "delegation buys independence, not accuracy").
+- [x] Implementation audit — acceptance test re-run, tasks & criteria verified (steps 1, 2)
+- [x] Quality audit (step 3)
+- [x] Consistency audit (step 4)
+- [x] Documentation audit — coverage, whole-tree sweep, docs build clean (step 4a)
+- [x] Docs-readability pass — conscious skip: no docs-readability reviewer configured in this host
+- [x] Findings recorded with severity, class, disposition; disposition summary + cost line (step 5)
+- [x] Ticket moved (step 6)
+- [x] Other references updated; governing documents reconciled (step 7)
+- [x] Remaining-tickets impact sweep done (step 8)
+- [x] Summary + commit message presented for approval (step 9)
+
+**Implementation audit.** All 3 Tasks and all 8 confirmed design decisions verified met, in the
+files/paths named. Acceptance test re-run verbatim, all 4 items pass:
+1. `command grep -rln "docs/architecture.md\|docs/lob_concepts_review.md" --include="*.md" . | command grep -v '^\./tickets/'` → only `./development/design.md` and `./development/review-addendum.md` (both intentional, explanatory mentions of the retirement).
+2. `development/design.md` contains every planned section (spot-checked "What's intentionally simplified" and "Target architecture: platform/ restructuring").
+3. `pickle doctor` → 0 errors / 0 warnings.
+4. `just lint` → all checks passed. `just test` → 66 passed.
+
+(Note: the plan's own acceptance-test grep, run with a shell alias that strips the `./` prefix,
+can falsely appear to leak a `tickets/` hit — confirmed a local shell artifact, not a repo defect,
+using real `grep`/`command grep`.)
+
+**Findings:**
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | fixed inline | `README.md`'s Project Structure tree still listed the deleted `docs/architecture.md` and described `CLAUDE.md` as "contains project context" — both made false by this branch's own deletion/edit. Missed by the plan's own acceptance-test grep because the tree splits `docs/` and `architecture.md` across two lines, past a single-line regex. | `README.md:63-67` (pre-fix) | Fixed inline: replaced the `docs/`/`CLAUDE.md` lines with the actual `development/design.md` + pointer-`CLAUDE.md` shape. Commit `1f49785`. |
+| F2 | non-blocking | design | noted | `pyproject.toml:51`'s `exclude = ["docs/**/*.py"]` was already a no-op before this branch (`docs/` never held `.py` files) and is now doubly dead since `docs/` no longer exists at all — pre-existing, not caused by this branch. | `pyproject.toml:51` | Leave as noted; a future lint/config-cleanup pass can drop it. |
+| F3 | non-blocking | docs-gap | fixed inline | The folded "Detailed architecture" section's staleness disclaimer named only the account/notifications gap, not the also-pre-existing `shared/` → `shared/platform/` path rename baked into the same folded content (e.g. `shared/service_clients.py`, `shared/db/connection.py` no longer exist) — a reader trusting the disclaimer's completeness would still be misled. The underlying path staleness itself predates this ticket (already wrong in `main:docs/architecture.md`) and is out of this ticket's fold-verbatim scope, so only the disclaimer's own incompleteness — authored by this branch — was in scope to fix. | `development/design.md:91-96` (pre-fix) | Fixed inline: broadened the disclaimer to also name the `shared/` → `shared/platform/` rename and point at the real paths. Commit `1f49785`. |
+
+Disposition summary: 3 findings, 0 blocking. 2 `fixed inline` (F1, F3), 1 `noted` (F2).
+
+cost: estimated M, actual M
+
+**Step 7 — governing documents.** `development/design.md` and `CLAUDE.md` are themselves this
+ticket's product, already reconciled by Task 1/2. `development/review-addendum.md` was
+reconciled by Task 3 (verified: all 4 named spots + revision history + version banner, diff-
+checked). No other governing document in this repo references the retired paths.
+
+**Step 8 — impact sweep.** Checked `tickets/1-to-do/` (EXC-001, EXC-002) and `tickets/2-ready/`
+(none) for `depends-on:`/Description references to EXC-003: neither EXC-001 nor EXC-002
+references it. No assumption invalidated; no patch needed.
 
 ## History
 
@@ -230,3 +275,4 @@ of record; `CLAUDE.md` is reduced to a pointer at it; `docs/architecture.md` and
 - 2026-09-16 — TO DO → READY
 - 2026-09-16 — READY → IN DEVELOPMENT
 - 2026-09-16 — IN DEVELOPMENT → IN REVIEW
+- 2026-09-16 — IN REVIEW → DONE: review clean; 3 non-blocking findings, 2 fixed inline, 1 noted
