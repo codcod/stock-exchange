@@ -328,3 +328,4 @@ cost: estimated M, actual M
 - 2026-09-16 — reviewed: no blocking findings. 3 fixed inline (F1–F3, commit `14616ae`), 1
   new ticket (F4 → EXC-016). Impact sweep patched EXC-001, EXC-002, EXC-007.
 - 2026-09-16 — IN REVIEW → DONE: no blocking findings; 3 fixed inline, 1 spawned (EXC-016)
+- 2026-09-16 — MERGED: PR #19, `bb4e5cd`
