@@ -45,6 +45,8 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | S-M | [] |  |
+| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + matching_engine | medium | medium | M | [] |  |
 
 ## DONE
 
