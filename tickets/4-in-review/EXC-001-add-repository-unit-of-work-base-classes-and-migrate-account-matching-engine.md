@@ -254,3 +254,4 @@ not just that the fakes were mechanically patched to match new signatures.
   and the prerequisite gate rewritten (it claimed both target services were still under
   `services/`) — EXC-007 impact sweep; no scope change.
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
+- 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
