@@ -264,7 +264,41 @@ confirm `just services-build` still fails with exactly the pre-existing `EXC-016
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): **independent** — fresh session, no hand in authoring this branch.
+- [x] Implementation audit — acceptance test re-run, tasks & criteria verified (steps 1, 2)
+- [x] Quality audit (step 3)
+- [x] Consistency audit (step 4)
+- [x] Documentation audit — coverage, whole-tree sweep; no docs build configured for this project (step 4a)
+- [x] Docs-readability pass — conscious skip: no docs-readability reviewer available in this host (step 4b)
+- [x] Findings recorded with severity, class, and disposition; disposition summary + cost line below (step 5)
+- [x] Ticket moved to `tickets/6-done/`; `## History` appended (step 6)
+- [x] Other references updated; governing documents reconciled (step 7)
+- [x] Remaining-tickets impact sweep done (step 8)
+- [x] Summary + commit message & MR attributes presented for approval; overarching bookkeeping committed; next-ticket suggestion (step 9)
+
+Re-ran on `feat/EXC-005-migrate-services-gateway-into-platform-gateway-package`: `uv sync --extra dev`,
+the gateway import check, `just lint`, `just test` (66 passed), `docker build -f
+platform/gateway/Dockerfile` (succeeded), the stale-path grep (clean), `test ! -d services/gateway`
+(passed), and confirmed `just services-build` still fails with exactly the pre-existing EXC-016
+`postgres` error and nothing new. `just check` (addendum step 9) also clean. All eight
+Implementation Plan tasks verified against the tree; all eight confirmed design decisions honoured
+(no `DATABASE_URL` added, no `tests/` added, two-stage Dockerfile matches the reference shape,
+`platform/gateway/{CHANGELOG,PACKAGING,RELEASING}.md` present, `justfile`/CI untouched, shared
+Dockerfile CMD repointed, compose block switched, `services-build` failure unchanged). Every
+gateway module is under the addendum's 200-line guideline.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | fixed inline | `platform/base/src/base/domain/api_schemas.py`'s module docstring still pointed at the pre-move path | `platform/base/src/base/domain/api_schemas.py:12` said "remain in services/gateway/schemas.py" | Fixed to `platform/gateway/src/gateway/schemas.py` |
+| F2 | non-blocking | stale-xref | fixed inline | `development/review-addendum.md` step 4a item 3 (a governing document, `review_addendum` in `pickle.toml`) still named the pre-move path | `development/review-addendum.md:86` said "`services/gateway/` has no test directory" | Fixed to `platform/gateway/` |
+| F3 | non-blocking | design | fixed inline | `platform/gateway/CHANGELOG.md`'s `0.0.1` entry used a `### Changed` heading instead of the bold `**Changed**` label the plan's Task 7 specified (to avoid confusion with a ticket's own `### `-heading scan) | `platform/gateway/CHANGELOG.md` | Changed to bold `**Changed**` |
+| F4 | non-blocking | plan-wrong | noted | `EXC-006` (READY)'s Implementation Plan Task 4 has the same root-`pyproject.toml` wiring gap this ticket discovered and inline-amended (missing `[project.dependencies]`/`[tool.uv.sources]` entries for the new workspace member) | `tickets/2-ready/EXC-006-migrate-services-market-data-into-platform-market-data-package.md`, Task 4 | Patched directly (step 8 impact sweep) — see EXC-006's own History |
+
+Disposition summary: 3 `fixed inline` (F1, F2, F3), 1 `noted` (F4, patched into EXC-006 per the
+step-8 impact sweep rather than left as a follow-up ticket — see EXC-006's History). No `folded`,
+no `new ticket`. No blocking findings.
+
+cost: estimated M, actual M
 
 ## History
 
@@ -276,3 +310,4 @@ confirm `just services-build` still fails with exactly the pre-existing `EXC-016
   them `uv sync` doesn't install the workspace member into the root venv and the acceptance
   test's import step fails. Added both.
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-17 — IN REVIEW → DONE: no blocking findings; disposition: 3 fixed inline, 1 noted (patched into EXC-006)

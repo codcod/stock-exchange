@@ -125,6 +125,10 @@ services.market_data.service import MAX_TRADE_HISTORY, MarketDataService`). Veri
 #### Task 4 — Update the root workspace, pytest config, and the shared Dockerfile
 In root `pyproject.toml`:
 - `[tool.uv.workspace].members`: add `"platform/market_data"`.
+- `[project.dependencies]`: add `"market_data"`, and `[tool.uv.sources]`: add
+  `market_data = { workspace = true }` — EXC-005 found that without both, `uv sync` never
+  installs the workspace member into the root venv and the acceptance test's `import
+  market_data...` step fails with `ModuleNotFoundError`.
 - `[tool.pytest.ini_options].testpaths`: `["services"]` → `["services", "platform"]`.
 - `[tool.coverage.run].source`: add `"platform/market_data/src"` alongside
   `"platform/base/src"` (and `"platform/gateway/src"` if EXC-005 has already merged; otherwise
@@ -251,3 +255,7 @@ error and no new error — do not treat that failure as blocking.
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-16 — TO DO → READY: plan complete
+- 2026-09-17 — plan amended inline: EXC-005's review (impact sweep, step 8) found Task 4 here
+  had the same root-`pyproject.toml` wiring gap EXC-005 itself hit during implementation —
+  missing `[project.dependencies]`/`[tool.uv.sources]` entries for the new workspace member.
+  Added both.

@@ -20,11 +20,10 @@ Last updated: 2026-09-17
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-005 | Migrate services/gateway into platform/gateway package | [EXC-004] |
 
 ## REWORK
 
@@ -68,6 +67,7 @@ Last updated: 2026-09-17
 |---|---|---|
 | EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | yes — merged to main (PR #18, 53104bc) |
 | EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | yes — MERGED: PR #19, `bb4e5cd` |
+| EXC-005 | Migrate services/gateway into platform/gateway package | no — publish-gated |
 
 ## DROPPED
 
