@@ -76,17 +76,17 @@ None. `depends-on: []`.
    inside* the service directory (not a sibling of a `src/` root), the simplest correct
    scoping is a CLI `--exclude` glob on a single invocation covering all three top-level trees:
    `uv run ty check services platform clients --exclude "**/tests/**"`. Confirmed working
-   during discovery (excludes `services/market_data/tests/` and every other `tests/` dir with
+   during discovery (excludes `platform/market_data/src/market_data/tests/` and every other `tests/` dir with
    zero config).
 3. **Fix pattern A — Optional module-level service singleton, unguarded in route handlers**
-   (29 of the 39 diagnostics, 6 files: `services/{account,clearing,market_data,notifications,
-   order_management,risk_engine}/app.py`). Each service's `_AppState` dataclass holds its
+   (29 of the 39 diagnostics, 6 files: `platform/{account,market_data}/src/*/app.py` and
+   `services/{clearing,notifications,order_management,risk_engine}/app.py`). Each service's `_AppState` dataclass holds its
    dependency as `tp.Optional[X] = None`, populated once in the `lifespan` startup hook, then
    read unguarded (`_state.svc.foo(...)`) in every route handler — `ty` can't see across that
    boundary, and it's a real (if practically-always-false) crash risk if a handler ever ran
    before/after the lifespan window. Fix: add one small module-level narrowing accessor per
    optional field, and call it instead of the raw attribute at every read site — e.g. in
-   `services/account/app.py`:
+   `platform/account/src/account/app.py`:
    ```python
    def _svc() -> AccountService:
        assert _state.svc is not None, 'service not initialized'
@@ -157,7 +157,7 @@ None. `depends-on: []`.
           run: uv run ty check services platform clients --exclude "**/tests/**"
   ```
 
-#### Task 2 — Fix pattern A: `services/account/app.py`
+#### Task 2 — Fix pattern A: `platform/account/src/account/app.py`
 Add `_svc()`/`_risk()` accessors (decision 3); replace the 7 flagged call sites (`register_account`
 ×2, `list_accounts`, `get_account`, `reserve_cash`, `reserve_shares`, `apply_settlement`).
 
@@ -245,3 +245,6 @@ ticket; note the nuance in the summary instead.
 - 2026-09-16 — Description corrected: scope `shared/` → `platform/` (EXC-004 impact sweep —
   `shared/` no longer exists post-EXC-004).
 - 2026-09-16 — TO DO → READY: plan complete
+- 2026-09-17 — plan paths repointed from `services/account/` to `platform/account/src/account/`
+  (and `services/market_data/tests/` to `platform/market_data/src/market_data/tests/`) — EXC-007
+  impact sweep; no scope change.

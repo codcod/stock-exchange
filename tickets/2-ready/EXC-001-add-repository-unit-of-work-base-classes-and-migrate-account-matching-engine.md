@@ -20,7 +20,7 @@ safely by default instead of silently doing nothing.
 
 ## Description
 
-Every stateful service currently manages its own transactions ad hoc. `services/account/repository.py`
+Every stateful service currently manages its own transactions ad hoc. `platform/account/src/account/repository.py`
 is the clearest example: `AccountRepository.save()` opens its own `engine.begin()` transaction,
 while `save_with_conn()` takes a borrowed connection for callers that need to join an existing
 transaction — the same split, hand-written per repository, with no shared base class and no
@@ -35,7 +35,7 @@ repository in `__aenter__` — no generic SQLAlchemy repository is shared, since
 shape differs.
 
 Scope for this ticket: add `AbstractRepository`/`AbstractUnitOfWork` (plus a
-`SqlAlchemyUnitOfWork` base) to `platform/base/`, then migrate `services/account/` and
+`SqlAlchemyUnitOfWork` base) to `platform/base/`, then migrate `platform/account/src/account/` and
 `services/order_management/` — confirmed with the user during refinement, replacing the
 original draft's `services/matching_engine/` (rules §5-style correction, not a finding against
 this ticket): `matching_engine` turned out to have no domain repository at all — its only DB
@@ -66,12 +66,12 @@ approval).
 
 ### Prerequisite gate (hard)
 
-None. `depends-on: []`. Both target services (`services/account/`, `services/order_management/`)
-are still under `services/` as of this writing (their own `platform/` migrations, EXC-007 and a
-not-yet-filed order_management ticket, haven't landed) — this plan is written against that
-current layout. If either service's `platform/` migration lands first, the only adjustment
-needed is updating this plan's paths from `services/<name>/` to
-`platform/<name>/src/<name>/` before picking this ticket up (note-and-close, not a blocker).
+None. `depends-on: []`. `account` now lives at `platform/account/src/account/` — EXC-007
+landed and this plan's account paths were repointed by that ticket's review (step 8 impact
+sweep). `order_management` is still under `services/order_management/` until its own
+`platform/` migration, EXC-010, lands; if that happens before this ticket is picked up, the
+only adjustment needed is repointing this plan's `services/order_management/` paths to
+`platform/order_management/src/order_management/` (note-and-close, not a blocker).
 
 ### Confirmed design decisions (do not deviate without asking)
 
@@ -109,7 +109,7 @@ needed is updating this plan's paths from `services/<name>/` to
      it's a one-shot scan outside any write transaction: `load_all()` on each repository becomes
      a module-level function taking an `engine` directly —
      `async def load_all_accounts(engine: AsyncEngine) -> list[Account]` in
-     `services/account/repository.py`, and `load_all_orders`/`load_open_orders(engine:
+     `platform/account/src/account/repository.py`, and `load_all_orders`/`load_open_orders(engine:
      AsyncEngine)` in `services/order_management/repository.py` — same query bodies, just
      detached from the now connection-scoped class.
 6. **Services take a UoW factory, not a repo + engine.** `AccountService.__init__` changes from
@@ -133,7 +133,7 @@ needed is updating this plan's paths from `services/<name>/` to
    `FakeUnitOfWork(AbstractUnitOfWork)` — no `AsyncEngine`/`AsyncConnection` faking needed. Each
    service's test module gets a `Fake<Service>UnitOfWork(AbstractUnitOfWork)` whose `__init__`
    sets `.accounts`/`.orders` to a fake repo and `.connection` to the existing `_FakeConn` stub
-   (`services/account/tests/test_service.py` already has one — reuse it), and whose
+   (`platform/account/src/account/tests/test_service.py` already has one — reuse it), and whose
    `commit`/`rollback` just flip a flag. The test helper's `uow_factory` returns the *same*
    fake instance on every call (`lambda: uow`), not a fresh one, so assertions after a service
    method call (or across several calls in one test) still see accumulated state.
@@ -145,14 +145,14 @@ Create `platform/base/src/base/unit_of_work.py` (decision 2) and
 `platform/base/src/base/repository.py` (decision 3), adapted from the reference paths named
 above. Both are pure ABCs/generic infrastructure — no service-specific code.
 
-#### Task 2 — Migrate `services/account/`
-- `services/account/repository.py`: retype `AccountRepository.__init__` to take a `connection:
+#### Task 2 — Migrate `platform/account/src/account/`
+- `platform/account/src/account/repository.py`: retype `AccountRepository.__init__` to take a `connection:
   AsyncConnection`; rename the upsert body to `add()` (subclass `AbstractRepository[Account]`);
   add `get(account_id) -> Account | None`; remove `save`/`save_with_conn`/`_save`; add the
   module-level `load_all_accounts(engine: AsyncEngine) -> list[Account]` function (decision 5).
-- `services/account/unit_of_work.py` (new): `AccountUnitOfWork(SqlAlchemyUnitOfWork)` attaching
+- `platform/account/src/account/unit_of_work.py` (new): `AccountUnitOfWork(SqlAlchemyUnitOfWork)` attaching
   `self.accounts = AccountRepository(self.connection)` in `__aenter__` (decision 4).
-- `services/account/service.py`: `AccountService.__init__(self, uow_factory)`; rewrite
+- `platform/account/src/account/service.py`: `AccountService.__init__(self, uow_factory)`; rewrite
   `register_account`, `reserve_cash`, `reserve_shares`, `apply_settlement` per decision 6/7 —
   each existing `async with self._engine.begin() as conn:` block becomes `async with
   self._uow_factory() as uow:`, `self._repo.save_with_conn(conn, x)` → `await
@@ -160,11 +160,11 @@ above. Both are pure ABCs/generic infrastructure — no service-specific code.
   uow.connection, x)`, ad hoc `processed_events` queries in `apply_settlement` → `uow.connection`,
   and an explicit `await uow.commit()` at the end of each `async with` block (before it exits
   normally).
-- `services/account/app.py`: lifespan wiring changes from `repo = AccountRepository(db); _state.svc
+- `platform/account/src/account/app.py`: lifespan wiring changes from `repo = AccountRepository(db); _state.svc
   = AccountService(repo, db)` to `_state.svc = AccountService(lambda: AccountUnitOfWork(db))`;
   startup hydration changes from `for account in await repo.load_all():` to `for account in
   await load_all_accounts(db):` (new import).
-- `services/account/tests/test_service.py`: per decision 8 — `FakeAccountRepo` implements
+- `platform/account/src/account/tests/test_service.py`: per decision 8 — `FakeAccountRepo` implements
   `add`/`get` instead of `save`/`save_with_conn`/`load_all`; add
   `FakeAccountUnitOfWork(AbstractUnitOfWork)` wrapping it plus the existing `_FakeConn`; update
   `make_svc()` to build `AccountService(lambda: uow)` over one shared `FakeAccountUnitOfWork`
@@ -204,7 +204,7 @@ just lint
 just test
 ```
 Expect: the new base modules import cleanly; `just lint` clean; `just test` green, including
-`services/account/tests/test_service.py` and `services/order_management/tests/test_service.py`
+`platform/account/src/account/tests/test_service.py` and `services/order_management/tests/test_service.py`
 with their fakes updated per decision 8 — a passing test suite that still exercises the same
 behavioural assertions (what gets persisted, what gets enqueued to the outbox, that a
 forgotten/failed commit doesn't persist) is the real proof this refactor preserved behaviour,
@@ -250,3 +250,6 @@ not just that the fakes were mechanically patched to match new signatures.
 - 2026-09-16 — Description corrected: target path `shared/platform/` → `platform/base/`
   (EXC-004 impact sweep — `shared/` no longer exists post-EXC-004).
 - 2026-09-17 — TO DO → READY: plan complete
+- 2026-09-17 — plan paths repointed from `services/account/` to `platform/account/src/account/`,
+  and the prerequisite gate rewritten (it claimed both target services were still under
+  `services/`) — EXC-007 impact sweep; no scope change.
