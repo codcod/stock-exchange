@@ -51,12 +51,12 @@ services/
   risk_engine/      # Pre-trade checks (e.g., balance, position, price sanity)
   order_management/ # Manages the lifecycle and routing of orders
   clearing/         # Handles post-trade settlement, updating cash and share balances
-  market_data/      # Provides live quotes and trade history (in-memory)
 platform/
   base/             # Shared `uv` workspace package (see platform/base/README.md): domain
                     # models/events/API schemas, DB engine, HTTP client, request context,
                     # per-service HTTP clients
   gateway/          # FastAPI HTTP layer (public entry point for clients), own installable package
+  market_data/      # Provides live quotes and trade history (in-memory), own installable package
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual

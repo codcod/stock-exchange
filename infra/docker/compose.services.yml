@@ -39,8 +39,8 @@ services:
   market-data:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile
-    command: python -m services.market_data
+      dockerfile: platform/market_data/Dockerfile
+    command: python -m market_data
     environment:
       PORT: "8005"
     ports:

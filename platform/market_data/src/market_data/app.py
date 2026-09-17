@@ -21,7 +21,7 @@ from base.domain.api_schemas import MarketDataUpdateEvent, TradeExecutedEvent
 from base.domain.events import MarketDataUpdate, TradeExecuted
 from fastapi import FastAPI, HTTPException, Query
 
-from services.market_data.service import MarketDataService
+from market_data.service import MarketDataService
 
 
 @dataclass

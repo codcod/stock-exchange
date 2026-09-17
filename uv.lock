@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 members = [
     "base",
     "gateway",
+    "market-data",
     "stock-exchange",
 ]
 
@@ -454,6 +455,23 @@ linkify = [
 ]
 
 [[package]]
+name = "market-data"
+version = "0.0.1"
+source = { editable = "platform/market_data" }
+dependencies = [
+    { name = "base" },
+    { name = "fastapi" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "base", editable = "platform/base" },
+    { name = "fastapi", specifier = ">=0.111" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },
+]
+
+[[package]]
 name = "mdit-py-plugins"
 version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -853,6 +871,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "gateway" },
     { name = "httpx" },
+    { name = "market-data" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -880,6 +899,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.111" },
     { name = "gateway", editable = "platform/gateway" },
     { name = "httpx", specifier = ">=0.27" },
+    { name = "market-data", editable = "platform/market_data" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },

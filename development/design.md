@@ -22,9 +22,9 @@ services/matching_engine  → order book + price-time priority matching
 services/clearing      → post-trade trade-record keeper (audit ledger only)
 services/account       → source of truth for cash, positions, and reservations
 services/notifications → per-account event feed; WebSocket push + HTTP backfill
-services/market_data   → publishes prices, depth, and trade feed
 platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
 platform/gateway/      → entry point: auth, rate limiting, order routing (own installable package)
+platform/market_data/  → publishes prices, depth, and trade feed (own installable package)
 infra/                 → docker-compose files and helper scripts
 ```
 
