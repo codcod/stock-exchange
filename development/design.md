@@ -380,10 +380,10 @@ Destination base URLs are configured via env vars (`CLEARING_URL`, `ORDER_MANAGE
 ```text
 infra/docker/
 ├── compose.infra.yml     # Postgres 17 (postgres-data volume, named 'exchange' network)
-└── compose.services.yml  # Six service containers; all depend only on Postgres health
+└── compose.services.yml  # Eight service containers + the account-migrate one-shot
 ```
 
-All six service containers share a single `depends_on: postgres: condition: service_healthy` — no inter-service dependency ordering is enforced by docker-compose. Services that call each other retry gracefully at the application level. Each container runs `python -m services.<name>` and is reachable on `localhost:800X`.
+`compose.services.yml` declares no Postgres dependency: `postgres` lives in `compose.infra.yml`, and `depends_on` cannot reference a service outside the same compose invocation — declaring it made the file an invalid project for every one-file recipe (`build`, `up`, `down`, `logs`). The cross-stack coupling is the shared external `exchange` network instead, and the wait-for-Postgres ordering lives in the `justfile`: `just infra-up` passes `--wait`, so Postgres is healthy before any service starts, and `just up` runs `infra-up` before bringing the services up. Within `compose.services.yml`, `depends_on` does enforce inter-service ordering — `account` waits for the `account-migrate` one-shot to complete, and `risk-engine`, `order-management`, `matching-engine` and `gateway` wait on the services they call. Services that call each other still retry gracefully at the application level. Each container runs `python -m services.<name>` (or `python -m <name>` for the `platform/` packages) and is reachable on `localhost:800X`.
 
 ### Terminal client (`clients/tui/`)
 

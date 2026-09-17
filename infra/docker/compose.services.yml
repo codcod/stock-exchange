@@ -22,9 +22,6 @@ services:
     command: ["-m", "alembic", "upgrade", "head"]
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   account:
     build:
@@ -83,9 +80,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   # ---------------------------------------------------------------------------
   # Tier 2: notifications (receives events from OMS and Matching Engine)
@@ -107,9 +101,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   # ---------------------------------------------------------------------------
   # Tier 3: risk engine (warms account cache from Account service on boot)
@@ -133,8 +124,6 @@ services:
       retries: 10
       start_period: 10s
     depends_on:
-      postgres:
-        condition: service_healthy
       account:
         condition: service_healthy
 
@@ -163,8 +152,6 @@ services:
       retries: 10
       start_period: 10s
     depends_on:
-      postgres:
-        condition: service_healthy
       risk-engine:
         condition: service_healthy
       account:
@@ -198,8 +185,6 @@ services:
       retries: 10
       start_period: 10s
     depends_on:
-      postgres:
-        condition: service_healthy
       order-management:
         condition: service_healthy
 
