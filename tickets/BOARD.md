@@ -13,18 +13,18 @@ Last updated: 2026-09-17
 
 ## IN DEVELOPMENT
 
+### exchange (0/1)
+
+| id | title | depends-on |
+|---|---|---|
+
+## IN REVIEW
+
 ### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
 | EXC-005 | Migrate services/gateway into platform/gateway package | [EXC-004] |
-
-## IN REVIEW
-
-### exchange (0/1)
-
-| id | title | depends-on |
-|---|---|---|
 
 ## REWORK
 

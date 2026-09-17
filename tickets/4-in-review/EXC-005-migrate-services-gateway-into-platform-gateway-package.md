@@ -275,3 +275,4 @@ confirm `just services-build` still fails with exactly the pre-existing `EXC-016
   `[tool.uv.sources]` entries for `gateway` (EXC-004 added the equivalent for `base`); without
   them `uv sync` doesn't install the workspace member into the root venv and the acceptance
   test's import step fails. Added both.
+- 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
