@@ -27,8 +27,8 @@ import httpx
 from base.request_context import request_id as _request_id_ctx
 from fastapi import FastAPI, Request, Response
 
-from services.gateway import dependencies
-from services.gateway.routes import accounts, instruments, market_data, orders
+from gateway import dependencies
+from gateway.routes import accounts, instruments, market_data, orders
 
 logger = logging.getLogger(__name__)
 
