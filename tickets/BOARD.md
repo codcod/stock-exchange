@@ -40,6 +40,7 @@ Last updated: 2026-09-17
 |---|---|---|---|---|---|---|
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | medium | low | S | [] |  |
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
+| EXC-007 | Migrate services/account into platform/account package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | medium | medium | L | [] |  |
 
 ## TO DO (impact order, per child)
@@ -48,7 +49,6 @@ Last updated: 2026-09-17
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
-| EXC-007 | Migrate services/account into platform/account package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [EXC-004] |  |
