@@ -509,3 +509,4 @@ error and no new error — do not treat that failure as blocking (decision 8).
 - 2026-09-16 — Description corrected: line anchor `shared/platform/db/tables.py:25` →
   `platform/base/src/base/db/tables.py:25` (EXC-004 impact sweep — file moved, line unchanged).
 - 2026-09-17 — TO DO → READY: plan complete
+- 2026-09-17 — READY → IN DEVELOPMENT: picked up
