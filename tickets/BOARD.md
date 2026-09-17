@@ -65,7 +65,7 @@ Last updated: 2026-09-17
 
 | id | title | merged |
 |---|---|---|
-| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | no — publish-gated |
+| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | yes — MERGED: PR #24 merged to `main` (a8ec3e2). |
 | EXC-003 | Write development/design.md as target-architecture design of record for monolith-style platform/ restructuring | yes — merged to main (PR #18, 53104bc) |
 | EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | yes — MERGED: PR #19, `bb4e5cd` |
 | EXC-005 | Migrate services/gateway into platform/gateway package | yes — merged: PR #20, `8f71920`, merged to `main` |
