@@ -48,6 +48,7 @@ Last updated: 2026-09-17
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | medium | low | S | [] |  |
 | EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [EXC-004] |  |
