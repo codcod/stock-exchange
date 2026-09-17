@@ -311,3 +311,4 @@ cost: estimated M, actual M
   test's import step fails. Added both.
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-17 — IN REVIEW → DONE: no blocking findings; disposition: 3 fixed inline, 1 noted (patched into EXC-006)
+- 2026-09-17 — merged: PR #20, `8f71920`, merged to `main`
