@@ -260,3 +260,14 @@ error and no new error — do not treat that failure as blocking.
   missing `[project.dependencies]`/`[tool.uv.sources]` entries for the new workspace member.
   Added both.
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
+- 2026-09-17 — plan amended inline: Task 5's Dockerfile, copied verbatim from EXC-005's pattern,
+  only worked for a 2-member workspace. With `market_data` added as a 3rd `[tool.uv.workspace]`
+  member, `uv sync --locked --package <target>` fails inside either service's Docker build with
+  `references a workspace ... but is not a workspace member`, because uv resolves the whole
+  workspace declared in root `pyproject.toml`, not just the target package — every member's
+  `pyproject.toml` must be present in the build context even though only the target gets
+  installed. Fixed by adding a `COPY platform/<sibling>/pyproject.toml
+  ./platform/<sibling>/pyproject.toml` line (no `src/`, so no extra install) for the other
+  service's Dockerfile in both `platform/market_data/Dockerfile` (added gateway's) and
+  `platform/gateway/Dockerfile` (added market_data's, to fix the regression this ticket's own
+  workspace-member addition caused there). Verified both `docker build`s green.
