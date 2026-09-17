@@ -43,7 +43,7 @@ fresh: clean-all install
 [group('infra')]
 infra-up:
     docker network inspect exchange >/dev/null 2>&1 || docker network create exchange
-    {{ infra }} up -d
+    {{ infra }} up -d --wait
 
 # Stop Postgres
 [group('infra')]
@@ -93,8 +93,8 @@ redeploy name:
 # Start Postgres + all microservices
 [group('stack')]
 up:
-    docker network inspect exchange >/dev/null 2>&1 || docker network create exchange
-    {{ stack }} up -d --build
+    just infra-up
+    {{ services }} up -d --build
 
 # Stop everything
 [group('stack')]
