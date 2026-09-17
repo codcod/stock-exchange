@@ -9,7 +9,7 @@ hand — edit the tickets. Hand-written planning notes live in [`NOTES.md`](NOTE
 **WIP limits (per child-project):**
 - `exchange`: `3-in-development/` ≤ 1 · `4-in-review/` ≤ 1
 
-Last updated: 2026-09-16
+Last updated: 2026-09-17
 
 ## IN DEVELOPMENT
 
@@ -38,6 +38,11 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | medium | low | S | [] |  |
+| EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
+| EXC-005 | Migrate services/gateway into platform/gateway package | medium | medium | M | [EXC-004] |  |
+| EXC-006 | Migrate services/market_data into platform/market_data package | medium | low | M | [EXC-004] |  |
+| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | medium | medium | L | [] |  |
 
 ## TO DO (impact order, per child)
 
@@ -45,11 +50,6 @@ Last updated: 2026-09-16
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
-| EXC-005 | Migrate services/gateway into platform/gateway package | medium | low | S | [EXC-004] |  |
-| EXC-006 | Migrate services/market_data into platform/market_data package | medium | low | S | [EXC-004] |  |
-| EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | medium | low | S | [] |  |
-| EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | S-M | [] |  |
-| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + matching_engine | medium | medium | M | [] |  |
 | EXC-007 | Migrate services/account into platform/account package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
