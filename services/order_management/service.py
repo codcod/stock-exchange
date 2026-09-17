@@ -27,7 +27,7 @@ if tp.TYPE_CHECKING:
     from base.clients.matching_engine import MatchingEngineClient
     from base.clients.risk_engine import RiskEngineClient
 
-    from services.order_management.repository import OrderRepository
+    from services.order_management.unit_of_work import OrderManagementUnitOfWork
 
 logger = logging.getLogger(__name__)
 
@@ -44,13 +44,13 @@ class OrderManagementService:
         self,
         risk_engine: 'RiskEngineClient',
         matching_engine: 'MatchingEngineClient',
-        order_repo: 'OrderRepository',
+        uow_factory: tp.Callable[[], 'OrderManagementUnitOfWork'],
         account_client: 'AccountClient',
     ) -> None:
         self._risk = risk_engine
         self._matching = matching_engine
         self._orders: tp.Dict[str, Order] = {}
-        self._order_repo = order_repo
+        self._uow_factory = uow_factory
         self._account = account_client
 
     # ------------------------------------------------------------------
@@ -81,19 +81,25 @@ class OrderManagementService:
         )
 
         self._orders[order.order_id] = order
-        await self._order_repo.save(order)
+        async with self._uow_factory() as uow:
+            await uow.orders.add(order)
+            await uow.commit()
 
         risk_result = await self._risk.check(order)
         if not risk_result.passed:
             order.status = OrderStatus.REJECTED
             order.reject_reason = risk_result.reason
-            await self._order_repo.update(order)
+            async with self._uow_factory() as uow:
+                await uow.orders.update(order)
+                await uow.commit()
             return order
 
         await self._reserve(order)
         order.status = OrderStatus.OPEN
         await self._matching.submit(order)
-        await self._order_repo.update(order)
+        async with self._uow_factory() as uow:
+            await uow.orders.update(order)
+            await uow.commit()
 
         return order
 
@@ -119,7 +125,9 @@ class OrderManagementService:
         if cancelled:
             order.status = OrderStatus.CANCELLED
             await self._release(order)
-            await self._order_repo.update(order)
+            async with self._uow_factory() as uow:
+                await uow.orders.update(order)
+                await uow.commit()
         return cancelled
 
     def get_order(self, order_id: str) -> tp.Optional[Order]:
@@ -162,7 +170,9 @@ class OrderManagementService:
         else:
             order.status = OrderStatus.PARTIALLY_FILLED
 
-        await self._order_repo.update(order)
+        async with self._uow_factory() as uow:
+            await uow.orders.update(order)
+            await uow.commit()
 
     # ------------------------------------------------------------------
     # Fund / share reservation — delegated to Clearing

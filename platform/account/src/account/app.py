@@ -38,8 +38,9 @@ from base.domain.models import Account
 from fastapi import FastAPI, HTTPException
 
 from account.outbox_relay import run_relay
-from account.repository import AccountRepository
+from account.repository import load_all_accounts
 from account.service import AccountService
+from account.unit_of_work import AccountUnitOfWork
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +62,8 @@ async def lifespan(app: FastAPI):
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.risk = RiskEngineClient(_RISK_URL, _state.http)
     db = get_engine()
-    repo = AccountRepository(db)
-    _state.svc = AccountService(repo, db)
-    for account in await repo.load_all():
+    _state.svc = AccountService(lambda: AccountUnitOfWork(db))
+    for account in await load_all_accounts(db):
         _state.svc._accounts[account.account_id] = account
 
     relay_task = asyncio.create_task(run_relay(_state.http, db))

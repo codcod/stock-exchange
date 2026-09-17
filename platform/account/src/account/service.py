@@ -18,13 +18,12 @@ from datetime import datetime, timezone
 from base.domain.events import AccountUpdated, TradeExecuted
 from base.domain.models import Account
 from sqlalchemy import insert, select
-from sqlalchemy.ext.asyncio import AsyncEngine
 
 from account.outbox_repo import write_outbox_rows
 from account.tables import processed_events as processed_events_t
 
 if tp.TYPE_CHECKING:
-    from account.repository import AccountRepository
+    from account.unit_of_work import AccountUnitOfWork
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +36,9 @@ class AccountService:
     in the same transaction so the Risk Engine cache stays coherent.
     """
 
-    def __init__(self, account_repo: 'AccountRepository', engine: AsyncEngine) -> None:
+    def __init__(self, uow_factory: tp.Callable[[], 'AccountUnitOfWork']) -> None:
         self._accounts: tp.Dict[str, Account] = {}
-        self._repo = account_repo
-        self._engine = engine
+        self._uow_factory = uow_factory
 
     # ------------------------------------------------------------------
     # Account registration
@@ -49,9 +47,10 @@ class AccountService:
     async def register_account(self, account: Account) -> Account:
         """Persist a new account and populate the in-memory cache."""
         self._accounts[account.account_id] = account
-        async with self._engine.begin() as conn:
-            await self._repo.save_with_conn(conn, account)
-            await _enqueue_account_updated(conn, account)
+        async with self._uow_factory() as uow:
+            await uow.accounts.add(account)
+            await _enqueue_account_updated(uow.connection, account)
+            await uow.commit()
         return account
 
     def list_accounts(self) -> tp.List[Account]:
@@ -70,9 +69,10 @@ class AccountService:
         if account is None:
             return None
         account.reserved_cash = max(0.0, account.reserved_cash + delta)
-        async with self._engine.begin() as conn:
-            await self._repo.save_with_conn(conn, account)
-            await _enqueue_account_updated(conn, account)
+        async with self._uow_factory() as uow:
+            await uow.accounts.add(account)
+            await _enqueue_account_updated(uow.connection, account)
+            await uow.commit()
         return account
 
     async def reserve_shares(
@@ -84,9 +84,10 @@ class AccountService:
             return None
         current = account.reserved_shares.get(ticker, 0)
         account.reserved_shares[ticker] = max(0, current + delta)
-        async with self._engine.begin() as conn:
-            await self._repo.save_with_conn(conn, account)
-            await _enqueue_account_updated(conn, account)
+        async with self._uow_factory() as uow:
+            await uow.accounts.add(account)
+            await _enqueue_account_updated(uow.connection, account)
+            await uow.commit()
         return account
 
     # ------------------------------------------------------------------
@@ -102,8 +103,8 @@ class AccountService:
         Idempotent: re-delivery of the same event_id is a no-op, guarded by
         the processed_events table within the same transaction.
         """
-        async with self._engine.begin() as conn:
-            already_done = await conn.scalar(
+        async with self._uow_factory() as uow:
+            already_done = await uow.connection.scalar(
                 select(processed_events_t.c.event_id).where(
                     processed_events_t.c.event_id == event.event_id
                 )
@@ -128,8 +129,8 @@ class AccountService:
                     event.quantity,
                     trade_value,
                 )
-                await self._repo.save_with_conn(conn, buyer)
-                await _enqueue_account_updated(conn, buyer)
+                await uow.accounts.add(buyer)
+                await _enqueue_account_updated(uow.connection, buyer)
 
             if seller:
                 seller.cash_balance += trade_value
@@ -145,12 +146,13 @@ class AccountService:
                     event.quantity,
                     trade_value,
                 )
-                await self._repo.save_with_conn(conn, seller)
-                await _enqueue_account_updated(conn, seller)
+                await uow.accounts.add(seller)
+                await _enqueue_account_updated(uow.connection, seller)
 
-            await conn.execute(
+            await uow.connection.execute(
                 insert(processed_events_t).values(event_id=event.event_id)
             )
+            await uow.commit()
 
         return buyer, seller
 

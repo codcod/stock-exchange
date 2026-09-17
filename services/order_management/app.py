@@ -42,9 +42,10 @@ from fastapi import FastAPI, HTTPException, Query
 
 from services.order_management.outbox_relay import run_relay
 from services.order_management.outbox_repo import write_outbox_rows
-from services.order_management.repository import OrderRepository
+from services.order_management.repository import load_all_orders
 from services.order_management.service import OrderManagementService
 from services.order_management.tables import ensure_tables
+from services.order_management.unit_of_work import OrderManagementUnitOfWork
 
 _RISK_URL = os.getenv('RISK_ENGINE_URL', 'http://localhost:8002')
 _MATCHING_URL = os.getenv('MATCHING_ENGINE_URL', 'http://localhost:8003')
@@ -66,16 +67,18 @@ async def lifespan(app: FastAPI):
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.db = get_engine()
     await ensure_tables(_state.db)
-    order_repo = OrderRepository(_state.db)
 
     risk_client = RiskEngineClient(_RISK_URL, _state.http)
     matching_client = MatchingEngineClient(_MATCHING_URL, _state.http)
     account_client = AccountClient(_ACCOUNT_URL, _state.http)
     _state.svc = OrderManagementService(
-        risk_client, matching_client, order_repo, account_client
+        risk_client,
+        matching_client,
+        lambda: OrderManagementUnitOfWork(_state.db),
+        account_client,
     )
 
-    for order in await order_repo.load_all():
+    for order in await load_all_orders(_state.db):
         _state.svc._orders[order.order_id] = order
 
     relay_task = asyncio.create_task(run_relay(_state.http, _state.db))

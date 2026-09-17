@@ -10,6 +10,7 @@ import typing as tp
 import pytest
 from base.domain.events import OrderFilled
 from base.domain.models import Order, OrderStatus, OrderType, Side
+from base.unit_of_work import AbstractUnitOfWork
 
 from services.order_management.service import OrderManagementService
 from services.risk_engine.engine import RiskResult
@@ -47,14 +48,17 @@ class FakeAccountClient:
 
 
 class FakeOrderRepo:
-    """Captures save/update calls so tests can assert on persisted state."""
+    """Captures add/update calls so tests can assert on persisted state."""
 
     def __init__(self) -> None:
         self.saved: tp.Dict[str, Order] = {}
         self.updates: tp.List[Order] = []
 
-    async def save(self, order: Order) -> None:
-        self.saved[order.order_id] = order
+    async def add(self, item: Order) -> None:
+        self.saved[item.order_id] = item
+
+    async def get(self, id: str):
+        return self.saved.get(id)
 
     async def update(self, order: Order) -> None:
         self.updates.append(
@@ -71,6 +75,21 @@ class FakeOrderRepo:
                 average_fill_price=order.average_fill_price,
             )
         )
+
+
+class FakeOrderManagementUnitOfWork(AbstractUnitOfWork):
+    """Test double bypassing SqlAlchemyUnitOfWork — no engine/connection faking."""
+
+    def __init__(self, repo: FakeOrderRepo) -> None:
+        self.orders = repo
+        self.committed = False
+        self.rolled_back = False
+
+    async def commit(self) -> None:
+        self.committed = True
+
+    async def rollback(self) -> None:
+        self.rolled_back = True
 
 
 # ---------------------------------------------------------------------------
@@ -94,10 +113,11 @@ def make_svc(
     repo: FakeOrderRepo | None = None,
 ) -> tuple:
     repo = repo or FakeOrderRepo()
+    uow = FakeOrderManagementUnitOfWork(repo)
     svc = OrderManagementService(
         risk_engine=risk or FakeRiskEngine(),
         matching_engine=FakeMatchingEngine(),
-        order_repo=repo,
+        uow_factory=lambda: uow,
         account_client=FakeAccountClient(),
     )
     return svc, repo
