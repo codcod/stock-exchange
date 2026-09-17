@@ -206,3 +206,16 @@ stale on two further counts. Rewrite it:
   with an exit-status assertion. The `postgres-data` volume path bug found alongside is filed
   separately.
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up; plan amended inline at the applicability gate
+- 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
+  Implemented on `feat/EXC-016-fix-compose-services-yml-depends-on-postgres` as one atomic
+  commit (`fdf80f3`): six `postgres:` entries removed from `infra/docker/compose.services.yml`
+  (`account-migrate`, `clearing`, `notifications` lost the whole now-empty `depends_on:` key;
+  `risk-engine`, `order-management`, `matching-engine` kept their inter-service entries;
+  `account`, `market-data`, `gateway` untouched), Task 2's two `justfile` edits (`infra-up`
+  now `up -d --wait`, `up` now calls `just infra-up` then `{{ services }} up -d --build`,
+  which also removed a duplicated network-create line), and `development/design.md:382-386`
+  rewritten. Acceptance: `docker compose -f compose.services.yml config` and the merged
+  two-file `config` both exit 0 with no "depends on undefined service" error; `just
+  services-build` exits 0 building all nine images; `just lint` exits 0; `just test` 66 passed.
+  `{{ stack }}` is still used by `down`/`fresh-stack`/`logs`/`ps`, where merged semantics are
+  wanted and `postgres` resolves. Publish pending user approval of the commit message.
