@@ -310,3 +310,5 @@ same pattern elsewhere in both files (`load_all_accounts`, `load_all_orders`,
 - 2026-09-17 — IN REVIEW → REWORK: F1 blocking: ruff format --check fails on 2 files (just check gap)
 - 2026-09-17 — REWORK → IN REVIEW: findings fixed
 - 2026-09-17 — IN REVIEW → DONE: scoped re-review: F1 fixed (689d00e), no new findings; F2/F3 noted, F4 spawned EXC-020
+- 2026-09-17 — pushed `feat/EXC-001-add-repository-unit-of-work-base-classes`; opened
+  https://github.com/codcod/stock-exchange/pull/24 (base `main`). Awaiting human merge.
