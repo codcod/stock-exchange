@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "account"
+version = "0.0.1"
+description = "Account service — cash/position ledger, reservations, settlement"
+requires-python = ">=3.11"
+dependencies = [
+    "base",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+]
+
+[tool.uv.sources]
+base = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/account"]

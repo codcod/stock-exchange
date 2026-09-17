@@ -12,6 +12,7 @@ dependencies = [
     "base",
     "gateway",
     "market_data",
+    "account",
 ]
 
 [project.optional-dependencies]
@@ -30,12 +31,13 @@ where = ["."]
 include = ["services*", "clients*"]
 
 [tool.uv.workspace]
-members = ["platform/base", "platform/gateway", "platform/market_data"]
+members = ["platform/base", "platform/gateway", "platform/market_data", "platform/account"]
 
 [tool.uv.sources]
 base = { workspace = true }
 gateway = { workspace = true }
 market_data = { workspace = true }
+account = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["services", "platform"]
@@ -46,7 +48,7 @@ asyncio_mode = "auto"
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["services", "platform/base/src", "platform/gateway/src", "platform/market_data/src"]
+source = ["services", "platform/base/src", "platform/gateway/src", "platform/market_data/src", "platform/account/src"]
 omit = ["*/tests/*", "clients/*"]
 
 # optional config below
