@@ -360,3 +360,4 @@ upgrade head` creates the `matching_engine` schema with `outbox` plus
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-17 — TO DO → READY: plan complete
+- 2026-09-17 — READY → IN DEVELOPMENT: picked up

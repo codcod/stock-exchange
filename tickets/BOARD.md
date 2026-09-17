@@ -13,10 +13,11 @@ Last updated: 2026-09-17
 
 ## IN DEVELOPMENT
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | [EXC-004] |
 
 ## IN REVIEW
 
@@ -39,7 +40,6 @@ Last updated: 2026-09-17
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
-| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | medium | medium | M | [EXC-004] |  |
