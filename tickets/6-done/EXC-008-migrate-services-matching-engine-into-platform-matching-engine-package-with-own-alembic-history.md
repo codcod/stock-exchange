@@ -354,7 +354,80 @@ upgrade head` creates the `matching_engine` schema with `outbox` plus
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): **independent** — this reviewing session has no
+  hand in the `feat/EXC-008-...` branch (fresh session, first action was this review); no
+  delegation needed.
+- [x] Implementation audit — acceptance test re-run, tasks & criteria verified (steps 1, 2)
+- [x] Quality audit (step 3)
+- [x] Consistency audit (step 4)
+- [x] Documentation audit — coverage, whole-tree sweep; no docs build configured for this
+  project (step 4a)
+- [x] Docs-readability pass — **conscious skip**: no docs-readability reviewer configured in
+  this host session (step 4b)
+- [x] Findings recorded with severity, class, disposition; disposition summary + cost line (step 5)
+- [x] Ticket moved (step 6)
+- [x] Other references updated; governing documents reconciled (step 7)
+- [x] Remaining-tickets impact sweep done (step 8)
+- [x] Summary + commit message & MR attributes presented for approval (step 9)
+
+**Implementation audit.** Re-ran the full acceptance test on
+`feat/EXC-008-migrate-services-matching-engine-into-platform-matching-engine-package-with-own-alembic-history`
+(commit `7a4cff7`, plus a review fixup `16126f7` — see F1 below):
+- `alembic history` (via `uv run --project platform/matching_engine`): exactly one revision,
+  `<base> -> eb6552474e2f (head), create matching_engine schema`. Met.
+- `uv sync --extra dev` + import check
+  (`matching_engine.app/.matching/.order_book/.outbox_repo/.outbox_relay`): clean, no output. Met.
+- `just check` (ruff check + ruff format --check): both clean. Met.
+- `just test`: 66 passed, including the moved `matching_engine` suite (10 tests) at its new
+  path; no drop vs. the pre-move suite. Met.
+- `platform/*/Dockerfile` builds (account, gateway, market_data, matching_engine): all build
+  clean. Met.
+- `just services-build`: succeeds outright (decision 9) — all 10 images built. Met.
+- Repo-wide `grep -rn "services\.matching_engine" services scripts platform clients infra
+  --include='*.py' --include='*.yml'`: no output. `services/matching_engine` directory: gone.
+  Met.
+- Live migration: started an isolated Postgres 18 container, ran
+  `alembic -c platform/matching_engine/alembic.ini upgrade head` against it with `DATABASE_URL`
+  pointed at it — `matching_engine.outbox` and `matching_engine.alembic_version` both created
+  (`\dt matching_engine.*`). Met.
+- All 12 confirmed design decisions verified against the diff: package name/layout (1), `alembic`
+  transitive-only (2), Dockerfile shape + migration files copied (3), `matching-engine-migrate`
+  compose block has no `depends_on: postgres`, mirrors `account-migrate` (4), `tables.py`
+  schema-qualified (5), `ensure_tables()` and its call deleted from `tables.py`/`app.py` (6),
+  initial migration handwritten, matches the plan's SQL verbatim (7), `EVENT_DESTINATIONS` /
+  `DESTINATION_URLS` / `ENDPOINT_FOR_EVENT_TYPE` untouched (8), `just services-build` green (9),
+  all three sibling Dockerfiles (`account`, `gateway`, `market_data`) got the new `COPY` stub (10),
+  `justfile`'s `run-matching` fixed (11), no `justfile`/CI restructuring attempted (12).
+
+**Quality audit.** Code is idiomatic and matches the sibling `platform/account`/`platform/gateway`
+shape. Test coverage unchanged (file moved verbatim, only import paths rewritten). No blocking
+call introduced. `EVENT_DESTINATIONS`/`ENDPOINT_FOR_EVENT_TYPE` both wired for the three event
+types (addendum step 2 item 1) — this branch didn't add or rename an event, so the check is
+moot, but verified anyway. No new file exceeds 200 lines; `order_book.py` (246, pre-existing
+overage) was moved, not grown.
+
+**Consistency audit.** Searched project-wide for `services.matching_engine` / `services/
+matching_engine` (see grep above, and doc grep below) — one stale reference found (F1).
+`outbox_relay.py`'s destination strings correctly left as HTTP routing keys, not import paths.
+
+**Documentation audit.** `README.md` and `development/design.md` updated per the plan
+(`services/matching_engine` line removed from the tree, `platform/matching_engine/` entry
+added with correct description; the outbox-relay section header and the Limit Order Book table's
+`order_book.py` path both repointed; the stale `engine.py` filename corrected to
+`order_book.py`). Whole-tree grep for `matching_engine`/`matching-engine` across
+`development/design.md`, `README.md`, `development/review-addendum.md` found one item this branch
+missed (F1) and one pre-existing item unrelated to this branch (F2). No docs build is configured
+for this project (addendum step 1).
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | fixed inline | `development/review-addendum.md` step 2 item 1's outbox-maps parenthetical still said `services/matching_engine/outbox_relay.py`, made false by this branch's move to `platform/matching_engine/` | `development/review-addendum.md:38` (pre-fix) | repointed to `platform/matching_engine/src/matching_engine/outbox_relay.py` |
+| F2 | non-blocking | stale-xref | noted | Same parenthetical's `services/account/outbox_relay.py` entry is also stale (account moved to `platform/account/` in EXC-007) — pre-existing, not this branch's causation, so left as-is per the inline-fix bar | `development/review-addendum.md:38` | a future ticket/review repoints it when next touching this file; too small on its own to promote |
+
+Disposition summary: 1 fixed inline (F1), 1 noted (F2). No findings folded or spawned as new
+tickets — nothing here clears the promotion test on its own.
+
+cost: estimated M, actual M
 
 ## History
 
@@ -362,3 +435,4 @@ upgrade head` creates the `matching_engine` schema with `outbox` plus
 - 2026-09-17 — TO DO → READY: plan complete
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-17 — IN REVIEW → DONE: review clean — 1 fixed inline (F1), 1 noted (F2), no blocking findings
