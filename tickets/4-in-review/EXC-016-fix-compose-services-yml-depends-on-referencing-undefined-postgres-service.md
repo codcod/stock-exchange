@@ -195,3 +195,4 @@ stale on two further counts. Rewrite it:
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green (fdf80f3); publish pending approval
 - 2026-09-17 — published: branch pushed, MR opened (PR #23, fdf80f3); awaiting human merge
+- 2026-09-17 — merged to main (PR #23, deddc9a)
