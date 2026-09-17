@@ -124,7 +124,7 @@ ps:
 # Gateway (routes to local microservices)
 [group('run locally')]
 run-gateway:
-    uv run python -m services.gateway
+    uv run python -m gateway
 
 # Order Management Service
 [group('run locally')]
@@ -164,7 +164,7 @@ run-clearing:
 run-account:
     DATABASE_URL={{ db_url }} \
     RISK_ENGINE_URL=http://localhost:8002 \
-    uv run python -m services.account
+    uv run python -m account
 
 # Notifications Service
 [group('run locally')]
@@ -174,7 +174,7 @@ run-notifications:
 # Market Data Service
 [group('run locally')]
 run-market-data:
-    uv run python -m services.market_data
+    uv run python -m market_data
 
 # Start a tmux session (2×4 panes) with infra + all six services
 [group('run locally')]

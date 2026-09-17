@@ -3,7 +3,7 @@ Tests for ClearingService.
 
 Clearing is now a pure trade-record keeper. The only behaviour to test
 is that on_trade_executed persists the correct trade to the repository.
-Settlement logic lives in services/account/tests/.
+Settlement logic lives in platform/account/src/account/tests/.
 """
 
 import pytest

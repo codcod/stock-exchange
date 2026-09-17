@@ -278,7 +278,9 @@ All synchronous inter-service calls are performed over HTTP using `httpx`. Trade
 | Clearing | 8004 | Manages account balances and positions. | — | `accounts`, `positions`, `trades` |
 | MarketData | 8005 | Provides in-memory quote snapshots and trade history. | — | No |
 
-`platform/account/` and `services/notifications/` are scaffolded but not yet implemented.
+`platform/account/` (port 8006) and `services/notifications/` (port 8007) are implemented
+but absent from the table above, which predates both — see "Architecture overview" for the
+current, authoritative service list.
 
 ### HTTP gateway (`platform/gateway/`)
 
