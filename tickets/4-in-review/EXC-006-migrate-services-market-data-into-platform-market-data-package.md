@@ -271,3 +271,4 @@ error and no new error — do not treat that failure as blocking.
   service's Dockerfile in both `platform/market_data/Dockerfile` (added gateway's) and
   `platform/gateway/Dockerfile` (added market_data's, to fix the regression this ticket's own
   workspace-member addition caused there). Verified both `docker build`s green.
+- 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
