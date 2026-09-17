@@ -259,3 +259,4 @@ error and no new error — do not treat that failure as blocking.
   had the same root-`pyproject.toml` wiring gap EXC-005 itself hit during implementation —
   missing `[project.dependencies]`/`[tool.uv.sources]` entries for the new workspace member.
   Added both.
+- 2026-09-17 — READY → IN DEVELOPMENT: picked up

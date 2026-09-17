@@ -13,10 +13,11 @@ Last updated: 2026-09-17
 
 ## IN DEVELOPMENT
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-006 | Migrate services/market_data into platform/market_data package | [EXC-004] |
 
 ## IN REVIEW
 
@@ -40,7 +41,6 @@ Last updated: 2026-09-17
 |---|---|---|---|---|---|---|
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | medium | low | S | [] |  |
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
-| EXC-006 | Migrate services/market_data into platform/market_data package | medium | low | M | [EXC-004] |  |
 | EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | medium | medium | L | [] |  |
 
 ## TO DO (impact order, per child)
