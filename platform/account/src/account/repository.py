@@ -70,20 +70,36 @@ class AccountRepository(AbstractRepository[Account]):
         """Fetch a single account with its positions and reservations."""
         conn = self._connection
         acc_row = (
-            await conn.execute(select(accounts_t).where(accounts_t.c.account_id == id))
-        ).mappings().first()
+            (
+                await conn.execute(
+                    select(accounts_t).where(accounts_t.c.account_id == id)
+                )
+            )
+            .mappings()
+            .first()
+        )
         if acc_row is None:
             return None
         pos_rows = (
-            await conn.execute(
-                select(positions_t).where(positions_t.c.account_id == id)
+            (
+                await conn.execute(
+                    select(positions_t).where(positions_t.c.account_id == id)
+                )
             )
-        ).mappings().all()
+            .mappings()
+            .all()
+        )
         res_rows = (
-            await conn.execute(
-                select(reserved_shares_t).where(reserved_shares_t.c.account_id == id)
+            (
+                await conn.execute(
+                    select(reserved_shares_t).where(
+                        reserved_shares_t.c.account_id == id
+                    )
+                )
             )
-        ).mappings().all()
+            .mappings()
+            .all()
+        )
 
         account = Account(
             account_id=acc_row['account_id'],

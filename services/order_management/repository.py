@@ -46,10 +46,14 @@ class OrderRepository(AbstractRepository[Order]):
     async def get(self, id: str) -> Order | None:
         """Fetch a single order by id."""
         row = (
-            await self._connection.execute(
-                select(orders_t).where(orders_t.c.order_id == id)
+            (
+                await self._connection.execute(
+                    select(orders_t).where(orders_t.c.order_id == id)
+                )
             )
-        ).mappings().first()
+            .mappings()
+            .first()
+        )
         return _row_to_order(row) if row is not None else None
 
     async def update(self, order: Order) -> None:
