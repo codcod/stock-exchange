@@ -39,6 +39,11 @@ Last updated: 2026-09-17
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
+| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | medium | medium | M | [EXC-004] |  |
+| EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | medium | medium | M | [EXC-004] |  |
 
 ## TO DO (impact order, per child)
 
@@ -48,11 +53,6 @@ Last updated: 2026-09-17
 |---|---|---|---|---|---|---|
 | EXC-018 | Guard compose config in CI and make the up recipe a just dependency | high | low | S | [] |  |
 | EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | medium | low | S | [] |  |
-| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
-| EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
-| EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [EXC-004] |  |
-| EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | medium | medium | M | [EXC-004] |  |
-| EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | medium | medium | M | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
 | EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
 | EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012, EXC-013, EXC-014] |  |
