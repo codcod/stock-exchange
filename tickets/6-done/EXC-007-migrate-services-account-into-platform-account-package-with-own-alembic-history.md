@@ -566,3 +566,4 @@ cost: estimated M, actual M
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-17 — IN REVIEW → DONE: review passed: 6 non-blocking findings (F1-F5 fixed inline, F6 patched into EXC-001/EXC-002 via the step-8 impact sweep); no blocking findings
+- 2026-09-17 — merged: PR #22, `84992f7`, merged to `main`
