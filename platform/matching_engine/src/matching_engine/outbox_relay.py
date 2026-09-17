@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 
 import httpx
 
-from services.matching_engine.outbox_repo import OutboxRepository, write_outbox_rows
+from matching_engine.outbox_repo import OutboxRepository, write_outbox_rows
 
 logger = logging.getLogger(__name__)
 

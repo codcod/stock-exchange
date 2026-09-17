@@ -1,10 +1,8 @@
 """Table definitions for the Matching Engine service."""
 
-from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import Column, DateTime, Integer, MetaData, String, Table, Text
 
-metadata = MetaData()
-_SCHEMAS = ('matching_engine',)
+metadata = MetaData(schema='matching_engine')
 
 outbox = Table(
     'outbox',
@@ -18,7 +16,3 @@ outbox = Table(
     Column('published_at', DateTime(timezone=True), nullable=True),
     schema='matching_engine',
 )
-
-
-async def ensure_tables(engine) -> None:
-    await _ensure_tables(engine, metadata, _SCHEMAS)

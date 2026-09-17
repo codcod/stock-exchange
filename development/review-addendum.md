@@ -35,7 +35,8 @@ this repo; do not look for them.
 step most likely to be silently skipped:
 
 1. **A new event needs both outbox maps, in the *emitting* service.** Each `outbox_relay.py`
-   (`services/{account,matching_engine,order_management}/outbox_relay.py`) carries an
+   (`services/account/outbox_relay.py`, `platform/matching_engine/src/matching_engine/outbox_relay.py`,
+   `services/order_management/outbox_relay.py`) carries an
    `EVENT_DESTINATIONS` dict (event type → list of downstream services) and an
    `ENDPOINT_FOR_EVENT_TYPE` dict (destination → URL path). Wiring only one of the two still
    passes local unit tests — they mock the HTTP call — and only fails at runtime when the relay
@@ -67,7 +68,7 @@ step most likely to be silently skipped:
    `class: design`, never blocking on its own.
 3. **The 200-line-per-file guideline is already soft-violated** in four files that predate this
    addendum: `services/order_management/service.py` (205), `services/order_management/app.py`
-   (204), `services/matching_engine/order_book.py` (246), `platform/account/src/account/app.py` (199). Do not
+   (204), `platform/matching_engine/src/matching_engine/order_book.py` (246), `platform/account/src/account/app.py` (199). Do not
    file the existing overage as a finding. Flag only a branch that grows one of these further, or
    that adds a new file starting over 200 lines.
 4. **Async discipline is a correctness axis here, not style.** Every service module is
@@ -122,3 +123,11 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
   the branch under review landed an unformatted generated migration, and repointed step 3 item 3's
   line-count entry from `services/account/app.py` (201) to `platform/account/src/account/app.py`
   (199).
+- **v4** (2026-09-17) — EXC-008 repointed step 3 item 3's `matching_engine/order_book.py` entry
+  from `services/matching_engine/` to `platform/matching_engine/src/matching_engine/` after the
+  service's move into its own installable package.
+- **v5** (2026-09-17) — EXC-008's review repointed step 2 item 1's `matching_engine` entry in the
+  outbox-maps parenthetical to `platform/matching_engine/src/matching_engine/outbox_relay.py`,
+  stale-xref F1 fixed inline (`## Review`, EXC-008). The `services/account/outbox_relay.py` entry
+  in the same parenthetical is separately stale since EXC-007's move to `platform/account/`; left
+  as-is and noted (F2) — pre-existing, not this branch's causation.

@@ -18,13 +18,14 @@ clients/simulator      → generates synthetic order traffic for testing
 clients/tui/           → interactive terminal trading app (Textual)
 services/risk_engine   → pre-trade checks before orders reach the book
 services/order_management → order lifecycle and persistence
-services/matching_engine  → order book + price-time priority matching
 services/clearing      → post-trade trade-record keeper (audit ledger only)
 services/notifications → per-account event feed; WebSocket push + HTTP backfill
 platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
 platform/gateway/      → entry point: auth, rate limiting, order routing (own installable package)
 platform/market_data/  → publishes prices, depth, and trade feed (own installable package)
 platform/account/      → source of truth for cash, positions, and reservations (own
+                          installable package, own Alembic migration history)
+platform/matching_engine/ → order book + price-time priority matching (own
                           installable package, own Alembic migration history)
 infra/                 → docker-compose files and helper scripts
 ```
@@ -359,7 +360,7 @@ Both stateful services that maintain in-memory caches reload their data from Pos
 
 Note: The matching engine reads from `order_management.orders`, and the risk engine reads from `clearing.accounts`, creating cross-schema dependencies at startup. Since all schemas reside in the same PostgreSQL instance, this is a read-only coupling rather than a service call.
 
-### Outbox event relay (`services/matching_engine/`)
+### Outbox event relay (`platform/matching_engine/`)
 
 After each match, the matching engine writes event rows to the `matching_engine.outbox` PostgreSQL table—one row for each event and destination—and immediately returns a response to the caller. A background coroutine, `_outbox_relay`, polls the table every 0.5 seconds, delivers each unpublished row via an HTTP POST request to the target service, and marks the row as published.
 
@@ -444,7 +445,7 @@ The TUI polls the gateway every 2 s (market data) and 3 s (account/orders). Bloc
 
 | Concept | Status | Notes / Implementation Gap |
 |---|---|---|
-| **Order Book** — A two-sided list of resting limit orders. | ✅ | Implemented as the `OrderBook` class in `services/matching_engine/engine.py`, with one instance per ticker. |
+| **Order Book** — A two-sided list of resting limit orders. | ✅ | Implemented as the `OrderBook` class in `platform/matching_engine/src/matching_engine/order_book.py`, with one instance per ticker. |
 | **Order** — Comprises a side, quantity, limit price, and submission time. | ✅ | Defined as a `dataclass` in `shared/models/domain.py`, containing all four required fields. |
 | **Price Level** — A discrete price point that groups multiple orders. | ✅ | Implemented as the `PriceLevel` dataclass, which holds a `Deque[Order]` for First-In, First-Out (FIFO) ordering. |
 | **Tick Size** — The minimum price increment between price levels. | ❌ | Not implemented. Orders can be submitted at any decimal price. This could be added by implementing a validator in `RiskEngine._check_price_sanity()` to round the price to the nearest tick. |

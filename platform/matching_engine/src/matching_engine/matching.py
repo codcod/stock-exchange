@@ -11,7 +11,7 @@ import typing as tp
 from base.domain.events import MarketDataUpdate, OrderFilled, TradeExecuted
 from base.domain.models import Order, Trade
 
-from services.matching_engine.order_book import OrderBook
+from matching_engine.order_book import OrderBook
 
 
 class MatchingEngine:

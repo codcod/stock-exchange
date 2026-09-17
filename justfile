@@ -152,7 +152,7 @@ run-matching:
     MARKET_DATA_URL=http://localhost:8005 \
     ACCOUNT_URL=http://localhost:8006 \
     NOTIFICATIONS_URL=http://localhost:8007 \
-    uv run python -m services.matching_engine
+    uv run python -m matching_engine
 
 # Clearing Service
 [group('run locally')]

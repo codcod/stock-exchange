@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "matching_engine"
+version = "0.0.1"
+description = "Matching Engine — order book, price-time priority matching, trade outbox"
+requires-python = ">=3.11"
+dependencies = [
+    "base",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+]
+
+[tool.uv.sources]
+base = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/matching_engine"]
