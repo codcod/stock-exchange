@@ -8,6 +8,7 @@ Covers settlement (apply_settlement), reservation management
 import pytest
 from base.domain.events import TradeExecuted
 from base.domain.models import Account
+from base.unit_of_work import AbstractUnitOfWork
 
 from account.service import AccountService
 
@@ -20,14 +21,11 @@ class FakeAccountRepo:
     def __init__(self) -> None:
         self.saved: dict = {}
 
-    async def save(self, account: Account) -> None:
-        self.saved[account.account_id] = account
+    async def add(self, item: Account) -> None:
+        self.saved[item.account_id] = item
 
-    async def save_with_conn(self, conn, account: Account) -> None:
-        self.saved[account.account_id] = account
-
-    async def load_all(self):
-        return list(self.saved.values())
+    async def get(self, id: str):
+        return self.saved.get(id)
 
 
 class _FakeConn:
@@ -50,15 +48,21 @@ class _FakeConn:
         pass
 
 
-class FakeEngine:
-    """Fake AsyncEngine that yields a FakeConn from begin()."""
+class FakeAccountUnitOfWork(AbstractUnitOfWork):
+    """Test double bypassing SqlAlchemyUnitOfWork — no engine/connection faking."""
 
     def __init__(self, already_processed: bool = False) -> None:
-        self.conn = _FakeConn()
-        self.conn._scalar_result = 'exists' if already_processed else None
+        self.accounts = FakeAccountRepo()
+        self.connection = _FakeConn()
+        self.connection._scalar_result = 'exists' if already_processed else None
+        self.committed = False
+        self.rolled_back = False
 
-    def begin(self):
-        return self.conn
+    async def commit(self) -> None:
+        self.committed = True
+
+    async def rollback(self) -> None:
+        self.rolled_back = True
 
 
 # ---------------------------------------------------------------------------
@@ -67,10 +71,9 @@ class FakeEngine:
 
 
 def make_svc(already_processed: bool = False) -> tuple:
-    repo = FakeAccountRepo()
-    engine = FakeEngine(already_processed=already_processed)
-    svc = AccountService(account_repo=repo, engine=engine)
-    return svc, repo, engine
+    uow = FakeAccountUnitOfWork(already_processed=already_processed)
+    svc = AccountService(uow_factory=lambda: uow)
+    return svc, uow.accounts, uow
 
 
 def make_buyer(cash: float = 1000.0, reserved_cash: float = 0.0) -> Account:
