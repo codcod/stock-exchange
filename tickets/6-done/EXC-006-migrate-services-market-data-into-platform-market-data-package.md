@@ -249,7 +249,48 @@ error and no new error — do not treat that failure as blocking.
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): audits run independently — this session did not author the branch
+- [x] Implementation audit — acceptance test re-run, tasks & criteria verified (steps 1, 2)
+- [x] Quality audit (step 3)
+- [x] Consistency audit (step 4)
+- [x] Documentation audit — coverage, whole-tree sweep, docs build clean (step 4a): no docs build command configured for this project; README.md/design.md sweep done
+- [x] Docs-readability pass: skipped — no docs-readability reviewer configured in this host
+- [x] Findings recorded, disposition summary + cost line below (step 5)
+- [x] Ticket moved to `tickets/6-done/`; `## History` appended (step 6)
+- [x] Other references updated; governing documents reconciled (step 7)
+- [x] Remaining-tickets impact sweep done (step 8)
+- [x] Summary + commit message & MR attributes presented for approval; overarching bookkeeping committed per policy; next-ticket suggestion (step 9)
+
+### Implementation audit
+
+- `uv sync --extra dev` — clean; `market-data==0.0.1` installed from `platform/market_data`.
+- `uv run python -c "import market_data.app, market_data.service"` — imports clean.
+- `just lint` — `ruff check .` — all checks passed.
+- `just test` — 66 passed, including 11 cases from `platform/market_data/src/market_data/tests/test_service.py` (was 55 before the migration's `testpaths` addition — `services`+`platform` both collected).
+- `docker build -f platform/market_data/Dockerfile -t exchange-market-data:test .` — succeeded.
+- `grep -rn "services\.market_data" services scripts platform clients infra --include='*.py' --include='*.yml'` — no output.
+- `test ! -d services/market_data` — confirmed gone.
+- `just services-build` — still fails with the pre-existing `EXC-016` error only (`service "matching-engine" depends on undefined service "postgres"`) — no new error introduced.
+- All 8 confirmed design decisions honoured: flat `market_data` package name, no Alembic history, two-stage Dockerfile matching EXC-005's shape, versioning artifacts at `0.0.1`, `tests/` moved and collected, `justfile`/CI restructuring untouched, compose block repointed, `services-build` failure unchanged.
+
+### Quality audit
+
+Code is a straight `git mv` + import rewrite (`services.market_data` → `market_data`) — idiomatic, no new logic introduced. `platform/market_data/pyproject.toml` mirrors `platform/gateway/pyproject.toml`'s shape. Dockerfile mirrors EXC-005's two-stage pattern exactly. Test suite carried over unchanged and passes. No new error-handling/security surface — in-memory-only service, no new inputs.
+
+### Consistency audit
+
+- `README.md` and `development/design.md` both updated — no stale `services/market_data` or `services\.market_data` references remain anywhere in the tree (grep above confirms).
+- `infra/docker/compose.services.yml`'s `market-data` block correctly repointed; no other service's block touched.
+- Root `pyproject.toml` wiring (`workspace.members`, `project.dependencies`, `tool.uv.sources`, `testpaths`, `coverage.run.source`) — all four entries present, avoiding the exact wiring gap EXC-005 hit and this ticket's plan was amended to pre-empt (History, 2026-09-17).
+- The commit additionally patches `platform/gateway/Dockerfile` to `COPY platform/market_data/pyproject.toml`, needed because `uv sync` resolves the whole workspace declared in root `pyproject.toml` — adding `market_data` as a third member broke `gateway`'s Docker build (uv sync inside its build context couldn't resolve the workspace without every member's `pyproject.toml` present). Not in the ticket's own task list, but required to keep the tree buildable and directly caused by this ticket's own workspace-member addition — reconciled inline (rules §5 disposition: fixed in-review, not deferred; no behaviour change to `gateway` itself).
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | note-and-close | `platform/gateway/Dockerfile` needed a `COPY platform/market_data/pyproject.toml` line to keep building once `market_data` joined the uv workspace as a third member | `git show HEAD -- platform/gateway/Dockerfile` | Already fixed inline in this commit; no further action. Same pattern will recur for EXC-007–EXC-012 (each adds another workspace member) — worth a one-line callout in those tickets' plans if not already present |
+
+disposition summary: 1 non-blocking (F1, note-and-close, already fixed inline). 0 blocking.
+
+cost: estimated M, actual M
 
 ## History
 
@@ -272,3 +313,4 @@ error and no new error — do not treat that failure as blocking.
   `platform/gateway/Dockerfile` (added market_data's, to fix the regression this ticket's own
   workspace-member addition caused there). Verified both `docker build`s green.
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-17 — IN REVIEW → DONE: acceptance green, no blocking findings
