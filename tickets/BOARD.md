@@ -20,11 +20,10 @@ Last updated: 2026-09-17
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-007 | Migrate services/account into platform/account package with own Alembic history | [EXC-004] |
 
 ## REWORK
 
@@ -68,6 +67,7 @@ Last updated: 2026-09-17
 | EXC-004 | Extract platform/base and set up uv workspace for platform/ restructuring | yes — MERGED: PR #19, `bb4e5cd` |
 | EXC-005 | Migrate services/gateway into platform/gateway package | yes — merged: PR #20, `8f71920`, merged to `main` |
 | EXC-006 | Migrate services/market_data into platform/market_data package | yes — MERGED: PR #21, `49b6ebf` |
+| EXC-007 | Migrate services/account into platform/account package with own Alembic history | no — publish-gated |
 
 ## DROPPED
 
