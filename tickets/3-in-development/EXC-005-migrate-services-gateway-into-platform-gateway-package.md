@@ -139,6 +139,10 @@ import ...`), and `__main__.py`'s `uvicorn.run('services.gateway.app:app', ...)`
 In root `pyproject.toml`:
 - `[tool.uv.workspace].members`: add `"platform/gateway"`.
 - `[tool.coverage.run].source`: add `"platform/gateway/src"` alongside `"platform/base/src"`.
+- `[project.dependencies]`: add `"gateway"` (matching EXC-004's `"base"` entry) and
+  `[tool.uv.sources]`: add `gateway = { workspace = true }` — otherwise `uv sync` never
+  installs the workspace member into the root venv and the acceptance test's `import gateway...`
+  fails with `ModuleNotFoundError`.
 
 In `infra/docker/Dockerfile`, change the default `CMD` from `["python", "-m",
 "services.gateway"]` to `["python", "-m", "services.account"]` (still-present, arbitrary
@@ -267,3 +271,7 @@ confirm `just services-build` still fails with exactly the pre-existing `EXC-016
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-16 — TO DO → READY: plan complete
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
+- 2026-09-17 — plan amended inline: Task 4 was missing the root `[project.dependencies]` +
+  `[tool.uv.sources]` entries for `gateway` (EXC-004 added the equivalent for `base`); without
+  them `uv sync` doesn't install the workspace member into the root venv and the acceptance
+  test's import step fails. Added both.
