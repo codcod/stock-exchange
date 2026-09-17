@@ -186,36 +186,11 @@ stale on two further counts. Rewrite it:
 ## Review
 
 <!-- empty until IN REVIEW -->
-
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-16 — TO DO → READY: plan complete
-- 2026-09-17 — plan amended inline: applicability gate (independent sub-agent) returned three
-  blocking findings, all confirmed by re-running the checks. (1) Task 1's service list was stale
-  — EXC-007 added `account-migrate` (the block `docker compose config` actually names) and moved
-  `account` onto `depends_on: account-migrate`, so the plan as written would have deleted a
-  load-bearing gate and missed the offending one; retargeted. (2) Decision 2's premise was false
-  — `infra-up` has no `--wait` and `just up` uses the merged `{{ stack }}` where
-  `depends_on: postgres` still does real work, so dropping it unreplaced would break `just up`;
-  replaced with Task 2, two `justfile` edits that keep the health ordering. (3) "No docs to
-  update" was false — `development/design.md:382-386` documents the removed behaviour; docs step
-  now covers it. Non-blocking: recorded the `<svc>-migrate` convention in Decision 1 so
-  EXC-008/009/010/011/012 don't reintroduce the bug, corrected Decision 1's rationale (the real
-  objection to merging is semantic, not validity), and replaced the acceptance test's image count
-  with an exit-status assertion. The `postgres-data` volume path bug found alongside is filed
-  separately.
-- 2026-09-17 — READY → IN DEVELOPMENT: picked up; plan amended inline at the applicability gate
-- 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
-  Implemented on `feat/EXC-016-fix-compose-services-yml-depends-on-postgres` as one atomic
-  commit (`fdf80f3`): six `postgres:` entries removed from `infra/docker/compose.services.yml`
-  (`account-migrate`, `clearing`, `notifications` lost the whole now-empty `depends_on:` key;
-  `risk-engine`, `order-management`, `matching-engine` kept their inter-service entries;
-  `account`, `market-data`, `gateway` untouched), Task 2's two `justfile` edits (`infra-up`
-  now `up -d --wait`, `up` now calls `just infra-up` then `{{ services }} up -d --build`,
-  which also removed a duplicated network-create line), and `development/design.md:382-386`
-  rewritten. Acceptance: `docker compose -f compose.services.yml config` and the merged
-  two-file `config` both exit 0 with no "depends on undefined service" error; `just
-  services-build` exits 0 building all nine images; `just lint` exits 0; `just test` 66 passed.
-  `{{ stack }}` is still used by `down`/`fresh-stack`/`logs`/`ps`, where merged semantics are
-  wanted and `postgres` resolves. Publish pending user approval of the commit message.
+- 2026-09-17 — plan amended inline: applicability gate found Task 1 stale, Decision 2's premise
+  false, and the docs claim wrong (see Notes)
+- 2026-09-17 — READY → IN DEVELOPMENT: picked up
+- 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green (fdf80f3); publish pending approval
