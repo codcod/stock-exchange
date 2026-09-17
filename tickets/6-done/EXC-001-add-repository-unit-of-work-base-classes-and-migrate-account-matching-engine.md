@@ -285,6 +285,17 @@ services/order_management/repository.py` (whitespace-only reflow of the `.mappin
 (`ruff check .` + `ruff format --check .`) and `just test` (66 passed) both re-verified green
 on `feat/EXC-001-add-repository-unit-of-work-base-classes` before handing back.
 
+### Scoped re-review verdict (round 1)
+
+Reviewer independence: this session authored the round-1 fix commit itself, so the scoped
+audit (commit `689d00e`'s diff, plus `just check`/`just test`) was **delegated** to an
+independent sub-agent with no memory of writing it, briefed adversarially. Re-verified by
+hand: `just check` and `just test` both green, matching the delegated report exactly. Findings:
+none — the diff is confirmed whitespace/line-wrap only (ruff's own formatter style for a
+chained call on a multi-line `await`), identical in shape to the existing one-line form of the
+same pattern elsewhere in both files (`load_all_accounts`, `load_all_orders`,
+`load_open_orders`). F1 closed. No new findings from the fix's own replacement text.
+
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
@@ -298,3 +309,4 @@ on `feat/EXC-001-add-repository-unit-of-work-base-classes` before handing back.
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-17 — IN REVIEW → REWORK: F1 blocking: ruff format --check fails on 2 files (just check gap)
 - 2026-09-17 — REWORK → IN REVIEW: findings fixed
+- 2026-09-17 — IN REVIEW → DONE: scoped re-review: F1 fixed (689d00e), no new findings; F2/F3 noted, F4 spawned EXC-020
