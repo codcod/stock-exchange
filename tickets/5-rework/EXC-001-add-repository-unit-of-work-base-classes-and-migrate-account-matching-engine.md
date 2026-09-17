@@ -242,7 +242,40 @@ not just that the fakes were mechanically patched to match new signatures.
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- Reviewer independence (step 0): **independent** — the reviewing session has no memory of
+  authoring this branch (fresh session, `git log` shows the single squashed commit was already
+  present before this review began). No delegation needed.
+- Implementation audit (step 2): all three tasks verified against the tree. Acceptance test
+  re-run on `feat/EXC-001-add-repository-unit-of-work-base-classes`:
+  `uv run python -c "import base.unit_of_work, base.repository"` — clean;
+  `just lint` — clean; `just test` — 66 passed. Confirmed design decisions 1–8 all honoured
+  (matching_engine swap, base-class shapes, connection-scoped repos, `load_all_*`/`load_open_orders`
+  module functions, uow-factory constructors, `apply_settlement`'s ad hoc queries on
+  `uow.connection`, fakes bypassing `SqlAlchemyUnitOfWork`).
+- Quality / consistency audit (steps 3–4, addendum): `just check` (addendum step 9 / step 2
+  item 3) fails — see F1. No leftover references to removed methods (`save`/`save_with_conn`/old
+  constructors) anywhere in the tree. No blocking I/O introduced. Type hints follow `tp.`
+  convention.
+- Documentation audit (step 4a): no configured docs command. `grep -rn
+  "AccountRepository(db\|AccountRepository(engine\|OrderRepository(db\|OrderRepository(engine"
+  README.md development/design.md` — no matches, confirming the ticket's own "no user-facing
+  surface" call. `development/design.md`'s persistence-layer section (`shared/db/`,
+  `ClearingService`) already describes a pre-EXC-003/004/007 layout and was stale before this
+  branch — out of this review's scope (this branch made none of it newly false).
+- Docs-readability pass (step 4b): conscious skip — this branch touches no `.md`/`.adoc` files.
+- Impact sweep (step 8): no ticket in `1-to-do/`/`2-ready/` references EXC-001 in `depends-on:`
+  or Description — clean.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | blocking | test-gap | — | `ruff format --check .` fails on 2 files this branch authored; CI's `ruff format --check .` step (separate from `just lint`) would go red even though `just lint` passes — the acceptance test lists only `just lint`, the exact gap the addendum's v3 revision warns about after EXC-007 | `just check` → "Would reformat: platform/account/src/account/repository.py", "Would reformat: services/order_management/repository.py" | run `ruff format platform/account/src/account/repository.py services/order_management/repository.py` and re-run `just check` |
+| F2 | non-blocking | design | noted | `services/order_management/service.py` grew from 205 (addendum-recorded pre-existing overage) to 216 lines | `wc -l` → 216 | none — within the addendum's "flag, don't fix" guidance for pre-existing overage |
+| F3 | non-blocking | design | noted | `services/order_management/app.py` grew from 204 (addendum-recorded pre-existing overage) to 207 lines | `wc -l` → 207 | none |
+| F4 | non-blocking | test-gap | new ticket (EXC-020) | `SqlAlchemyUnitOfWork`'s own commit/rollback state machine — this ticket's stated safety guarantee — has zero direct test coverage; both services' tests use `Fake*UnitOfWork` doubles that bypass it entirely (decision 8), and `platform/base/` has no `tests/` directory at all | `find platform/base -iname "*test*"` → no results | EXC-020: fake engine/connection/transaction triple exercising the real `__aenter__`/`commit`/`__aexit__` path |
+
+Disposition summary: 1 blocking (F1, fixed via rework), 2 `noted` (F2, F3), 1 `new ticket` (F4 → EXC-020).
+
+cost: estimated L, actual L
 
 ## History
 
@@ -255,3 +288,4 @@ not just that the fakes were mechanically patched to match new signatures.
   `services/`) — EXC-007 impact sweep; no scope change.
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-17 — IN REVIEW → REWORK: F1 blocking: ruff format --check fails on 2 files (just check gap)

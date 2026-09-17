@@ -20,11 +20,10 @@ Last updated: 2026-09-17
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | [] |
 
 ## REWORK
 
@@ -32,6 +31,7 @@ Last updated: 2026-09-17
 
 | id | title | open findings |
 |---|---|---|
+| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | F1 blocking: ruff format --check fails on 2 files (just check gap) |
 
 ## READY (impact order, per child)
 
@@ -58,6 +58,7 @@ Last updated: 2026-09-17
 | EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
 | EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012, EXC-013, EXC-014] |  |
 | EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | low | low | S | [] |  |
+| EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | low | low | S | [] |  |
 
 ## DONE
 
