@@ -47,7 +47,6 @@ This repository is organized as a monorepo containing multiple services and shar
 
 ```text
 services/
-  gateway/          # FastAPI HTTP layer (public entry point for clients)
   matching_engine/  # Core order book, price-time priority matching, and outbox event relay
   risk_engine/      # Pre-trade checks (e.g., balance, position, price sanity)
   order_management/ # Manages the lifecycle and routing of orders
@@ -57,6 +56,7 @@ platform/
   base/             # Shared `uv` workspace package (see platform/base/README.md): domain
                     # models/events/API schemas, DB engine, HTTP client, request context,
                     # per-service HTTP clients
+  gateway/          # FastAPI HTTP layer (public entry point for clients), own installable package
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual

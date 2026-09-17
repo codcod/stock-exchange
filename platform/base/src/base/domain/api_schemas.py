@@ -9,7 +9,7 @@ truth eliminates the three-way duplication of RegisterAccountRequest,
 TradeExecutedEvent, etc. that previously lived in each service's schemas.py.
 
 External / customer-facing DTOs (e.g. SubmitOrderRequest, AccountResponse)
-remain in services/gateway/schemas.py.
+remain in platform/gateway/src/gateway/schemas.py.
 """
 
 from __future__ import annotations

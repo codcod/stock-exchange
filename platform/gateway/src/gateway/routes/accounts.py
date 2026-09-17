@@ -5,9 +5,9 @@ import typing as tp
 from base.domain.models import Account
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from services.gateway.auth import require_api_key
-from services.gateway.dependencies import ServiceClients, get_clients
-from services.gateway.schemas import (
+from gateway.auth import require_api_key
+from gateway.dependencies import ServiceClients, get_clients
+from gateway.schemas import (
     AccountResponse,
     OrderResponse,
     RegisterAccountRequest,

@@ -5,9 +5,9 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from services.gateway.auth import require_api_key
-from services.gateway.dependencies import ServiceClients, get_clients
-from services.gateway.schemas import DepthLevel, DepthResponse, QuoteResponse, TradeItem
+from gateway.auth import require_api_key
+from gateway.dependencies import ServiceClients, get_clients
+from gateway.schemas import DepthLevel, DepthResponse, QuoteResponse, TradeItem
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 

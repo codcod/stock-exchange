@@ -83,7 +83,7 @@ step most likely to be silently skipped:
    shipped docs tree (`docs/architecture.md` and `docs/lob_concepts_review.md` were folded into
    it and deleted by EXC-003). Read it in full rather than spot-checking; there is no docs build
    to catch what a skim misses (step 1).
-3. **`services/gateway/` has no test directory**, unlike every other service (each has its own
+3. **`platform/gateway/` has no test directory**, unlike every other service (each has its own
    `tests/`). This is a pre-existing gap, not itself a finding — but a ticket that changes gateway
    routing, auth, or rate-limiting without adding a test alongside is `test-gap`, not something to
    wave through because "gateway has no tests anyway." Gateway is the entry point; untested changes

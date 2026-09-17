@@ -16,7 +16,6 @@ risk checks, clearing) — not to build a production-grade, high-performance sys
 ```text
 clients/simulator      → generates synthetic order traffic for testing
 clients/tui/           → interactive terminal trading app (Textual)
-services/gateway       → entry point: auth, rate limiting, order routing
 services/risk_engine   → pre-trade checks before orders reach the book
 services/order_management → order lifecycle and persistence
 services/matching_engine  → order book + price-time priority matching
@@ -25,6 +24,7 @@ services/account       → source of truth for cash, positions, and reservations
 services/notifications → per-account event feed; WebSocket push + HTTP backfill
 services/market_data   → publishes prices, depth, and trade feed
 platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
+platform/gateway/      → entry point: auth, rate limiting, order routing (own installable package)
 infra/                 → docker-compose files and helper scripts
 ```
 
@@ -58,7 +58,7 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 
 ## Development conventions
 
-- The HTTP gateway (`services/gateway/`) is a lightweight FastAPI layer that routes incoming requests to the appropriate downstream microservices.
+- The HTTP gateway (`platform/gateway/`) is a lightweight FastAPI layer that routes incoming requests to the appropriate downstream microservices.
 - Each service exposes a plain Python class interface. HTTP-specific logic is confined to the `app.py` file, keeping the core service logic clean and framework-agnostic.
 - Services communicate with each other via synchronous HTTP calls using `httpx`. After a match, the matching engine writes events to a PostgreSQL outbox table. A background relay process then delivers these events to downstream services.
 - Three services run outbox relays: `matching_engine` (TradeExecuted/OrderFilled/MarketDataUpdate), `account` (AccountUpdated → Risk Engine), and `order_management` (OrderAccepted/Rejected/Cancelled → Notifications).
@@ -279,12 +279,12 @@ All synchronous inter-service calls are performed over HTTP using `httpx`. Trade
 
 `services/account/` and `services/notifications/` are scaffolded but not yet implemented.
 
-### HTTP gateway (`services/gateway/`)
+### HTTP gateway (`platform/gateway/`)
 
 The gateway serves as a lightweight FastAPI layer that directs incoming requests to the appropriate downstream services via `ServiceClients`. It does not contain any business logic; instead, it is responsible for translating HTTP requests into service calls and mapping the results back to JSON responses.
 
 ```text
-services/gateway/
+platform/gateway/src/gateway/
 ├── app.py           # FastAPI app, lifespan, router wiring
 ├── auth.py          # Optional X-API-Key header check
 ├── dependencies.py  # ServiceClients singleton (injected via Depends)

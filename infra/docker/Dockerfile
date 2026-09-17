@@ -17,4 +17,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
 # Entry point is set per-service via CMD in docker-compose
-CMD ["python", "-m", "services.gateway"]
+CMD ["python", "-m", "services.account"]
