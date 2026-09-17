@@ -20,11 +20,10 @@ Last updated: 2026-09-17
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | [] |
 
 ## REWORK
 
@@ -48,6 +47,7 @@ Last updated: 2026-09-17
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-018 | Guard compose config in CI and make the up recipe a just dependency | high | low | S | [] |  |
 | EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | medium | low | S | [] |  |
 | EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | medium | medium | M | [EXC-004] |  |
@@ -57,6 +57,7 @@ Last updated: 2026-09-17
 | EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | medium | medium | M | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
 | EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
 | EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012, EXC-013, EXC-014] |  |
+| EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | low | low | S | [] |  |
 
 ## DONE
 
@@ -69,6 +70,7 @@ Last updated: 2026-09-17
 | EXC-005 | Migrate services/gateway into platform/gateway package | yes — merged: PR #20, `8f71920`, merged to `main` |
 | EXC-006 | Migrate services/market_data into platform/market_data package | yes — MERGED: PR #21, `49b6ebf` |
 | EXC-007 | Migrate services/account into platform/account package with own Alembic history | yes — merged: PR #22, `84992f7`, merged to `main` |
+| EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 
 ## DROPPED
 

@@ -34,7 +34,7 @@ Implemented as one atomic commit `fdf80f3`. Six `postgres:` entries removed from
 `compose.services.yml`: `account-migrate`, `clearing` and `notifications` lost the whole
 now-empty `depends_on:` key; `risk-engine`, `order-management` and `matching-engine` kept their
 inter-service entries; `account`, `market-data` and `gateway` untouched. `{{ stack }}` remains
-in use by `down`/`fresh-stack`/`logs`/`ps`, where merged semantics are wanted and `postgres`
+in use by `down`/`db-wipe`/`logs`/`ps`, where merged semantics are wanted and `postgres`
 resolves. Acceptance: both the one-file and merged `docker compose config` exit 0, `just
 services-build` exits 0 building all nine images, `just lint` exits 0, `just test` 66 passed.
 

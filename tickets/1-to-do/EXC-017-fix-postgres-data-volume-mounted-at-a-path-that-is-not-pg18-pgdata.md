@@ -42,6 +42,21 @@ failure); (c) set `PGDATA` explicitly in `environment:` and mount to match, maki
 coupling local and visible. Whichever is chosen, the acceptance test should be behavioural —
 write a row, recreate the container, read it back — and not merely that the path strings agree.
 
+**Second item, folded in from EXC-016's review (finding F9, `design`).** The same file's
+healthcheck (`compose.infra.yml:26-30`) is `pg_isready -U exchange` with `interval: 5s`,
+`retries: 10` and **no `start_period`**. With no `-h`, `pg_isready` probes the local unix
+socket, which the official Postgres entrypoint serves during first-time `initdb` using a
+temporary server started with `listen_addresses=''`. So on a fresh volume the healthcheck can
+report healthy before the database accepts TCP connections. This is pre-existing and not a
+regression — the identical healthcheck previously backed `compose.services.yml`'s
+`depends_on: postgres: condition: service_healthy` — but EXC-016 moved the gate into
+`just infra-up --wait` and `development/design.md:386` now asserts "Postgres is healthy before
+any service starts" as a positive guarantee, so the healthcheck's precision started mattering
+more. Cheap fix, natural to land with the volume change since both touch this file:
+`test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U exchange"]` and/or `start_period: 10s`. Note
+this was reasoned from the Postgres image's entrypoint behaviour and `docker compose up --help`,
+not reproduced — a runtime check belongs in this ticket's acceptance test.
+
 Note also that `development/design.md:382` still describes this file as "Postgres 17" while
 the image is `postgres:18-alpine`; the docs step should correct that line. EXC-016 deliberately
 left it alone to keep its own diff scoped.
@@ -62,3 +77,5 @@ left it alone to keep its own diff scoped.
   independently schedulable data-persistence bug in a different file
   (`compose.infra.yml`) with a different fix and its own behavioural acceptance test — it
   shares nothing with EXC-016's `depends_on` change beyond the directory.
+- 2026-09-17 — folded in EXC-016 review finding F9 (postgres healthcheck lacks `-h` and
+  `start_period`); same file, same acceptance test
