@@ -266,3 +266,4 @@ confirm `just services-build` still fails with exactly the pre-existing `EXC-016
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-16 — TO DO → READY: plan complete
+- 2026-09-17 — READY → IN DEVELOPMENT: picked up
