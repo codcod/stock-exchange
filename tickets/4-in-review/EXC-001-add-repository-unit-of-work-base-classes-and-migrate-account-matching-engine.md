@@ -277,6 +277,14 @@ Disposition summary: 1 blocking (F1, fixed via rework), 2 `noted` (F2, F3), 1 `n
 
 cost: estimated L, actual L
 
+### Rework fix record — round 1 (commit 689d00e)
+
+F1 fixed: ran `ruff format platform/account/src/account/repository.py
+services/order_management/repository.py` (whitespace-only reflow of the `.mappings().first()`/
+`.mappings().all()` chains introduced by this branch — no behaviour change). `just check`
+(`ruff check .` + `ruff format --check .`) and `just test` (66 passed) both re-verified green
+on `feat/EXC-001-add-repository-unit-of-work-base-classes` before handing back.
+
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
@@ -289,3 +297,4 @@ cost: estimated L, actual L
 - 2026-09-17 — READY → IN DEVELOPMENT: picked up
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-17 — IN REVIEW → REWORK: F1 blocking: ruff format --check fails on 2 files (just check gap)
+- 2026-09-17 — REWORK → IN REVIEW: findings fixed

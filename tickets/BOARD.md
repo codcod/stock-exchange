@@ -20,10 +20,11 @@ Last updated: 2026-09-17
 
 ## IN REVIEW
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | [] |
 
 ## REWORK
 
@@ -31,7 +32,6 @@ Last updated: 2026-09-17
 
 | id | title | open findings |
 |---|---|---|
-| EXC-001 | Add Repository/Unit-of-Work base classes and migrate account + order_management | F1 blocking: ruff format --check fails on 2 files (just check gap) |
 
 ## READY (impact order, per child)
 
