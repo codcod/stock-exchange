@@ -205,3 +205,4 @@ stale on two further counts. Rewrite it:
   objection to merging is semantic, not validity), and replaced the acceptance test's image count
   with an exit-status assertion. The `postgres-data` volume path bug found alongside is filed
   separately.
+- 2026-09-17 — READY → IN DEVELOPMENT: picked up; plan amended inline at the applicability gate
