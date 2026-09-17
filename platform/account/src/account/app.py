@@ -37,10 +37,9 @@ from base.domain.events import TradeExecuted
 from base.domain.models import Account
 from fastapi import FastAPI, HTTPException
 
-from services.account.outbox_relay import run_relay
-from services.account.repository import AccountRepository
-from services.account.service import AccountService
-from services.account.tables import ensure_tables
+from account.outbox_relay import run_relay
+from account.repository import AccountRepository
+from account.service import AccountService
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,6 @@ async def lifespan(app: FastAPI):
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.risk = RiskEngineClient(_RISK_URL, _state.http)
     db = get_engine()
-    await ensure_tables(db)
     repo = AccountRepository(db)
     _state.svc = AccountService(repo, db)
     for account in await repo.load_all():

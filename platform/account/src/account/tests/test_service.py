@@ -9,7 +9,7 @@ import pytest
 from base.domain.events import TradeExecuted
 from base.domain.models import Account
 
-from services.account.service import AccountService
+from account.service import AccountService
 
 # ---------------------------------------------------------------------------
 # Stubs

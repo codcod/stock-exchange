@@ -20,11 +20,12 @@ services/risk_engine   → pre-trade checks before orders reach the book
 services/order_management → order lifecycle and persistence
 services/matching_engine  → order book + price-time priority matching
 services/clearing      → post-trade trade-record keeper (audit ledger only)
-services/account       → source of truth for cash, positions, and reservations
 services/notifications → per-account event feed; WebSocket push + HTTP backfill
 platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
 platform/gateway/      → entry point: auth, rate limiting, order routing (own installable package)
 platform/market_data/  → publishes prices, depth, and trade feed (own installable package)
+platform/account/      → source of truth for cash, positions, and reservations (own
+                          installable package, own Alembic migration history)
 infra/                 → docker-compose files and helper scripts
 ```
 
@@ -277,7 +278,9 @@ All synchronous inter-service calls are performed over HTTP using `httpx`. Trade
 | Clearing | 8004 | Manages account balances and positions. | — | `accounts`, `positions`, `trades` |
 | MarketData | 8005 | Provides in-memory quote snapshots and trade history. | — | No |
 
-`services/account/` and `services/notifications/` are scaffolded but not yet implemented.
+`platform/account/` (port 8006) and `services/notifications/` (port 8007) are implemented
+but absent from the table above, which predates both — see "Architecture overview" for the
+current, authoritative service list.
 
 ### HTTP gateway (`platform/gateway/`)
 

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from services.account.tables import outbox as outbox_t
+from account.tables import outbox as outbox_t
 
 
 async def write_outbox_rows(conn, rows: tp.List[dict]) -> None:

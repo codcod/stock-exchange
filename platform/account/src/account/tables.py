@@ -1,6 +1,5 @@
 """Table definitions for the Account service."""
 
-from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import (
     Column,
     DateTime,
@@ -13,8 +12,7 @@ from sqlalchemy import (
     Text,
 )
 
-metadata = MetaData()
-_SCHEMAS = ('account',)
+metadata = MetaData(schema='account')
 
 accounts = Table(
     'accounts',
@@ -66,7 +64,3 @@ processed_events = Table(
     Column('event_id', String, primary_key=True),
     schema='account',
 )
-
-
-async def ensure_tables(engine) -> None:
-    await _ensure_tables(engine, metadata, _SCHEMAS)

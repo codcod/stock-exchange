@@ -1,7 +1,8 @@
 # Review addendum — exchange project-specific rules
 
-**Version 2** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
-filed yet), updated same day by EXC-003 (docs/architecture.md → development/design.md).
+**Version 3** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
+filed yet), updated same day by EXC-003 (docs/architecture.md → development/design.md) and on
+2026-09-17 by EXC-007's review.
 
 Applies **on top of** the brine review protocol
 (`.agents/skills/brine/resources/review-protocol.md`), keyed to that procedure's step numbers.
@@ -44,7 +45,13 @@ step most likely to be silently skipped:
    downstream service by string; nothing type-checks that the named service actually exposes the
    `/events/...` route `ENDPOINT_FOR_EVENT_TYPE` points at. Confirm the destination service's
    `app.py` defines that route.
-3. **Stateful/stateless is a hard split, not a convention.** `risk_engine`, `order_management`,
+3. **An acceptance test that stops at `just lint` does not cover CI.** `.github/workflows/ci.yaml`
+   runs `ruff check .` **and** `ruff format --check .`; `just lint` is only the first of the two.
+   A ticket whose acceptance test lists `just lint` without `just check` (or `just fmt-check`) can
+   go green locally and still land a red PR — generated files are the usual culprit, since
+   scaffolders such as `alembic revision` do not emit ruff-formatted output. Run `just check`
+   during the implementation audit, not only at step 9, and class a plan that omits it `test-gap`.
+4. **Stateful/stateless is a hard split, not a convention.** `risk_engine`, `order_management`,
    `matching_engine`, `clearing`, `account`, `notifications` require `DATABASE_URL`; `gateway` and
    `market_data` do not. A ticket that adds persistence to `gateway` or `market_data` is
    contradicting this split — flag it at step 4, `class: design` (or `plan-wrong` if a ticket's
@@ -60,7 +67,7 @@ step most likely to be silently skipped:
    `class: design`, never blocking on its own.
 3. **The 200-line-per-file guideline is already soft-violated** in four files that predate this
    addendum: `services/order_management/service.py` (205), `services/order_management/app.py`
-   (204), `services/matching_engine/order_book.py` (246), `services/account/app.py` (201). Do not
+   (204), `services/matching_engine/order_book.py` (246), `platform/account/src/account/app.py` (199). Do not
    file the existing overage as a finding. Flag only a branch that grows one of these further, or
    that adds a new file starting over 200 lines.
 4. **Async discipline is a correctness axis here, not style.** Every service module is
@@ -110,3 +117,8 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
 - **v2** (2026-09-16) — EXC-003 folded `docs/architecture.md` and `docs/lob_concepts_review.md`
   into `development/design.md` and deleted the originals; every governing-document reference
   above moved from `docs/architecture.md` to `development/design.md`.
+- **v3** (2026-09-17) — EXC-007's review added step 2 item 3 (an acceptance test listing only
+  `just lint` misses CI's `ruff format --check`, which a scaffolded Alembic revision fails) after
+  the branch under review landed an unformatted generated migration, and repointed step 3 item 3's
+  line-count entry from `services/account/app.py` (201) to `platform/account/src/account/app.py`
+  (199).

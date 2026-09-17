@@ -15,11 +15,22 @@ services:
   # Tier 1: no service dependencies — only Postgres
   # ---------------------------------------------------------------------------
 
+  account-migrate:
+    build:
+      context: ../..
+      dockerfile: platform/account/Dockerfile
+    command: ["-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   account:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile
-    command: python -m services.account
+      dockerfile: platform/account/Dockerfile
+    command: python -m account
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
       RISK_ENGINE_URL: http://risk-engine:8002
@@ -33,8 +44,8 @@ services:
       retries: 10
       start_period: 10s
     depends_on:
-      postgres:
-        condition: service_healthy
+      account-migrate:
+        condition: service_completed_successfully
 
   market-data:
     build:

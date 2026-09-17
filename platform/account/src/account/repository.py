@@ -9,9 +9,9 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from services.account.tables import accounts as accounts_t
-from services.account.tables import positions as positions_t
-from services.account.tables import reserved_shares as reserved_shares_t
+from account.tables import accounts as accounts_t
+from account.tables import positions as positions_t
+from account.tables import reserved_shares as reserved_shares_t
 
 
 class AccountRepository:

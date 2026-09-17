@@ -57,6 +57,8 @@ platform/
                     # per-service HTTP clients
   gateway/          # FastAPI HTTP layer (public entry point for clients), own installable package
   market_data/      # Provides live quotes and trade history (in-memory), own installable package
+  account/          # Cash/position ledger, reservations, settlement; own installable package,
+                    # own Alembic migration history
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual

@@ -17,7 +17,7 @@ import os
 
 import httpx
 
-from services.account.outbox_repo import OutboxRepository
+from account.outbox_repo import OutboxRepository
 
 logger = logging.getLogger(__name__)
 
