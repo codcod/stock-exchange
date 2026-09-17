@@ -11,6 +11,7 @@ dependencies = [
     "httpx>=0.27",
     "base",
     "gateway",
+    "market_data",
 ]
 
 [project.optional-dependencies]
@@ -29,14 +30,15 @@ where = ["."]
 include = ["services*", "clients*"]
 
 [tool.uv.workspace]
-members = ["platform/base", "platform/gateway"]
+members = ["platform/base", "platform/gateway", "platform/market_data"]
 
 [tool.uv.sources]
 base = { workspace = true }
 gateway = { workspace = true }
+market_data = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["services"]
+testpaths = ["services", "platform"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -44,7 +46,7 @@ asyncio_mode = "auto"
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["services", "platform/base/src", "platform/gateway/src"]
+source = ["services", "platform/base/src", "platform/gateway/src", "platform/market_data/src"]
 omit = ["*/tests/*", "clients/*"]
 
 # optional config below

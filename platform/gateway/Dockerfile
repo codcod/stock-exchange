@@ -15,6 +15,9 @@ ENV UV_LINK_MODE=copy
 
 COPY pyproject.toml uv.lock ./
 COPY platform/base ./platform/base
+# uv resolves the whole workspace declared in pyproject.toml, so every other member's
+# pyproject.toml must be present too, even though only gateway gets installed.
+COPY platform/market_data/pyproject.toml ./platform/market_data/pyproject.toml
 COPY platform/gateway/pyproject.toml ./platform/gateway/pyproject.toml
 COPY platform/gateway/src ./platform/gateway/src
 
