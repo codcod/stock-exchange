@@ -314,3 +314,4 @@ cost: estimated M, actual M
   workspace-member addition caused there). Verified both `docker build`s green.
 - 2026-09-17 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-17 — IN REVIEW → DONE: acceptance green, no blocking findings
+- 2026-09-17 — MERGED: PR #21, `49b6ebf`
