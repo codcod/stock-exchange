@@ -16,7 +16,6 @@ risk checks, clearing) — not to build a production-grade, high-performance sys
 ```text
 clients/simulator      → generates synthetic order traffic for testing
 clients/tui/           → interactive terminal trading app (Textual)
-services/clearing      → post-trade trade-record keeper (audit ledger only)
 services/notifications → per-account event feed; WebSocket push + HTTP backfill
 platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
 platform/gateway/      → entry point: auth, rate limiting, order routing (own installable package)
@@ -29,6 +28,8 @@ platform/risk_engine/  → pre-trade checks before orders reach the book (own
                           installable package, own Alembic migration history)
 platform/order_management/ → order lifecycle and persistence (own installable package,
                           own Alembic migration history)
+platform/clearing/     → post-trade trade-record keeper (audit ledger only) (own
+                          installable package, own Alembic migration history)
 infra/                 → docker-compose files and helper scripts
 ```
 

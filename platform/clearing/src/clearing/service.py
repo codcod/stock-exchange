@@ -15,7 +15,7 @@ from base.domain.events import TradeExecuted
 from base.domain.models import Trade
 
 if __import__('typing').TYPE_CHECKING:
-    from services.clearing.repository import TradeRepository
+    from clearing.repository import TradeRepository
 
 logger = logging.getLogger(__name__)
 

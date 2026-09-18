@@ -6,7 +6,7 @@ from base.domain.models import Trade
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from services.clearing.tables import trades as trades_t
+from clearing.tables import trades as trades_t
 
 
 class TradeRepository:

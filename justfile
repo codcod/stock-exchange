@@ -157,7 +157,7 @@ run-matching:
 # Clearing Service
 [group('run locally')]
 run-clearing:
-    DATABASE_URL={{ db_url }} uv run python -m services.clearing
+    DATABASE_URL={{ db_url }} uv run python -m clearing
 
 # Account Service
 [group('run locally')]

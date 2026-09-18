@@ -10,7 +10,7 @@ import pytest
 from base.domain.events import TradeExecuted
 from base.domain.models import Trade
 
-from services.clearing.service import ClearingService
+from clearing.service import ClearingService
 
 
 class FakeTradeRepo:
