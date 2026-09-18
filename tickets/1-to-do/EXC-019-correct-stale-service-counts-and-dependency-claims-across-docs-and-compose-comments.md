@@ -61,7 +61,9 @@ and sat next to the rest; they were classified non-blocking because none breaks 
    (`stale-xref`.)
 
 Deliberately excluded: `design.md:382`'s "Postgres 17" (the image is `postgres:18-alpine`) and
-the `postgres-data` volume path both belong to **EXC-017**, which owns `compose.infra.yml`.
+the `postgres-data` volume path both belonged to **EXC-017**, which owns `compose.infra.yml`.
+**EXC-017 has since fixed both** (design.md now reads "Postgres 18"); nothing remains here for
+this ticket to do on that front.
 
 ## Implementation Plan
 
@@ -77,3 +79,6 @@ the `postgres-data` volume path both belong to **EXC-017**, which owns `compose.
   governing-document observations, batched by theme (documentation accuracy). Promoted over
   noting because finding 6 explains a gap in the review procedure itself, not just a wrong
   number.
+- 2026-09-18 — corrected Description's "Deliberately excluded" note (EXC-017's impact sweep,
+  step 8): EXC-017 fixed `design.md:382`'s "Postgres 17" and the volume path, so that exclusion
+  is now past tense — nothing left for this ticket on that front.

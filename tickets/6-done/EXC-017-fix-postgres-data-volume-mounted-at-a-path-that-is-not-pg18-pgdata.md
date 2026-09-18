@@ -151,7 +151,51 @@ Postgres version.
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): implementer authored the branch this session, so
+  audits (steps 2-4a) were delegated to a freshly spawned, independent sub-agent with no memory
+  of writing the code, briefed adversarially. Every delegated claim (diff contents, grep results,
+  acceptance-test output) was re-verified by hand before recording here.
+- [x] In-tree stale-branch check (step 0a): `pickle doctor` initially warned the branch's ticket
+  copy was stale (had it in `3-in-development`, `main` already had `4-in-review`); rebased onto
+  `main`, re-ran clean (0 errors, 0 warnings).
+- [x] Implementation audit (step 2) — all three tasks verified against `git diff main...HEAD`:
+  volume mount now `postgres-data:/var/lib/postgresql/18/docker` (Task 1), healthcheck now
+  `pg_isready -h 127.0.0.1 -U exchange` with `start_period: 10s` (Task 2), `development/design.md`
+  now reads "Postgres 18" (Task 3). Both acceptance tests re-run verbatim: fresh-volume
+  (`down -v && just infra-up`) reached `Healthy` in ~5.8s with health-log entries confirming a
+  genuine TCP accept, not the unix-socket false positive; recreate test (insert probe row →
+  `down` (no `-v`) → `infra-up` → row still present) confirms persistence. `just lint`,
+  `just test` (67 passed), and `just check` (ruff + `ruff format --check`, addendum step 9) all
+  green. All three confirmed design decisions honored.
+- [x] Quality audit (step 3) — straight two-line compose edit + one doc-string fix; no new
+  security/edge-case surface; `start_period: 10s` doesn't mask real failures (`retries: 10` ×
+  `interval: 5s` still bounds total wait).
+- [x] Consistency audit (step 4) — repo-wide grep for the old mount path, the old healthcheck
+  (`pg_isready -U` without `-h`), and "Postgres 17"/`postgres:17`: no remaining live-config or
+  docs hits outside `tickets/` (historical ticket prose correctly preserved as-is).
+- [x] Documentation audit (step 4a) — `development/design.md` is the entire shipped docs tree
+  per the addendum; read in full, only the one corrected line referenced this file's Postgres
+  version.
+- [ ] Docs-readability pass (step 4b) — conscious skip: the only prose change is a single-word
+  version-number swap, not a readability-relevant edit.
+- [x] Findings recorded below; disposition summary + cost line present (step 5).
+- [x] Ticket moved to `tickets/6-done/` (step 6b) — zero findings, nothing to disposition.
+- [x] Other references / governing documents reconciled (step 7) — `development/design.md`
+  already corrected as Task 3.
+- [x] Remaining-tickets impact sweep (step 8) — `tickets/1-to-do/EXC-019-...md` referenced this
+  ticket's `design.md:382` fix in its own "Deliberately excluded" scope note, in present tense as
+  still-pending. Now stale since this ticket fixed that line; corrected in place (History line
+  added to EXC-019).
+- [x] Summary + commit message & MR attributes presented for approval; overarching bookkeeping
+  committed per policy; next-ticket suggestion given (step 9).
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| — | — | — | — | no findings from steps 2-4a | independent audit + hand re-verification, both clean | — |
+
+Disposition summary: 0 findings, nothing to disposition.
+
+cost: estimated S, actual S
 
 ## History
 
@@ -166,3 +210,4 @@ Postgres version.
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: review: 0 findings
