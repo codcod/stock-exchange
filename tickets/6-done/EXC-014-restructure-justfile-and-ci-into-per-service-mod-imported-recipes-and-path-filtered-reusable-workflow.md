@@ -366,3 +366,4 @@ cost: estimated M, actual M (unchanged by round 2 — a one-file doc reword)
 - 2026-09-18 — IN REVIEW → REWORK: F1 blocking: ruff format --check dropped from CI
 - 2026-09-18 — REWORK → IN REVIEW: findings fixed
 - 2026-09-18 — IN REVIEW → DONE: F1 fixed and verified; F2 (stale-xref) fixed inline; round-2 re-review clean
+- 2026-09-18 — MERGED: PR #31 (8b25775)
