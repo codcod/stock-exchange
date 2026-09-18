@@ -102,8 +102,7 @@ redeploy name:
 
 # Start Postgres + all microservices
 [group('stack')]
-up:
-    just infra-up
+up: infra-up
     {{ services }} up -d --build
 
 # Stop everything
@@ -246,6 +245,13 @@ seed:
 lint-repo:
     uv run ruff check clients scripts
     uv run ruff format --check clients scripts
+
+# Validate compose files are well-formed, alone and merged (matches CI's docker compose v2)
+[group('qa')]
+compose-check:
+    docker compose -f infra/docker/compose.infra.yml config -q
+    docker compose -f infra/docker/compose.services.yml config -q
+    docker compose -f infra/docker/compose.infra.yml -f infra/docker/compose.services.yml config -q
 
 # Test what's not covered by a per-service justfile (clients)
 [group('qa')]
