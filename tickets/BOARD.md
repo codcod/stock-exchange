@@ -9,7 +9,7 @@ hand — edit the tickets. Hand-written planning notes live in [`NOTES.md`](NOTE
 **WIP limits (per child-project):**
 - `exchange`: `3-in-development/` ≤ 1 · `4-in-review/` ≤ 1
 
-Last updated: 2026-09-17
+Last updated: 2026-09-18
 
 ## IN DEVELOPMENT
 
@@ -70,7 +70,7 @@ Last updated: 2026-09-17
 | EXC-005 | Migrate services/gateway into platform/gateway package | yes — merged: PR #20, `8f71920`, merged to `main` |
 | EXC-006 | Migrate services/market_data into platform/market_data package | yes — MERGED: PR #21, `49b6ebf` |
 | EXC-007 | Migrate services/account into platform/account package with own Alembic history | yes — merged: PR #22, `84992f7`, merged to `main` |
-| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | no — publish-gated |
+| EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | yes — MERGED: PR #25, `f5962e2`, merged to `main` |
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 
 ## DROPPED
