@@ -22,9 +22,10 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/docker
+      - postgres-data:/var/lib/postgresql/18/docker
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U exchange"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U exchange"]
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
