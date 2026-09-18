@@ -20,11 +20,10 @@ Last updated: 2026-09-18
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012, EXC-013, EXC-014] |
 
 ## REWORK
 
@@ -71,6 +70,7 @@ Last updated: 2026-09-18
 | EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | yes — MERGED: PR #29, `151723e`, merged to `main` (merged by the user before this review ran) |
 | EXC-013 | Update clients/ imports for platform/ package layout | yes — MERGED: PR #30, commit 6e05679 |
 | EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | yes — MERGED: PR #31 (8b25775) |
+| EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | no — publish-gated |
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 
 ## DROPPED

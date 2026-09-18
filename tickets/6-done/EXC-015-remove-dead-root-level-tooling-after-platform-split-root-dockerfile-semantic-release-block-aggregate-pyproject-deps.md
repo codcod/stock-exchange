@@ -132,7 +132,44 @@ fulfills that, it doesn't need to restate it.
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): no hand in this branch this session — independent, audits run directly (no delegation needed)
+- [x] In-tree stale-branch check (step 0a): `pickle doctor` found the branch stale (ticket copy still `3-in-development` vs main's `4-in-review`); rebased `feat/EXC-015-...` onto `main` (4295268), re-ran `pickle doctor` — clean
+- [x] Implementation audit — acceptance test re-run, tasks & criteria verified (steps 1, 2)
+- [x] Quality audit (step 3) — config-only deletion, no logic to assess for idiom/tests/error-handling
+- [x] Consistency audit (step 4) — repo-wide grep for dangling references
+- [x] Documentation audit (step 4a) — project has no configured docs-build command (n/a); no user-facing docs coverage needed per the ticket's own "Docs update" section
+- [x] Docs-readability pass (step 4b) — conscious skip: no docs-readability reviewer available in this session
+- [x] Findings recorded with severity, class, disposition; disposition summary + cost line present (step 5)
+- [x] Ticket moved (step 6)
+- [x] Other references updated; governing documents reconciled (step 7)
+- [x] Remaining-tickets impact sweep done (step 8) — no ticket in `1-to-do/`/`2-ready/` lists EXC-015 in `depends-on:` or Description
+- [x] Summary + commit message & MR attributes presented for approval (step 9)
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | fixed inline | `development/design.md` decision 5 said the `[tool.semantic_release]` block would be removed once each service has its own versioning story (tracked by a future ticket) — EXC-015 removed it now, ahead of and independent from that future ticket, making the sentence misattribute the removal | `development/design.md:624-626` (pre-fix) | reworded to credit EXC-015 for the removal, leaving the per-service versioning story itself tracked by the future ticket — fixed on the feature branch, commit `1ee6c77` |
+
+Disposition summary: 1 finding — 1 fixed inline (F1). No blocking findings.
+
+cost: estimated S, actual S
+
+**Acceptance test (re-run verbatim):**
+- `uv sync --extra dev` → succeeded (`Resolved 58 packages`, `Checked 47 packages`).
+- `git ls-files services/` → empty (pass).
+- `git grep -n 'semantic_release\|services\*\|"services"' pyproject.toml` → no match (pass).
+- `just lint` → `All checks passed!`
+- `just services-build` → all 14 images built.
+- `just test` → `67 passed`.
+
+**Implementation audit:** all three plan tasks verified against the diff (`git diff
+fd0fd56..HEAD`): Dockerfile removed, `[tool.semantic_release*]` fully removed,
+`packages.find` trimmed to `include = ["clients*"]`, `services/__init__.py` and the
+`[tool.coverage.run]` bare `"services"` entry both removed exactly as the amended plan
+specified. `clients.simulator`/`clients.tui` re-verified importable after the trim.
+
+**Reviewer independence:** this session did not author the branch (the code commit
+predates this session — confirmed via `git log`); audits ran directly, no delegation
+needed.
 
 ## History
 
@@ -144,3 +181,4 @@ fulfills that, it doesn't need to restate it.
   (git ancestry) — EXC-013/EXC-014 both merged to main; prerequisite is satisfied.
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: acceptance green; 1 non-blocking finding (F1, stale-xref) fixed inline in design.md on feature branch
