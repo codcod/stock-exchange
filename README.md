@@ -9,7 +9,7 @@ The goal is to understand how trading works, not to build a production system.
 # Install
 uv sync --extra dev
 
-# Start Postgres + all six microservices
+# Start Postgres + all eight microservices
 just up
 
 # Run the simulator (generates synthetic order traffic)

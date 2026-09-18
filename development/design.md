@@ -96,7 +96,9 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 
 > Folded in from the former `docs/architecture.md`, largely verbatim, and **not** re-audited
 > against the current tree as part of this fold — treat it as historical background, not a
-> current source of truth. Known gaps: it predates the `account` and `notifications` services
+> current source of truth. **Exception: `### Infrastructure` below was rewritten with current,
+> authoritative prose and is not covered by this characterization.** Known gaps: it predates the
+> `account` and `notifications` services
 > becoming first-class (Clearing is shown owning balances/positions, with no Account/
 > Notifications containers), and it predates the `shared/` reorganization into `shared/platform/`
 > (its `shared/service_clients.py` and `shared/db/{connection,tables,repositories}.py` paths are
@@ -388,7 +390,7 @@ infra/docker/
 └── compose.services.yml  # Eight service containers + the account-migrate one-shot
 ```
 
-`compose.services.yml` declares no Postgres dependency: `postgres` lives in `compose.infra.yml`, and `depends_on` cannot reference a service outside the same compose invocation — declaring it made the file an invalid project for every one-file recipe (`build`, `up`, `down`, `logs`). The cross-stack coupling is the shared external `exchange` network instead, and the wait-for-Postgres ordering lives in the `justfile`: `just infra-up` passes `--wait`, so Postgres is healthy before any service starts, and `just up` runs `infra-up` before bringing the services up. Within `compose.services.yml`, `depends_on` does enforce inter-service ordering — `account` waits for the `account-migrate` one-shot to complete, and `risk-engine`, `order-management`, `matching-engine` and `gateway` wait on the services they call. Services that call each other still retry gracefully at the application level. Each container runs `python -m services.<name>` (or `python -m <name>` for the `platform/` packages) and is reachable on `localhost:800X`.
+`compose.services.yml` declares no Postgres dependency: `postgres` lives in `compose.infra.yml`, and `depends_on` cannot reference a service outside the same compose invocation — declaring it made the file an invalid project for every one-file recipe (`build`, `up`, `down`, `logs`). The cross-stack coupling is the shared external `exchange` network instead, and the wait-for-Postgres ordering lives in the `justfile`: `just infra-up` passes `--wait`, so Postgres is healthy before any service starts, and `just up` runs `infra-up` before bringing the services up. Within `compose.services.yml`, `depends_on` does enforce inter-service ordering — `account` waits for the `account-migrate` one-shot to complete, and `risk-engine`, `order-management`, `matching-engine` and `gateway` wait on a subset of the services they call: `risk-engine` fully covers its one call (`account`); `order-management` calls `matching-engine` but does not wait on it; `matching-engine` calls `clearing`, `market-data`, `account` and `notifications` but waits only on `order-management`; `gateway` calls `clearing`, `risk-engine` and `notifications` via env var but its `depends_on` covers only `order-management`, `matching-engine`, `market-data` and `account`. Services that call each other still retry gracefully at the application level. Each of the eight long-running services runs `python -m services.<name>` (or `python -m <name>` for the `platform/` packages) and is reachable on `localhost:800X`; the six one-shot `*-migrate` blocks run `alembic upgrade head` and expose no port.
 
 ### Terminal client (`clients/tui/`)
 

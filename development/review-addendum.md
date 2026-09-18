@@ -1,8 +1,10 @@
 # Review addendum — exchange project-specific rules
 
-**Version 3** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
+**Version 8** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
 filed yet), updated same day by EXC-003 (docs/architecture.md → development/design.md) and on
-2026-09-17 by EXC-007's review.
+2026-09-17 by EXC-007's review; v4–v7 each repointed a stale path left by a service's move into
+its own `platform/` package, and v8 corrects the stale "entire shipped docs tree" claim (step 2)
+to list the full shipped tree and re-syncs this header to match the revision history below.
 
 Applies **on top of** the brine review protocol
 (`.agents/skills/brine/resources/review-protocol.md`), keyed to that procedure's step numbers.
@@ -90,10 +92,14 @@ step most likely to be silently skipped:
    file any of them as a finding on their own. A ticket that touches one of these areas without
    updating or removing its entry is `stale-xref`; a ticket whose design assumes a listed
    limitation doesn't exist is `plan-wrong`.
-2. **Whole-tree docs sweep is small and exact here** — `development/design.md` is the entire
-   shipped docs tree (`docs/architecture.md` and `docs/lob_concepts_review.md` were folded into
-   it and deleted by EXC-003). Read it in full rather than spot-checking; there is no docs build
-   to catch what a skim misses (step 1).
+2. **Whole-tree docs sweep is small and exact here** — the shipped docs tree is
+   `development/design.md`, `README.md`, `platform/base/README.md`, and each service's
+   `platform/*/PACKAGING.md` (currently eight — `account`, `clearing`, `gateway`, `market_data`,
+   `matching_engine`, `notifications`, `order_management`, `risk_engine`). `docs/architecture.md`
+   and `docs/lob_concepts_review.md` were folded into `development/design.md` and deleted by
+   EXC-003; `README.md`, `platform/base/README.md` and the `PACKAGING.md` files were added by
+   EXC-005 through EXC-012, after that fold. Read the whole tree in full rather than
+   spot-checking; there is no docs build to catch what a skim misses (step 1).
 3. **`platform/gateway/` has no test directory**, unlike every other service (each has its own
    `tests/`). This is a pre-existing gap, not itself a finding — but a ticket that changes gateway
    routing, auth, or rate-limiting without adding a test alongside is `test-gap`, not something to
@@ -144,3 +150,8 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
   the outbox-maps parenthetical to `platform/order_management/src/order_management/outbox_relay.py`,
   stale-xref F1 fixed inline (`## Review`, EXC-010) — the same class of miss as EXC-008's F1
   (v5): the ticket's own Docs update section didn't cover this parenthetical, only step 3 item 3.
+- **v8** (2026-09-18) — EXC-019 corrected step 2's stale "`development/design.md` is the entire
+  shipped docs tree" claim to list the actual shipped tree (`README.md`, `platform/base/README.md`
+  and eight `platform/*/PACKAGING.md` files were added by EXC-005 through EXC-012, after v2's
+  fold, and this claim never caught up) and re-synced this header, which had read "Version 3"
+  since v4 landed, to match.
