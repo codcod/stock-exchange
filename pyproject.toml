@@ -50,7 +50,7 @@ clearing = { workspace = true }
 notifications = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["services", "platform"]
+testpaths = ["clients", "platform"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
