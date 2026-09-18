@@ -13,10 +13,11 @@ Last updated: 2026-09-18
 
 ## IN DEVELOPMENT
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | [EXC-004] |
 
 ## IN REVIEW
 
@@ -39,7 +40,6 @@ Last updated: 2026-09-18
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
-| EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | medium | medium | M | [EXC-004] |  |
 | EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | medium | medium | M | [EXC-004] |  |
 

@@ -341,3 +341,4 @@ succeeds; the `grep` prints nothing; `services/order_management` gone; the `wc -
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-17 — TO DO → READY: plan complete
+- 2026-09-18 — READY → IN DEVELOPMENT: picked up
