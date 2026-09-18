@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "notifications"
+version = "0.0.1"
+description = "Notifications — per-account event feed; WebSocket push + HTTP backfill"
+requires-python = ">=3.11"
+dependencies = [
+    "base",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+]
+
+[tool.uv.sources]
+base = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/notifications"]

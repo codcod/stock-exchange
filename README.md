@@ -62,6 +62,8 @@ platform/
                     # own Alembic migration history
   clearing/         # Handles post-trade settlement, updating cash and share balances; own
                     # installable package, own Alembic migration history
+  notifications/    # Per-account event feed; WebSocket push + HTTP backfill; own installable
+                    # package, own Alembic migration history
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual

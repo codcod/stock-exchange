@@ -169,7 +169,7 @@ run-account:
 # Notifications Service
 [group('run locally')]
 run-notifications:
-    DATABASE_URL={{ db_url }} uv run python -m services.notifications
+    DATABASE_URL={{ db_url }} uv run python -m notifications
 
 # Market Data Service
 [group('run locally')]

@@ -5,7 +5,7 @@ Covers notification persistence, backfill queries, and that trade-executed
 events fan into rows for both buyer and seller.
 """
 
-from services.notifications.service import NotificationService
+from notifications.service import NotificationService
 
 # ---------------------------------------------------------------------------
 # Stubs

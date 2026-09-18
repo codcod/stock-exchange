@@ -35,9 +35,8 @@ from base.domain.api_schemas import (
 )
 from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 
-from services.notifications.repository import NotificationRepository
-from services.notifications.service import NotificationService
-from services.notifications.tables import ensure_tables
+from notifications.repository import NotificationRepository
+from notifications.service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,6 @@ _state = _AppState()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db = get_engine()
-    await ensure_tables(db)
     _state.svc = NotificationService(NotificationRepository(db))
     yield
 

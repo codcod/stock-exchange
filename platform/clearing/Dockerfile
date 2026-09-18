@@ -25,6 +25,7 @@ COPY platform/account/pyproject.toml ./platform/account/pyproject.toml
 COPY platform/matching_engine/pyproject.toml ./platform/matching_engine/pyproject.toml
 COPY platform/risk_engine/pyproject.toml ./platform/risk_engine/pyproject.toml
 COPY platform/order_management/pyproject.toml ./platform/order_management/pyproject.toml
+COPY platform/notifications/pyproject.toml ./platform/notifications/pyproject.toml
 
 RUN uv sync --locked --no-dev --no-editable --package clearing
 

@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime
 
 if tp.TYPE_CHECKING:
-    from services.notifications.repository import NotificationRepository
+    from notifications.repository import NotificationRepository
 
 
 class NotificationService:
