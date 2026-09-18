@@ -182,4 +182,7 @@ cost: estimated S, actual S
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: reviewed, 1 non-blocking finding (F1, test-gap), disposition
+  note-and-close
+- 2026-09-18 — EXC-020 PR #36 opened
 - 2026-09-18 — IN REVIEW → DONE: reviewed: 1 non-blocking finding (F1, test-gap), disposition note-and-close
