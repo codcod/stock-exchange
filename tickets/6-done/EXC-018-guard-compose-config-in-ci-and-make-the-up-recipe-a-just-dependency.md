@@ -233,3 +233,4 @@ cost: estimated S, actual S.
   Nothing deferred.
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → DONE: review passed: 0 findings
+- 2026-09-18 — MERGED: PR #34, merge commit `548b9a0`
