@@ -161,6 +161,14 @@ project convention, `pyproject.toml`'s `[tool.ruff.format] quote-style = "single
 check` (lint + fmt-check), `just services-build`, and `uv run pytest` (67 passed) all green
 afterward.
 
+**Scoped re-review (round 1):** read the fix diff (`git show a33a02a`) — a pure quote-style
+change (double → single quotes throughout the file), no semantic change, no new defects. Rebased
+onto `main`; `pickle doctor` clean (0 errors, 0 warnings). Re-ran `just check` (lint + fmt-check
+both pass), `uv run pytest` (67 passed), `just services-build` (green). No new findings. F1
+resolved.
+
+Final disposition summary: 1 blocking (F1, fixed in rework round 1), 0 non-blocking.
+
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
@@ -169,3 +177,4 @@ afterward.
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → REWORK: F1 blocking: new test file fails ruff format --check
 - 2026-09-18 — REWORK → IN REVIEW: F1 fixed
+- 2026-09-18 — IN REVIEW → DONE: F1 fixed, scoped re-review clean
