@@ -197,7 +197,84 @@ This ticket *is* the docs update — `README.md`, `development/design.md`, and
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+**Reviewer independence (step 0):** independent — this review runs in a fresh session with no
+memory of authoring the branch (the implementing session's context was cleared before this
+review began), so the audits were run directly rather than delegated.
+
+**In-tree stale-branch check (step 0a):** `pickle doctor` on the checked-out
+`feat/EXC-019-correct-stale-docs-counts` branch reported `WARNING: ticket EXC-019: this branch
+has it in "3-in-development" but main has it in "4-in-review"`. Rebased the branch onto `main`;
+re-ran `pickle doctor` — 0 errors, 0 warnings. This advanced the branch's local tip from
+`afca57b` to `eb30c0f` (no code content changed by the rebase itself —
+`git diff --name-only origin/main...HEAD` after the rebase shows only `README.md`,
+`development/design.md`, `development/review-addendum.md`,
+`infra/docker/compose.services.yml`, no `tickets/` path). The already-open PR #35 still points at
+the pre-rebase tip; a force-push is needed to bring it in sync — flagged for approval at Finish
+below rather than pushed unilaterally.
+
+**Implementation audit (steps 1, 2):** all six tasks verified against the actual tree on
+`feat/EXC-019-correct-stale-docs-counts`, not just the diff:
+- Task 1: `infra/docker/compose.services.yml:15` reads
+  `# Tier 1: no other-service dependencies — only Postgres` — no longer contradicts `account`'s
+  `depends_on: account-migrate`.
+- Task 2 & 3: `development/design.md`'s Infrastructure paragraph now states the four services
+  wait on *a subset* of what they call (spelled out per-service, matching the ticket's own
+  wording), and scopes the "runs `python -m …`, reachable on `localhost:800X`" claim to "the
+  eight long-running services", separately noting the six one-shot `*-migrate` blocks run
+  `alembic upgrade head` and expose no port.
+- Task 4: `README.md:12` reads "all eight microservices".
+- Task 5: `development/design.md`'s "Detailed architecture" banner now reads "**Exception:
+  `### Infrastructure` below was rewritten with current, authoritative prose and is not covered
+  by this characterization.**", other subsections unaffected.
+- Task 6: `development/review-addendum.md` step 2 item 2 lists the actual shipped tree
+  (`development/design.md`, `README.md`, `platform/base/README.md`, eight
+  `platform/*/PACKAGING.md` files, named) instead of the false "entire shipped docs tree" claim;
+  header now reads "**Version 8**"; `## Revision history` carries a matching `v8` entry.
+- Acceptance test re-run verbatim: (1) `grep -rn "six microservices" README.md
+  development/design.md` → no matches. (2) `grep -n "wait on the services they call"
+  development/design.md` → no matches. (3) `### Infrastructure` confirmed exempted in the banner
+  text. (4) Addendum confirmed "Version 8" with a shipped-tree list matching the actual tree
+  (verified independently: `find platform -maxdepth 2 -iname PACKAGING.md` returns exactly eight
+  files). (5) `just lint` → "All checks passed!". All five: **met**.
+- `just check` (addendum step 9 addition: `lint` + `fmt-check`) also run — clean
+  ("All checks passed!", "133 files already formatted").
+
+**Quality audit (step 3):** docs-only change, no code/tests touched; nothing in the addendum's
+step 3 additions (lint selection, type hints, line-count guideline, async discipline) applies.
+Prose is idiomatic, matches the surrounding doc's voice, and each edit is scoped to exactly the
+finding it targets.
+
+**Consistency audit (step 4) & documentation audit (step 4a):** whole-tree sweep —
+`grep -rniE "six (service|microservice)|eight (service|microservice)|nine
+(service|microservice)"` across `README.md`, `development/design.md`,
+`platform/base/README.md`, every `platform/*/PACKAGING.md`, `development/review-addendum.md`,
+`CLAUDE.md` — only the three now-correct "eight" occurrences remain, no stale "six" or mismatched
+counts anywhere else in the shipped tree. No docs build configured for this project (addendum
+step 1), so no build-health check applies. Checked for other stale references to the addendum's
+former "Version 3" banner across the repo (tickets and `development/design.md`'s own reference
+at line 638) — none found; only archival `tickets/6-done/*` History lines cite older version
+numbers, which is correct as a record of what was true when those reviews ran, not something to
+rewrite.
+
+**Docs-readability pass (step 4b):** conscious skip — no `docs_readability` tool,
+`docs-readability` subagent, or reachable `opencode` backend is available in this session.
+
+**Governing documents (step 7):** `development/review-addendum.md` *is* the governing document
+this ticket exists to reconcile (finding 6) — done as Task 6, verified above. No other governing
+document (`development/design.md` itself, `CLAUDE.md`) asserts anything this branch made false.
+
+**Impact sweep (step 8):** no ticket in `tickets/1-to-do/` or `tickets/2-ready/` lists EXC-019 in
+`depends-on:` or references it in its Description (`grep -rl "EXC-019" tickets/1-to-do
+tickets/2-ready` → no matches) — nothing to patch.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | note and close | This ticket's own Implementation Plan (Task 6 prose) says the `platform/*/PACKAGING.md` count is "currently nine files" while listing only eight service names; the branch correctly ships "eight" in `development/review-addendum.md` (matching the actual tree), so only the ticket's own task text is stale, not anything shipped | Task 6 above (`… currently nine files — account, clearing, gateway, market_data, matching_engine, notifications, order_management, risk_engine, plus any added since`) vs. `find platform -maxdepth 2 -iname PACKAGING.md` → 8 files, and the shipped addendum text (Task 6 diff) → "eight" | No fix needed — the shipped artifact is already correct; recorded so the archive doesn't imply the plan and the shipped text agree verbatim |
+
+Disposition summary: 1 non-blocking finding (F1), disposition note and close. 0 blocking
+findings.
+
+cost: estimated S, actual S
 
 ## History
 
@@ -216,3 +293,8 @@ This ticket *is* the docs update — `README.md`, `development/design.md`, and
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — commit message approved by user; pushed `feat/EXC-019-correct-stale-docs-counts`
   (`afca57b`) and opened PR #35 (https://github.com/codcod/stock-exchange/pull/35).
+- 2026-09-18 — validated: independent review (fresh session, no memory of authoring the
+  branch); acceptance test re-run green, `just check` clean, whole-tree docs sweep clean. 1
+  non-blocking finding (F1, `stale-xref`), disposition note and close. cost: estimated S,
+  actual S.
+- 2026-09-18 — IN REVIEW → DONE: validated: 0 blocking findings, 1 non-blocking noted and closed
