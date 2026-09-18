@@ -154,6 +154,13 @@ disposition summary: 1 blocking (F1, routed to rework), 0 non-blocking.
 
 cost: estimated S, actual S
 
+### Rework fix record — round 1 (commit a33a02a)
+
+Fixed F1: ran `uv run ruff format clients/tests/test_no_stale_imports.py` (single-quote
+project convention, `pyproject.toml`'s `[tool.ruff.format] quote-style = "single"`). `just
+check` (lint + fmt-check), `just services-build`, and `uv run pytest` (67 passed) all green
+afterward.
+
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
@@ -161,3 +168,4 @@ cost: estimated S, actual S
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → REWORK: F1 blocking: new test file fails ruff format --check
+- 2026-09-18 — REWORK → IN REVIEW: F1 fixed
