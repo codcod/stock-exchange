@@ -64,11 +64,19 @@ services:
   # Tier 2: clearing (trade record keeper — no account dependencies)
   # ---------------------------------------------------------------------------
 
+  clearing-migrate:
+    build:
+      context: ../..
+      dockerfile: platform/clearing/Dockerfile
+    command: ["-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+
   clearing:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile
-    command: python -m services.clearing
+      dockerfile: platform/clearing/Dockerfile
+    command: python -m clearing
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
       PORT: "8004"
@@ -80,6 +88,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    depends_on:
+      clearing-migrate:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Tier 2: notifications (receives events from OMS and Matching Engine)

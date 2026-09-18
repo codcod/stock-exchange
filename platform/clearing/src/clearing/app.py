@@ -21,9 +21,8 @@ from base.domain.api_schemas import TradeExecutedEvent
 from base.domain.events import TradeExecuted
 from fastapi import FastAPI
 
-from services.clearing.repository import TradeRepository
-from services.clearing.service import ClearingService
-from services.clearing.tables import ensure_tables
+from clearing.repository import TradeRepository
+from clearing.service import ClearingService
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,6 @@ _state = _AppState()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db = get_engine()
-    await ensure_tables(db)
     _state.svc = ClearingService(TradeRepository(db))
     yield
 

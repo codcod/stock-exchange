@@ -1,6 +1,5 @@
 """Table definitions for the Clearing service — trade records only."""
 
-from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import (
     Column,
     DateTime,
@@ -11,8 +10,7 @@ from sqlalchemy import (
     Table,
 )
 
-metadata = MetaData()
-_SCHEMAS = ('clearing',)
+metadata = MetaData(schema='clearing')
 
 trades = Table(
     'trades',
@@ -28,7 +26,3 @@ trades = Table(
     Column('executed_at', DateTime(timezone=True), nullable=False),
     schema='clearing',
 )
-
-
-async def ensure_tables(engine) -> None:
-    await _ensure_tables(engine, metadata, _SCHEMAS)

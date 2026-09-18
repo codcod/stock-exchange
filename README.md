@@ -46,8 +46,6 @@ Authentication is opt-in: set `EXCHANGE_API_KEY=<secret>` and pass `X-API-Key: <
 This repository is organized as a monorepo containing multiple services and shared libraries.
 
 ```text
-services/
-  clearing/         # Handles post-trade settlement, updating cash and share balances
 platform/
   base/             # Shared `uv` workspace package (see platform/base/README.md): domain
                     # models/events/API schemas, DB engine, HTTP client, request context,
@@ -62,6 +60,8 @@ platform/
                     # package, own Alembic migration history
   order_management/ # Manages the lifecycle and routing of orders; own installable package,
                     # own Alembic migration history
+  clearing/         # Handles post-trade settlement, updating cash and share balances; own
+                    # installable package, own Alembic migration history
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual
