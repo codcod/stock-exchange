@@ -21,6 +21,6 @@ Thin helpers with no domain knowledge. Services depend on these, not on each oth
 | `http_client.py` | `http_get`, `http_post`, `http_delete` — correlation-header-aware async helpers |
 | `request_context.py` | `request_id` context var set by the gateway and propagated downstream |
 | `db/connection.py` | `get_engine()` — cached async SQLAlchemy engine from `DATABASE_URL` |
-| `db/tables.py` | `ensure_tables(engine, metadata, schemas)` — DDL helper with advisory lock |
+| `db/tables.py` | `ensure_tables(engine, metadata, schemas)` — DDL helper with advisory lock; unused now that every stateful service creates its schema via its own Alembic `*-migrate` one-shot container instead |
 | `clients/` | One typed HTTP client per service (`RiskEngineClient`, `ClearingClient`, …) |
 | `clients/converters.py` | Dict ↔ domain-object helpers shared by all clients |

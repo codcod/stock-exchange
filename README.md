@@ -30,6 +30,7 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 | POST   | `/accounts`                 | Create a new trading account with an initial cash balance. |
 | GET    | `/accounts/{id}`            | Retrieve account details, including balances and positions. |
 | GET    | `/accounts/{id}/orders`     | List all historical and open orders for a specific account. |
+| GET    | `/accounts/{id}/notifications` | Fetch recent notifications for an account (HTTP backfill; live updates arrive over the notifications service's WebSocket). |
 | POST   | `/orders`                   | Submit a new buy or sell order (limit or market). |
 | GET    | `/orders/{id}`              | Check the current status of a specific order. |
 | DELETE | `/orders/{id}?account_id=`  | Cancel an open order. |

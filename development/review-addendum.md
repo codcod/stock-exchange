@@ -1,10 +1,12 @@
 # Review addendum — exchange project-specific rules
 
-**Version 8** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
+**Version 9** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
 filed yet), updated same day by EXC-003 (docs/architecture.md → development/design.md) and on
 2026-09-17 by EXC-007's review; v4–v7 each repointed a stale path left by a service's move into
-its own `platform/` package, and v8 corrects the stale "entire shipped docs tree" claim (step 2)
-to list the full shipped tree and re-syncs this header to match the revision history below.
+its own `platform/` package, v8 corrects the stale "entire shipped docs tree" claim (step 2)
+to list the full shipped tree and re-syncs this header to match the revision history below, and
+v9 repoints step 2 item 1's last remaining stale path (F2 — `services/account/outbox_relay.py`)
+now that a docs sweep caught it.
 
 Applies **on top of** the brine review protocol
 (`.agents/skills/brine/resources/review-protocol.md`), keyed to that procedure's step numbers.
@@ -37,7 +39,7 @@ this repo; do not look for them.
 step most likely to be silently skipped:
 
 1. **A new event needs both outbox maps, in the *emitting* service.** Each `outbox_relay.py`
-   (`services/account/outbox_relay.py`, `platform/matching_engine/src/matching_engine/outbox_relay.py`,
+   (`platform/account/src/account/outbox_relay.py`, `platform/matching_engine/src/matching_engine/outbox_relay.py`,
    `platform/order_management/src/order_management/outbox_relay.py`) carries an
    `EVENT_DESTINATIONS` dict (event type → list of downstream services) and an
    `ENDPOINT_FOR_EVENT_TYPE` dict (destination → URL path). Wiring only one of the two still
@@ -155,3 +157,6 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
   and eight `platform/*/PACKAGING.md` files were added by EXC-005 through EXC-012, after v2's
   fold, and this claim never caught up) and re-synced this header, which had read "Version 3"
   since v4 landed, to match.
+- **v9** (2026-09-18) — Docs currency review repointed step 2 item 1's `services/account/outbox_relay.py`
+  entry to `platform/account/src/account/outbox_relay.py` (F2, tracked stale since v5, never
+  itself corrected).
