@@ -20,11 +20,10 @@ Last updated: 2026-09-18
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-018 | Guard compose config in CI and make the up recipe a just dependency | [] |
 
 ## REWORK
 
@@ -72,6 +71,7 @@ Last updated: 2026-09-18
 | EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | yes — MERGED: PR #32, `01e9a28` |
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 | EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | yes — MERGED (PR #33, c04b3e1) |
+| EXC-018 | Guard compose config in CI and make the up recipe a just dependency | no — publish-gated |
 
 ## DROPPED
 

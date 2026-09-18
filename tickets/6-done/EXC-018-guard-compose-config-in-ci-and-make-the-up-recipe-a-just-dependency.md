@@ -167,7 +167,48 @@ docs reference the old `up` shell-out or the absence of a compose guard.
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): **independent** — fresh session, no memory of
+  authoring this branch, nothing to delegate.
+- [x] In-tree stale-branch check (step 0a): `pickle doctor` initially warned the checked-out
+  branch had the ticket at `2-ready` while `main` had it at `4-in-review`; rebased onto `main`
+  (tip moved from `cb2bb8d` to `0a84a8d`), re-ran `pickle doctor`: 0 errors, 0 warnings.
+- [x] Implementation audit (steps 1, 2): all three tasks verified against the tree —
+  `compose-check` recipe (`justfile`) checks the infra-only, services-only, and merged
+  two-file forms exactly as Decision 2 specifies; `ci-repo.yml`'s `lint` job runs it as a step
+  named "Validate compose config" right after `just lint-repo`, matching Task 2 exactly; `up`
+  is now `up: infra-up` with only the services-up line in its body, matching Task 3. Re-ran the
+  acceptance test: `just --dry-run up` prints `infra-up`'s own commands (network create,
+  `docker-compose ... up -d --wait`) followed by the services-up line; `just compose-check`
+  passes (exit 0) on the current compose files; temporarily added a dangling
+  `postgres: condition: service_started` under `account`'s `depends_on` in
+  `compose.services.yml` — `just compose-check` failed non-zero with docker compose's own
+  `service "account" depends on undefined service "postgres"` error — then reverted with
+  `git checkout --`, re-ran `just compose-check` clean. `just lint`, `just lint-repo`
+  (incl. `ruff format --check`), and `just test` (67 passed) all green.
+- [x] Quality audit (step 3): no Python changed — n/a for the addendum's ruff-selection,
+  type-hint and line-count items. `docker compose` (not the hyphenated `docker-compose` the
+  rest of the `justfile` uses) is a deliberate, documented choice matching what GitHub Actions
+  runners ship; no security-relevant surface (no secrets, no injection-shaped input).
+- [x] Consistency audit (step 4): checked `development/design.md:391` — its "`just up` runs
+  `infra-up` before bringing the services up" prose stays true after this change, no
+  `stale-xref`. Checked the `stack`/`infra`/`services` justfile variables — `compose-check`'s
+  merged-form invocation uses the same two `-f` flags as `stack`, no drift. Checked EXC-002
+  (`2-ready/`), the ticket's own Description flagged as soft-coupled on the same `ci-repo.yml`
+  `lint` job: its Confirmed decision 7 already reads "after whatever step EXC-018/other
+  tickets have since added there" — written to anticipate EXC-018 landing first, so no patch
+  needed.
+- [x] Documentation audit (step 4a): no docs command configured (addendum step 1); no
+  user-facing surface shipped, matches the ticket's own Docs update section.
+- [x] Docs-readability pass (step 4b): n/a — no `.adoc`/`.md` prose changed by this branch
+  (only `justfile` and `ci-repo.yml`).
+- [x] Findings recorded (step 5): none.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+
+Disposition summary: 0 findings.
+
+cost: estimated S, actual S.
 
 ## History
 
@@ -191,3 +232,4 @@ docs reference the old `up` shell-out or the absence of a compose guard.
   error, then reverted; `just lint`, `just lint-repo`, and `just test` (67 passed) all green.
   Nothing deferred.
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: review passed: 0 findings
