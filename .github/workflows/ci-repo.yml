@@ -14,6 +14,8 @@ jobs:
       - uses: extractions/setup-just@v3
       - run: uv sync --extra dev
       - run: just lint-repo
+      - name: Validate compose config
+        run: just compose-check
 
   test:
     runs-on: ubuntu-latest
