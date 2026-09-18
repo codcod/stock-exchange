@@ -134,7 +134,7 @@ run-oms:
     MATCHING_ENGINE_URL=http://localhost:8003 \
     ACCOUNT_URL=http://localhost:8006 \
     NOTIFICATIONS_URL=http://localhost:8007 \
-    uv run python -m services.order_management
+    uv run python -m order_management
 
 # Risk Engine
 [group('run locally')]

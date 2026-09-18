@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "order_management"
+version = "0.0.1"
+description = "Order Management — order lifecycle, persistence, outbox relay to Notifications"
+requires-python = ">=3.11"
+dependencies = [
+    "base",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+]
+
+[tool.uv.sources]
+base = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/order_management"]

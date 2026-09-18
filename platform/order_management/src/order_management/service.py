@@ -27,7 +27,7 @@ if tp.TYPE_CHECKING:
     from base.clients.matching_engine import MatchingEngineClient
     from base.clients.risk_engine import RiskEngineClient
 
-    from services.order_management.unit_of_work import OrderManagementUnitOfWork
+    from order_management.unit_of_work import OrderManagementUnitOfWork
 
 logger = logging.getLogger(__name__)
 

@@ -23,6 +23,7 @@ COPY platform/gateway/pyproject.toml ./platform/gateway/pyproject.toml
 COPY platform/market_data/pyproject.toml ./platform/market_data/pyproject.toml
 COPY platform/account/pyproject.toml ./platform/account/pyproject.toml
 COPY platform/matching_engine/pyproject.toml ./platform/matching_engine/pyproject.toml
+COPY platform/order_management/pyproject.toml ./platform/order_management/pyproject.toml
 
 RUN uv sync --locked --no-dev --no-editable --package risk_engine
 

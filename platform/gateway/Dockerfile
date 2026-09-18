@@ -22,6 +22,7 @@ COPY platform/account/pyproject.toml ./platform/account/pyproject.toml
 COPY platform/matching_engine/pyproject.toml ./platform/matching_engine/pyproject.toml
 COPY platform/risk_engine/pyproject.toml ./platform/risk_engine/pyproject.toml
 COPY platform/gateway/pyproject.toml ./platform/gateway/pyproject.toml
+COPY platform/order_management/pyproject.toml ./platform/order_management/pyproject.toml
 COPY platform/gateway/src ./platform/gateway/src
 
 # --no-editable: the workspace member installs as a regular wheel, so the final stage can run

@@ -40,12 +40,11 @@ from base.domain.events import OrderFilled
 from base.domain.models import OrderStatus
 from fastapi import FastAPI, HTTPException, Query
 
-from services.order_management.outbox_relay import run_relay
-from services.order_management.outbox_repo import write_outbox_rows
-from services.order_management.repository import load_all_orders
-from services.order_management.service import OrderManagementService
-from services.order_management.tables import ensure_tables
-from services.order_management.unit_of_work import OrderManagementUnitOfWork
+from order_management.outbox_relay import run_relay
+from order_management.outbox_repo import write_outbox_rows
+from order_management.repository import load_all_orders
+from order_management.service import OrderManagementService
+from order_management.unit_of_work import OrderManagementUnitOfWork
 
 _RISK_URL = os.getenv('RISK_ENGINE_URL', 'http://localhost:8002')
 _MATCHING_URL = os.getenv('MATCHING_ENGINE_URL', 'http://localhost:8003')
@@ -66,7 +65,6 @@ _state = _AppState()
 async def lifespan(app: FastAPI):
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.db = get_engine()
-    await ensure_tables(_state.db)
 
     risk_client = RiskEngineClient(_RISK_URL, _state.http)
     matching_client = MatchingEngineClient(_MATCHING_URL, _state.http)
