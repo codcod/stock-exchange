@@ -322,6 +322,41 @@ re-review: `git diff f861ba2..f2bb446`.
 
 cost: estimated M, actual M
 
+### Scoped re-review — round 2
+
+**Reviewer independence (step 0):** this session has no memory of authoring the branch (fresh
+session) — direct audit, no delegation needed.
+
+**In-tree stale-branch check (step 0a):** `pickle doctor` at pickup reported the branch's ticket
+copy stale (`this branch has it in "5-rework" but main has it in "4-in-review"`); rebased onto
+`main`, re-ran `pickle doctor` — 0 errors, 0 warnings.
+
+**Scope (step 1):** F1's fix and the diff that closed it, `git diff f861ba2..f2bb446` (read above,
+in the round-1 fix record), plus a fresh read of that diff's replacement text for new defects.
+
+**Implementation audit (step 2):** F1 verified fixed — `just <name> lint` now runs
+`ruff format --check .` after `ruff check .` for all 9 services (confirmed by output, not just
+recipe text), `just lint-repo` likewise for `clients scripts`. Re-ran the full acceptance test:
+`just --list` still shows the nine mod groups; all 9 `just <name> lint`/`test` green; `just
+lint-repo`/`test-repo` green; `just services-build` green; `just test` green (67 passed); `just
+lint` green. Round-1 diff introduces no new files, only one new line per justfile — nothing else
+to verify against the plan's tasks.
+
+**Consistency / governing-doc audit (steps 4, 7):** `development/review-addendum.md` step 2 item
+3 named `.github/workflows/ci.yaml` as the workflow enforcing `ruff format --check` — a governing
+document this ticket's Task 6 (delete `ci.yaml`) made false: the enforcing workflows are now
+`ci-<service>.yml`/`service-ci.yml` and `ci-repo.yml`. No behaviour change, prose only, within
+this review's reach (same repo, branch already checked out) — fixed inline in
+`development/review-addendum.md` (F2 below).
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F2 | non-blocking | stale-xref | fixed inline | `development/review-addendum.md` step 2 item 3 named `.github/workflows/ci.yaml` as the workflow that runs `ruff format --check`; this ticket deletes that file (Task 6), making the reference stale. | `development/review-addendum.md:49` before the fix; `.github/workflows/ci.yaml` absent from the tree, `ci-<service>.yml`/`service-ci.yml`/`ci-repo.yml` present and running `ruff format --check` (round-1 fix, verified above). | Reworded to name the current workflows instead of the deleted file — done, this round. |
+
+Round-2 disposition summary: 0 blocking; 1 non-blocking (F2, stale-xref, fixed inline).
+
+cost: estimated M, actual M (unchanged by round 2 — a one-file doc reword)
+
 ## History
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
@@ -330,3 +365,4 @@ cost: estimated M, actual M
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → REWORK: F1 blocking: ruff format --check dropped from CI
 - 2026-09-18 — REWORK → IN REVIEW: findings fixed
+- 2026-09-18 — IN REVIEW → DONE: F1 fixed and verified; F2 (stale-xref) fixed inline; round-2 re-review clean

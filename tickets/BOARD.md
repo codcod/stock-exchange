@@ -20,11 +20,10 @@ Last updated: 2026-09-18
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |
 
 ## REWORK
 
@@ -71,6 +70,7 @@ Last updated: 2026-09-18
 | EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | yes — MERGED: PR #28, `fa9ca757`, merged to `main` (merged by the user before this review ran) |
 | EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | yes — MERGED: PR #29, `151723e`, merged to `main` (merged by the user before this review ran) |
 | EXC-013 | Update clients/ imports for platform/ package layout | yes — MERGED: PR #30, commit 6e05679 |
+| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | no — publish-gated |
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 
 ## DROPPED
