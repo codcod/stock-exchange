@@ -335,7 +335,38 @@ succeeds; the `grep` prints nothing; `services/order_management` gone; the `wc -
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+Reviewer independence (step 0): **delegated** — the implementing agent authored the branch in
+this session, so the implementation/quality/consistency/docs audits (steps 2–4a) were run by an
+independently-spawned sub-agent, briefed adversarially and with no memory of writing the code.
+Its findings were re-verified by hand before being recorded here.
+
+Acceptance test re-run in full against the merged tree on `main` (merge commit `9aa1744`, PR
+#27): `alembic history` (one revision), package imports clean, `just check` clean, `just test`
+(66 passed), `just services-build` (all 12 images), the `grep`/`test -d` checks, and the
+`wc -l` check (216 / 205, matching the History's inline amendment) — all green. The
+per-Dockerfile `docker build` loop and the live-Postgres `alembic upgrade head` were not
+re-run in review (already verified during implementation; `just services-build`'s pass covers
+the same build surface).
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | stale-xref | fixed inline | `development/review-addendum.md` step 2 item 1's outbox-maps parenthetical still named `services/order_management/outbox_relay.py`, even though this branch moved that file — the ticket's own Docs update section covered only step 3 item 3, not this line. Same class of miss as EXC-008's F1 (v5). | `development/review-addendum.md:39` (pre-fix) | Repointed to `platform/order_management/src/order_management/outbox_relay.py`; addendum revision history bumped to v7. |
+| F2 | non-blocking | stale-xref | note and close | `development/design.md:349` references `shared/db/connection.py`, which doesn't exist (no `shared/` dir; real module is `platform/base/src/base/db/connection.py`). Confirmed pre-existing via `git show 575be25 -- development/design.md` — this branch never touched that line. | `development/design.md:349` | Out of this ticket's causation and scope; left as-is. |
+
+Disposition summary: 2 non-blocking findings — F1 fixed inline, F2 noted and closed. No
+blocking findings; every confirmed design decision and every task in the Implementation Plan
+verified honored on disk.
+
+cost: estimated M, actual M
+
+Impact sweep (step 8): re-read `tickets/1-to-do/EXC-014-...md` and `EXC-015-...md`, and
+`tickets/2-ready/`'s `EXC-011`/`EXC-012` (both still list `order_management` only as a sibling
+migration precedent, not a hard assumption) — none of their Descriptions or Implementation Plans
+encode an assumption this branch invalidated. No patches needed.
+
+Next ticket: `EXC-002` (highest impact in READY, no `depends-on:`) is unblocked now. `EXC-011`
+and `EXC-012` (both `depends-on: [EXC-004]`, already done+merged) are also unblocked and follow
+the same `order_management`-shaped precedent this ticket just set.
 
 ## History
 
@@ -370,3 +401,5 @@ succeeds; the `grep` prints nothing; `services/order_management` gone; the `wc -
   overlap between the two branches, not a case requiring this ticket to itself repoint the
   import. Re-ran the full acceptance test after the rebase; all steps still green.
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: validated, no blocking findings; F1 fixed inline, F2 note-and-close
+- 2026-09-18 — MERGED: PR #27 merged to `main` (`9aa1744`).

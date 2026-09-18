@@ -36,7 +36,7 @@ step most likely to be silently skipped:
 
 1. **A new event needs both outbox maps, in the *emitting* service.** Each `outbox_relay.py`
    (`services/account/outbox_relay.py`, `platform/matching_engine/src/matching_engine/outbox_relay.py`,
-   `services/order_management/outbox_relay.py`) carries an
+   `platform/order_management/src/order_management/outbox_relay.py`) carries an
    `EVENT_DESTINATIONS` dict (event type → list of downstream services) and an
    `ENDPOINT_FOR_EVENT_TYPE` dict (destination → URL path). Wiring only one of the two still
    passes local unit tests — they mock the HTTP call — and only fails at runtime when the relay
@@ -138,3 +138,7 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
   the stale 204 to 205 — Task 5's mandated removal of the `ensure_tables` import and call
   (dropping create-on-boot) shrank the file by 2 lines during this same move, so the addendum
   now records the post-move count rather than the pre-move 207 the ticket's plan assumed.
+- **v7** (2026-09-18) — EXC-010's review repointed step 2 item 1's `order_management` entry in
+  the outbox-maps parenthetical to `platform/order_management/src/order_management/outbox_relay.py`,
+  stale-xref F1 fixed inline (`## Review`, EXC-010) — the same class of miss as EXC-008's F1
+  (v5): the ticket's own Docs update section didn't cover this parenthetical, only step 3 item 3.
