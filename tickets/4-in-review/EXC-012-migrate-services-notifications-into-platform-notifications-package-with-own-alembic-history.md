@@ -280,9 +280,41 @@ creates `notifications` schema with `notifications` + `notifications.alembic_ver
 
 ## Review
 
-| finding | class | disposition |
-|---|---|---|
-| Applicability-gate audit: `development/design.md`'s stale-reference line numbers had drifted to 19/285 (from the ticket's stated 23/281), cosmetic only — the Docs step's own `grep -n` finds the lines dynamically so execution was unaffected | doc-drift | note-and-close |
+**Reviewer independence (step 0):** delegated — the implementing agent authored this branch in
+this session, so the audits (steps 2–4a) were run by a fresh, independent sub-agent with no
+memory of writing the code, briefed adversarially. Every delegated finding below was re-verified
+by hand before being recorded.
+
+**Applicability-gate audit (pre-pickup):**
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| G1 | non-blocking | stale-xref | note-and-close | `development/design.md`'s stale-reference line numbers had drifted to 19/285 (ticket stated 23/281), cosmetic only | ticket Description vs. `development/design.md` at pickup time | none — the Docs step's own `grep -n` finds the lines dynamically, so execution was unaffected |
+
+**Post-implementation review (independent, delegated audit; PR #29 merged as commit `151723e`):**
+
+- Implementation audit: every task and acceptance criterion **met** — acceptance test re-run
+  verbatim (alembic history, imports, `just check`, `just lint`, `just test` 66 passed, all 8
+  `platform/*/Dockerfile`s build, `just services-build`, grep clean, `services/notifications`
+  gone, live `alembic upgrade head` created the schema/table/`alembic_version` on real Postgres).
+- Quality audit: idiomatic verbatim move, no gratuitous changes; no security issue introduced by
+  the migration itself.
+- Consistency audit: Dockerfile diffed line-for-line against `platform/account/Dockerfile`
+  (same shape, correct port substitution); port 8007 consistent everywhere referenced; no
+  caller/callee drift.
+- Documentation audit: `README.md` and `development/design.md` correctly repointed to
+  `platform/notifications/`; whole-tree sweep found no stale `services/notifications` /
+  `services.notifications` reference outside `platform/notifications/CHANGELOG.md`'s own
+  (correct, historical) mention.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | other | note-and-close | Local `main` checkout was briefly behind `origin/main` at the start of the independent review (an artifact of the review environment, not the branch) | reviewer fast-forwarded to `origin/main` before auditing | none — process note only |
+| F2 | non-blocking | correctness | note-and-close | `GET /notifications/{account_id}?since=` has no error handling around `datetime.fromisoformat`, and `/ws/notifications/{account_id}` has no per-account authorization | `platform/notifications/src/notifications/app.py` (`get_notifications`, `ws_notifications`) | pre-existing, carried over verbatim by the move, out of this ticket's scope; worth a follow-up ticket if not already tracked — none filed, since it does not clear the promotion test on its own (a repo-wide auth/validation gap, not specific to this migration) |
+
+Disposition summary: 3 non-blocking (G1, F1, F2), all note-and-close. 0 blocking. 0 spawned.
+
+cost: estimated M, actual M
 
 ## History
 
