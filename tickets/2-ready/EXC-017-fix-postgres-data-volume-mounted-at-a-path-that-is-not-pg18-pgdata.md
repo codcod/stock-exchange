@@ -63,7 +63,91 @@ left it alone to keep its own diff scoped.
 
 ## Implementation Plan
 
-<!-- empty until refined; must meet the READY gate before moving to 2-ready/ -->
+### 0. Feature branch (mandatory)
+
+```
+git checkout main
+git checkout -b feat/EXC-017-fix-postgres-data-volume-mounted-at-a-path-that-is-not-pg18-pgdata
+```
+
+`exchange` is the root-path child (`path = "."`) — tidy WIP commits into atomic ones before
+presenting.
+
+### Prerequisite gate (hard)
+
+None.
+
+### Confirmed design decisions (do not deviate without asking)
+
+1. **Volume-mount fix: option (a) — repoint the mount to the image's own `PGDATA`.** Change
+   `postgres-data:/var/lib/postgresql/docker` to `postgres-data:/var/lib/postgresql/18/docker`
+   in `infra/docker/compose.infra.yml:25`. Chosen over mounting the parent directory (option b)
+   or setting `PGDATA` explicitly (option c) for the smallest diff; the tradeoff — the path must
+   be revisited on the next Postgres major-version bump — is accepted since nothing currently
+   plans one. (User decision, 2026-09-18.)
+2. **Healthcheck fix folded in (EXC-016 review finding F9):** add `-h 127.0.0.1` so
+   `pg_isready` probes TCP instead of the unix socket the entrypoint's temporary `initdb` server
+   serves, and add `start_period: 10s`.
+3. **`development/design.md:382`'s "Postgres 17" is corrected to "Postgres 18"** in the same
+   change, since it's the same file this ticket is already touching for the volume/healthcheck
+   fix.
+
+### Tasks
+
+#### Task 1 — Fix the volume mount path
+`infra/docker/compose.infra.yml:25`:
+```
+    volumes:
+      - postgres-data:/var/lib/postgresql/18/docker
+```
+
+#### Task 2 — Fix the healthcheck
+`infra/docker/compose.infra.yml:26-30`:
+```
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U exchange"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+```
+
+#### Task 3 — Fix the stale version reference
+`development/design.md:382`: replace "Postgres 17" with "Postgres 18".
+
+### Acceptance test
+
+- Data survives a recreate: `docker compose -f infra/docker/compose.infra.yml down` (no `-v`),
+  `just infra-up`, use `just db-shell` to `INSERT` a row into an existing table (e.g. one the
+  `account-migrate` Alembic history already created), `docker compose -f
+  infra/docker/compose.infra.yml up -d --force-recreate postgres`, then `just db-shell` again
+  and confirm the row is still there. Before the fix this loses the row; after, it doesn't.
+- `docker compose -f infra/docker/compose.infra.yml down -v && just infra-up` succeeds (fresh
+  volume, first-time `initdb` path) and `just infra-up`'s own `--wait` returns healthy only once
+  `just db-shell -c "select 1"` (or equivalent) actually connects over TCP — confirms the
+  healthcheck fix didn't just move the false-positive window rather than close it.
+- `just lint` / `just test` unaffected (no code paths touch this).
+
+### Docs update (mandatory when user-facing)
+
+`development/design.md:382` corrected as Task 3 — the only doc reference to this file's
+Postgres version.
+
+### Finish (mandatory)
+
+1. Both acceptance tests green.
+2. Docs updated (Task 3).
+3. Write a summary: files touched, which volume-mount option was chosen and why, anything
+   deferred (e.g. the next major-version bump will need this path revisited again).
+4. Suggest a Conventional Commit message, e.g.:
+   ```
+   fix(infra): fix postgres data volume path and healthcheck TCP probe (EXC-017)
+   ```
+5. Tidy WIP commits into atomic ones (root-path child).
+6. Commit locally; do not push or open an MR without user approval. Verify
+   `git fetch origin main && git diff --name-only origin/main...HEAD | grep '^tickets/'` prints
+   nothing before pushing. Present the commit message for approval, then push and open the
+   merge request — merging is always the human's.
 
 ## Review
 
@@ -79,3 +163,4 @@ left it alone to keep its own diff scoped.
   shares nothing with EXC-016's `depends_on` change beyond the directory.
 - 2026-09-17 — folded in EXC-016 review finding F9 (postgres healthcheck lacks `-h` and
   `start_period`); same file, same acceptance test
+- 2026-09-18 — TO DO → READY: plan complete

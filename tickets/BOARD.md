@@ -38,7 +38,12 @@ Last updated: 2026-09-18
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-018 | Guard compose config in CI and make the up recipe a just dependency | high | low | S | [] |  |
+| EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | medium | low | S | [] |  |
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
+| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | medium | medium | M | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
+| EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
+| EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012, EXC-013, EXC-014] |  |
 
 ## TO DO (impact order, per child)
 
@@ -46,11 +51,6 @@ Last updated: 2026-09-18
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
-| EXC-018 | Guard compose config in CI and make the up recipe a just dependency | high | low | S | [] |  |
-| EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | medium | low | S | [] |  |
-| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | medium | medium | M | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
-| EXC-013 | Update clients/ imports for platform/ package layout | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |  |
-| EXC-015 | Remove dead root-level tooling after platform/ split (root Dockerfile, semantic_release block, aggregate pyproject deps) | low | low | S | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012, EXC-013, EXC-014] |  |
 | EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | low | low | S | [] |  |
 | EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | low | low | S | [] |  |
 
