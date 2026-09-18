@@ -143,3 +143,4 @@ fulfills that, it doesn't need to restate it.
   folded a fix into Task 3 and widened the grep. Dependency gate re-verified independently
   (git ancestry) — EXC-013/EXC-014 both merged to main; prerequisite is satisfied.
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
+- 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
