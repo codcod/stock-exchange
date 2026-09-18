@@ -621,9 +621,11 @@ against the numbered decisions below and may cite one as `EXC-003 decision N`.
 5. **Each service versions independently**: own SemVer starting at `0.0.1`, own `CHANGELOG.md`
    (Keep a Changelog format), release tags `<service>-vX.Y.Z`, own `PACKAGING.md` (why
    `src/`-layout + implicit namespace package, if applicable) and `RELEASING.md` (the manual
-   release procedure). This supersedes the existing unused single-repo `[tool.semantic_release]`
-   block in the current root `pyproject.toml` — that block is removed once each service has its
-   own versioning story (tracked by the future per-service versioning ticket, not this document).
+   release procedure). This supersedes the single-repo `[tool.semantic_release]` block that
+   used to live in the root `pyproject.toml` — that block was already unused, and was removed
+   ahead of this decision's remaining scope by EXC-015; the per-service SemVer/CHANGELOG/
+   RELEASING.md story itself is still tracked by the future per-service versioning ticket, not
+   this document.
 6. **`CLAUDE.md` is emptied to the pickle marker plus a one-line pointer to this document**
    (literal parity with the reference project, which carries no CLAUDE.md/AGENTS.md content of
    its own at all). `AGENTS.md` is unaffected — already marker-only.
