@@ -71,7 +71,7 @@ Last updated: 2026-09-18
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 | EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | yes — MERGED (PR #33, c04b3e1) |
 | EXC-018 | Guard compose config in CI and make the up recipe a just dependency | yes — MERGED: PR #34, merge commit `548b9a0` |
-| EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | no — publish-gated |
+| EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | yes — merged to main (PR #35, `36601cd`). |
 
 ## DROPPED
 

@@ -297,4 +297,5 @@ cost: estimated S, actual S
   branch); acceptance test re-run green, `just check` clean, whole-tree docs sweep clean. 1
   non-blocking finding (F1, `stale-xref`), disposition note and close. cost: estimated S,
   actual S.
+- 2026-09-18 — merged to main (PR #35, `36601cd`).
 - 2026-09-18 — IN REVIEW → DONE: validated: 0 blocking findings, 1 non-blocking noted and closed
