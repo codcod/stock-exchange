@@ -214,3 +214,5 @@ This ticket *is* the docs update — `README.md`, `development/design.md`, and
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — commit message approved by user; pushed `feat/EXC-019-correct-stale-docs-counts`
+  (`afca57b`) and opened PR #35 (https://github.com/codcod/stock-exchange/pull/35).
