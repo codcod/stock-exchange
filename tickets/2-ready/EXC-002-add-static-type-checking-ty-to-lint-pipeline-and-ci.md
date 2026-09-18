@@ -138,9 +138,14 @@ None. `depends-on: []`.
        return tp.cast('ExchangeApp', self.app)
    ```
    then replace the four `self.app.post_status(...)` call sites with `self._app().post_status(...)`.
-7. **`justfile`/CI restructuring (design decision 4, EXC-014) is out of scope** — `ty` is wired
-   into the existing root `just lint` and the existing single `.github/workflows/ci.yaml` lint
-   job, not a per-service split.
+7. **`ty` is wired into the root `just lint` recipe (unaffected — EXC-014 kept the
+   workspace-wide `lint`/`test`/`check` recipes as a local "everything" convenience) and into
+   `ci-repo.yml`'s `lint` job, not a per-service split** (patched 2026-09-18 impact sweep: EXC-014
+   landed first and deleted `.github/workflows/ci.yaml`, this decision's original CI target;
+   `ty check` is one whole-tree invocation across `services`/`platform`/`clients`, not a
+   per-service one, and `ci-repo.yml` is the only surviving workflow with no path filter — it
+   runs on every push/PR the same way `ci.yaml` used to, so it is where a repo-wide check
+   belongs. Same reasoning EXC-018's compose-check guard uses for the same reason.)
 
 ### Tasks
 
@@ -150,8 +155,9 @@ None. `depends-on: []`.
   ```
   uv run ty check services platform clients --exclude "**/tests/**"
   ```
-- `.github/workflows/ci.yaml`, `lint` job: change the "Install dependencies" step to
-  `uv sync --extra dev --extra tui`; add a "Type check" step after "Ruff format check":
+- `.github/workflows/ci-repo.yml`, `lint` job: change the "Install dependencies" step to
+  `uv sync --extra dev --extra tui`; add a "Type check" step after "Lint" (`just lint-repo`) —
+  or after whatever step EXC-018/other tickets have since added there:
   ```yaml
         - name: Type check
           run: uv run ty check services platform clients --exclude "**/tests/**"
@@ -200,9 +206,10 @@ Expect: `just lint` now runs `ruff check .` *and* `ty check services platform cl
 green (no runtime behaviour changed — every fix is either a narrowing accessor, a retype, an
 ignore-comment rewrite, or an assert on an invariant already true); `just services-build`'s
 outcome is unaffected by this ticket (still whatever EXC-016 leaves it at — do not treat that
-as this ticket's concern). Separately confirm CI's lint job (`.github/workflows/ci.yaml`) would
-pass by running the same two commands its steps now use:
-`uv sync --extra dev --extra tui`, `uv run ruff check .`, `uv run ruff format --check .`,
+as this ticket's concern). Separately confirm `ci-repo.yml`'s `lint` job would pass by running
+the same commands its steps now use:
+`uv sync --extra dev --extra tui`, `uv run ruff check clients scripts`,
+`uv run ruff format --check clients scripts`,
 `uv run ty check services platform clients --exclude "**/tests/**"`.
 
 ### Docs update (mandatory when user-facing)
@@ -248,3 +255,6 @@ ticket; note the nuance in the summary instead.
 - 2026-09-17 — plan paths repointed from `services/account/` to `platform/account/src/account/`
   (and `services/market_data/tests/` to `platform/market_data/src/market_data/tests/`) — EXC-007
   impact sweep; no scope change.
+- 2026-09-18 — plan amended: EXC-014's review impact sweep patched decision 7 and Task 1's CI
+  wiring to target `ci-repo.yml`'s `lint` job instead of the now-deleted `ci.yaml`; root `just
+  lint` wiring unaffected.

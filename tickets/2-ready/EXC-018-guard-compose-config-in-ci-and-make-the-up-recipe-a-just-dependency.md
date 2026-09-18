@@ -55,13 +55,18 @@ docker-compose -f infra/docker/compose.services.yml up -d --build
 Declaring it as `up: infra-up` with only `{{ services }} up -d --build` in the body fixes the
 idiom and makes the gate visible to `--dry-run` in one line.
 
-Soft coupling: EXC-014 ("Restructure justfile and CI into per-service mod-imported recipes")
-will rewrite both surfaces this ticket touches (`justfile`'s `up` recipe, `ci.yaml`'s `lint`
-job). Whichever lands second must fold the other's step/recipe into its own new shape rather
-than dropping it — checked as a task in both tickets' plans, not encoded as a hard dependency.
-Also soft-coupled to EXC-002 ("Add static type-checking (ty) to lint pipeline and CI", already
-`2-ready/`), which adds its own new step to the same `lint` job in `ci.yaml`; whichever of
-EXC-018/EXC-002 lands second should place its new step without clobbering the other's.
+**EXC-014 landed first (impact sweep, 2026-09-18) — `.github/workflows/ci.yaml` no longer
+exists.** CI is now `service-ci.yml` (reusable; `lint` job runs `just "<service>" lint`) called
+by nine path-filtered `ci-<service>.yml`, plus one always-on `ci-repo.yml` (`lint` job runs
+`just lint-repo`, no path filter — runs on every push/PR regardless of which file changed). The
+compose files this ticket guards (`infra/docker/compose.*.yml`) aren't under any
+`platform/<service>/` path, so a per-service workflow's path filter would never fire on a
+compose-only edit; `ci-repo.yml` is the only one of the ten that reliably runs on every PR
+regardless of path, so the guard belongs in its `lint` job, not any per-service one (Decision 1
+and Task 2 below, patched accordingly). Still soft-coupled to EXC-002 ("Add static
+type-checking (ty) to lint pipeline and CI", `2-ready/`), which will hit the same
+now-nonexistent `ci.yaml` target — whichever of EXC-018/EXC-002 lands second should place its
+new step without clobbering the other's, same as before, just against the new file.
 
 ## Implementation Plan
 
@@ -81,9 +86,11 @@ None. No `depends-on:`; no unmerged branches this ticket builds on.
 
 ### Confirmed design decisions (do not deviate without asking)
 
-1. **The compose-config guard runs as a new step inside `ci.yaml`'s existing `lint` job**, not
-   a new job — decided at refinement to avoid an extra runner startup for a check that takes a
-   few seconds. (User decision, 2026-09-18.)
+1. **The compose-config guard runs as a new step inside `ci-repo.yml`'s existing `lint` job**
+   (patched 2026-09-18 impact sweep — was `ci.yaml`'s `lint` job before EXC-014 deleted that
+   file; `ci-repo.yml` is the only always-on workflow left, see Description), not a new job —
+   decided at refinement to avoid an extra runner startup for a check that takes a few seconds.
+   (User decision, 2026-09-18.)
 2. **The guard checks all three compose invocations the repo actually uses**: the infra-only
    file, the services-only file, and the merged two-file form — not just the one EXC-016 fixed,
    since a future dangling reference could appear in either file or only surface in the merge.
@@ -108,16 +115,15 @@ Note GitHub Actions runners ship the `docker compose` v2 plugin (space, not the 
 existing hyphenated variables alone, that's out of this ticket's scope.
 
 #### Task 2 — Wire the guard into CI
-In `.github/workflows/ci.yaml`'s `lint` job, add a step after "Ruff format check" (or after
-whatever step EXC-002/other tickets have since added there — place it without removing an
-existing step):
+In `.github/workflows/ci-repo.yml`'s `lint` job, add a step after "Lint" (`just lint-repo`) —
+or after whatever step EXC-002/other tickets have since added there — place it without removing
+an existing step:
 ```yaml
       - name: Validate compose config
         run: just compose-check
 ```
-`just` is not preinstalled on `ubuntu-latest`; add a step before it (e.g.
-`extractions/setup-just@v3` or `taiki-e/install-action@just`) if the job doesn't already have
-`just` on PATH — check the current job first, since a later ticket may have added it already.
+`ci-repo.yml`'s job already installs `just` (`extractions/setup-just@v3`, EXC-014) — no new
+setup step needed; re-confirm at pickup in case that's changed.
 
 #### Task 3 — Make `up` a just recipe dependency
 `justfile`, the `up` recipe (currently a body that shells `just infra-up`):
@@ -136,12 +142,12 @@ up: infra-up
 - Temporarily reintroduce a dangling `depends_on:` reference in `compose.services.yml`, confirm
   `just compose-check` fails non-zero with docker compose's own error naming the missing
   service, then revert — do not commit the broken state.
-- `just lint` and the CI `lint` job (run locally via `act` or by re-reading the job's exact
-  commands) both stay green with the new step added.
+- `just lint-repo` and the `ci-repo.yml` `lint` job (run locally via `act` or by re-reading the
+  job's exact commands) both stay green with the new step added.
 
 ### Docs update (mandatory when user-facing)
 
-No user-facing surface — this is internal CI/tooling plumbing (`justfile`, `ci.yaml`); no
+No user-facing surface — this is internal CI/tooling plumbing (`justfile`, `ci-repo.yml`); no
 docs reference the old `up` shell-out or the absence of a compose guard.
 
 ### Finish (mandatory)
@@ -170,3 +176,5 @@ docs reference the old `up` shell-out or the absence of a compose guard.
   build-breaking config error sit on `main` across four tickets, and five queued tickets plan the
   same container shape that caused it.
 - 2026-09-18 — TO DO → READY: plan complete
+- 2026-09-18 — plan amended: EXC-014's review impact sweep patched Decision 1 and Task 2 to
+  target `ci-repo.yml`'s `lint` job instead of the now-deleted `ci.yaml`
