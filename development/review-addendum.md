@@ -1,12 +1,14 @@
 # Review addendum — exchange project-specific rules
 
-**Version 9** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
+**Version 10** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
 filed yet), updated same day by EXC-003 (docs/architecture.md → development/design.md) and on
 2026-09-17 by EXC-007's review; v4–v7 each repointed a stale path left by a service's move into
 its own `platform/` package, v8 corrects the stale "entire shipped docs tree" claim (step 2)
-to list the full shipped tree and re-syncs this header to match the revision history below, and
-v9 repoints step 2 item 1's last remaining stale path (F2 — `services/account/outbox_relay.py`)
-now that a docs sweep caught it.
+to list the full shipped tree and re-syncs this header to match the revision history below, v9
+repoints step 2 item 1's last remaining stale path (F2 — `services/account/outbox_relay.py`)
+now that a docs sweep caught it, and v10 corrects step 2 item 3's stale claim that all lint
+recipes are check-only (they now also run `ruff format --check .`) and step 4a item 2's
+"shipped docs tree" definition, which omitted every service's `RELEASING.md`/`CHANGELOG.md`.
 
 Applies **on top of** the brine review protocol
 (`.agents/skills/brine/resources/review-protocol.md`), keyed to that procedure's step numbers.
@@ -50,14 +52,17 @@ step most likely to be silently skipped:
    downstream service by string; nothing type-checks that the named service actually exposes the
    `/events/...` route `ENDPOINT_FOR_EVENT_TYPE` points at. Confirm the destination service's
    `app.py` defines that route.
-3. **An acceptance test that stops at `just lint` does not cover CI.** Each per-service CI
-   workflow (`.github/workflows/ci-<service>.yml` via `service-ci.yml`, and `ci-repo.yml` for
-   `clients`/`scripts`; EXC-014) runs `ruff check .` **and** `ruff format --check .` in its lint
-   job; `just lint`/`just <service> lint`/`just lint-repo` is only the first of the two. A ticket
-   whose acceptance test lists `just lint` without `just check` (or `just fmt-check`) can go green
-   locally and still land a red PR — generated files are the usual culprit, since scaffolders
-   such as `alembic revision` do not emit ruff-formatted output. Run `just check` during the
-   implementation audit, not only at step 9, and class a plan that omits it `test-gap`.
+3. **An acceptance test that stops at bare `just lint` does not cover CI.** Every per-service
+   `justfile` and `just lint-repo` already run both `ruff check .` and `ruff format --check .`;
+   only the bare root `just lint` is check-only. Each per-service CI workflow
+   (`.github/workflows/ci-<service>.yml` via `service-ci.yml`, and `ci-repo.yml` for
+   `clients`/`scripts`; EXC-014) just calls the corresponding `just <service> lint` /
+   `just lint-repo` recipe, so there is no separate CI-only format-check step beyond what those
+   recipes already run. A ticket whose acceptance test lists the bare root `just lint` without
+   `just check` (or `just fmt-check`) can still go green locally and land a red PR — generated
+   files are the usual culprit, since scaffolders such as `alembic revision` do not emit
+   ruff-formatted output. Run `just check` during the implementation audit, not only at step 9,
+   and class a plan that omits it `test-gap`.
 4. **Stateful/stateless is a hard split, not a convention.** `risk_engine`, `order_management`,
    `matching_engine`, `clearing`, `account`, `notifications` require `DATABASE_URL`; `gateway` and
    `market_data` do not. A ticket that adds persistence to `gateway` or `market_data` is
@@ -96,12 +101,14 @@ step most likely to be silently skipped:
    limitation doesn't exist is `plan-wrong`.
 2. **Whole-tree docs sweep is small and exact here** — the shipped docs tree is
    `development/design.md`, `README.md`, `platform/base/README.md`, and each service's
-   `platform/*/PACKAGING.md` (currently eight — `account`, `clearing`, `gateway`, `market_data`,
-   `matching_engine`, `notifications`, `order_management`, `risk_engine`). `docs/architecture.md`
-   and `docs/lob_concepts_review.md` were folded into `development/design.md` and deleted by
-   EXC-003; `README.md`, `platform/base/README.md` and the `PACKAGING.md` files were added by
-   EXC-005 through EXC-012, after that fold. Read the whole tree in full rather than
-   spot-checking; there is no docs build to catch what a skim misses (step 1).
+   `platform/*/PACKAGING.md`, `RELEASING.md` and `CHANGELOG.md` (currently eight services each —
+   `account`, `clearing`, `gateway`, `market_data`, `matching_engine`, `notifications`,
+   `order_management`, `risk_engine` — 24 files total). `docs/architecture.md` and
+   `docs/lob_concepts_review.md` were folded into `development/design.md` and deleted by EXC-003;
+   `README.md`, `platform/base/README.md` and the per-service `PACKAGING.md`/`RELEASING.md`/
+   `CHANGELOG.md` triples were added by EXC-005 through EXC-012, after that fold. Read the whole
+   tree in full rather than spot-checking; there is no docs build to catch what a skim misses
+   (step 1).
 3. **`platform/gateway/` has no test directory**, unlike every other service (each has its own
    `tests/`). This is a pre-existing gap, not itself a finding — but a ticket that changes gateway
    routing, auth, or rate-limiting without adding a test alongside is `test-gap`, not something to
@@ -160,3 +167,8 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
 - **v9** (2026-09-18) — Docs currency review repointed step 2 item 1's `services/account/outbox_relay.py`
   entry to `platform/account/src/account/outbox_relay.py` (F2, tracked stale since v5, never
   itself corrected).
+- **v10** (2026-09-18) — Docs currency review corrected step 2 item 3, which still claimed all
+  lint recipes were check-only when every per-service `justfile` and `just lint-repo` already run
+  `ruff format --check .` too (only the bare root `just lint` doesn't), and step 4a item 2's
+  "shipped docs tree" list, which named each service's `PACKAGING.md` but omitted the
+  `RELEASING.md`/`CHANGELOG.md` that ship alongside it.

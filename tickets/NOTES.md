@@ -38,7 +38,9 @@ in use by `down`/`db-wipe`/`logs`/`ps`, where merged semantics are wanted and `p
 resolves. Acceptance: both the one-file and merged `docker compose config` exit 0, `just
 services-build` exits 0 building all nine images, `just lint` exits 0, `just test` 66 passed.
 
-Deliberately **not** done, since it would deviate from the confirmed decisions: no mechanical
-guard (a `just compose-check` recipe or CI step running `docker compose -f
-compose.services.yml config`) was added. Decision 1 records the convention in prose only, so
+Deliberately **not** done at the time, since it would have deviated from the confirmed
+decisions: no mechanical guard (a `just compose-check` recipe or CI step running `docker compose
+-f compose.services.yml config`) was added. Decision 1 records the convention in prose only, so
 nothing yet *fails* if a future migrate container reintroduces `depends_on: postgres`.
+**Update:** this gap was later closed by EXC-018, which added a `compose-check` recipe and a
+"Validate compose config" CI step running it.

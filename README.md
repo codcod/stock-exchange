@@ -36,7 +36,7 @@ EXCHANGE_ACCOUNT_ID=trader-0 uv run python -m clients.tui
 | DELETE | `/orders/{id}?account_id=`  | Cancel an open order. |
 | GET    | `/market-data/tickers`      | Get a list of all tickers that have available quote data. |
 | GET    | `/market-data/{ticker}/quote` | Fetch the latest bid, ask, and last traded price for a ticker. |
-| GET    | `/market-data/{ticker}/depth` | Get a snapshot of the order book's depth (top 5 levels). |
+| GET    | `/market-data/{ticker}/depth` | Get a snapshot of the order book's depth (default 10 levels, 1–25 adjustable via `levels`). |
 | GET    | `/market-data/{ticker}/trades`| Retrieve the most recent trade history for a ticker. |
 | GET    | `/health`                   | Perform a health check on the API. |
 

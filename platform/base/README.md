@@ -22,5 +22,8 @@ Thin helpers with no domain knowledge. Services depend on these, not on each oth
 | `request_context.py` | `request_id` context var set by the gateway and propagated downstream |
 | `db/connection.py` | `get_engine()` — cached async SQLAlchemy engine from `DATABASE_URL` |
 | `db/tables.py` | `ensure_tables(engine, metadata, schemas)` — DDL helper with advisory lock; unused now that every stateful service creates its schema via its own Alembic `*-migrate` one-shot container instead |
+| `db/migrations.py` | `run_migrations_online()` — shared async Alembic `env.py` entry point every stateful service's own `migrations/env.py` calls into |
+| `repository.py` | `AbstractRepository[T]` — collection-like façade port; concrete implementations live in each service |
+| `unit_of_work.py` | `AbstractUnitOfWork`, `SqlAlchemyUnitOfWork` — one business transaction as `async with uow: ...; await uow.commit()` |
 | `clients/` | One typed HTTP client per service (`RiskEngineClient`, `ClearingClient`, …) |
 | `clients/converters.py` | Dict ↔ domain-object helpers shared by all clients |
