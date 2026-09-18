@@ -13,18 +13,18 @@ Last updated: 2026-09-18
 
 ## IN DEVELOPMENT
 
+### exchange (0/1)
+
+| id | title | depends-on |
+|---|---|---|
+
+## IN REVIEW
+
 ### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
 | EXC-018 | Guard compose config in CI and make the up recipe a just dependency | [] |
-
-## IN REVIEW
-
-### exchange (0/1)
-
-| id | title | depends-on |
-|---|---|---|
 
 ## REWORK
 

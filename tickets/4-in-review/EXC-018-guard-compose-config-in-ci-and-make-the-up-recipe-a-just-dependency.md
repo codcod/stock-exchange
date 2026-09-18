@@ -190,3 +190,4 @@ docs reference the old `up` shell-out or the absence of a compose guard.
   `just compose-check` fail non-zero with docker compose's own "depends on undefined service"
   error, then reverted; `just lint`, `just lint-repo`, and `just test` (67 passed) all green.
   Nothing deferred.
+- 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
