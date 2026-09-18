@@ -20,11 +20,10 @@ Last updated: 2026-09-18
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | [] |
 
 ## REWORK
 
@@ -72,6 +71,7 @@ Last updated: 2026-09-18
 | EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | yes — MERGED (PR #33, c04b3e1) |
 | EXC-018 | Guard compose config in CI and make the up recipe a just dependency | yes — MERGED: PR #34, merge commit `548b9a0` |
 | EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | yes — merged to main (PR #35, `36601cd`). |
+| EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | no — publish-gated |
 
 ## DROPPED
 

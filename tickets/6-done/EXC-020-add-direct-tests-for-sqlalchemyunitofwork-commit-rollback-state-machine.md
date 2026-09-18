@@ -140,7 +140,36 @@ No user-facing surface — this adds test coverage only, no behaviour or public 
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): the orchestrating reviewer authored this branch
+  in this session, so audits (steps 2–4a) were **delegated** to a fresh sub-agent, briefed
+  adversarially with no memory of writing the code; findings re-verified by hand before
+  recording.
+- [x] In-tree stale-branch check (step 0a): branch was stale (`pickle doctor` warned it held
+  the ticket at "3-in-development" while `main` had "4-in-review"); rebased onto `main`,
+  re-ran `pickle doctor` — clean.
+- [x] Implementation audit — acceptance test re-run (`just test`: 71 passed, all 4 new tests
+  green); all 6 tasks done in the named files; all 3 confirmed design decisions honoured (fake
+  triple matches `_FakeConn` style, `tests/` is a package with `__init__.py`, no per-file
+  asyncio marker added).
+- [x] Quality audit — `just lint` clean (no `PLR09xx`/`C901` hits); `just check` clean (`ruff
+  format --check .`: 135 files already formatted, no drift). Tests exercise the real
+  `__aenter__`/`commit`/`__aexit__` path, not tautological.
+- [x] Consistency audit — new test file's naming/style/imports match sibling test files (e.g.
+  `platform/account/src/account/tests/test_service.py`); no duplicated fake-double logic
+  elsewhere in the repo; fakes' method signatures match exactly what `unit_of_work.py` calls.
+- [x] Documentation audit — ticket's "no user-facing surface" claim verified true: branch
+  touches zero production files; no shipped doc (`README.md`, `platform/base/README.md`, any
+  `PACKAGING.md`) references `UnitOfWork`; `development/design.md`'s "What's intentionally
+  simplified" section lists nothing related to the commit/rollback mechanism.
+- [ ] Docs-readability pass — n/a, no `.adoc`/`.md` files changed by this branch.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | test-gap | note and close | `SqlAlchemyUnitOfWork.rollback()`'s `_committed` guard only prevents a rollback *after* a real commit; it does not guard against `rollback()` being called twice while still uncommitted (e.g. an explicit `rollback()` followed by `__aexit__`'s own unconditional rollback) — that path fires `transaction.rollback()` twice and is untested. Not a plan deviation: Task 6 only specified the commit-then-rollback case, which the new test covers correctly. | `platform/base/src/base/unit_of_work.py:65-70`; no caller in the repo currently calls `rollback()` explicitly before exiting the block, so this is latent, not exercised in production | Note and close — no current caller hits it; revisit with a guard (`_committed or _rolled_back`) and a test if a future service calls `rollback()` explicitly inside the block. |
+
+Disposition summary: 1 finding (F1), non-blocking, disposition **note and close**. No tickets spawned.
+
+cost: estimated S, actual S
 
 ## History
 
@@ -153,3 +182,4 @@ No user-facing surface — this adds test coverage only, no behaviour or public 
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: reviewed: 1 non-blocking finding (F1, test-gap), disposition note-and-close
