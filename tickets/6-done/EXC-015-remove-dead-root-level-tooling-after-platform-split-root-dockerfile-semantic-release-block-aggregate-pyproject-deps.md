@@ -182,3 +182,4 @@ needed.
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → DONE: acceptance green; 1 non-blocking finding (F1, stale-xref) fixed inline in design.md on feature branch
+- 2026-09-18 — MERGED: PR #32, `01e9a28`
