@@ -212,3 +212,4 @@ This ticket *is* the docs update — `README.md`, `development/design.md`, and
   stale on their own terms — five more `*-migrate` blocks and three more addendum revisions
   landed since filing); corrected both, added the Implementation Plan.
 - 2026-09-18 — TO DO → READY: plan complete
+- 2026-09-18 — READY → IN DEVELOPMENT: picked up
