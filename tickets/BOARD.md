@@ -13,18 +13,18 @@ Last updated: 2026-09-18
 
 ## IN DEVELOPMENT
 
+### exchange (0/1)
+
+| id | title | depends-on |
+|---|---|---|
+
+## IN REVIEW
+
 ### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
 | EXC-017 | Fix postgres-data volume mounted at a path that is not PG18 PGDATA | [] |
-
-## IN REVIEW
-
-### exchange (0/1)
-
-| id | title | depends-on |
-|---|---|---|
 
 ## REWORK
 
