@@ -164,3 +164,4 @@ Postgres version.
 - 2026-09-17 — folded in EXC-016 review finding F9 (postgres healthcheck lacks `-h` and
   `start_period`); same file, same acceptance test
 - 2026-09-18 — TO DO → READY: plan complete
+- 2026-09-18 — READY → IN DEVELOPMENT: picked up
