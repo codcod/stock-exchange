@@ -20,11 +20,10 @@ Last updated: 2026-09-18
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-013 | Update clients/ imports for platform/ package layout | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |
 
 ## REWORK
 
@@ -32,6 +31,7 @@ Last updated: 2026-09-18
 
 | id | title | open findings |
 |---|---|---|
+| EXC-013 | Update clients/ imports for platform/ package layout | F1 blocking: new test file fails ruff format --check |
 
 ## READY (impact order, per child)
 

@@ -117,7 +117,42 @@ No user-facing surface — internal test/config only.
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+**Reviewer independence (step 0):** not delegated — the reviewing agent had no hand in this
+branch (fresh session), so it is already independent; ran the audits directly.
+
+**In-tree stale-branch check (step 0a):** `pickle doctor` initially warned the checked-out
+branch had the ticket in `3-in-development` vs `main`'s `4-in-review`, plus a payload-version
+drift (0.18.0 vs 0.19.0). Rebased `feat/EXC-013-…` onto `main`; `pickle doctor` then reported
+0 errors, 0 warnings.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | blocking | test-gap | — | New file `clients/tests/test_no_stale_imports.py` is not ruff-formatted; `ruff format --check .` (run via `just check`) fails on it. CI (`.github/workflows/ci.yaml:30`) runs `ruff format --check .`, so this branch would land a red PR. The ticket's own acceptance test lists only `just lint`/`just test`, omitting `just check`/`fmt-check` — the exact gap `development/review-addendum.md` step 2 item 3 warns about. | `just check` → `Would reformat: clients/tests/test_no_stale_imports.py`; `just lint`/`just test` alone stay green | Run `uv run ruff format clients/tests/test_no_stale_imports.py`, re-run `just check`, commit as the rework fix. |
+
+Implementation audit (step 2): both tasks present exactly as planned (guard test at
+`clients/tests/test_no_stale_imports.py`, `testpaths` fixed to `["clients", "platform"]`).
+Acceptance test re-run: `uv run pytest` discovers and passes the new test (67 passed);
+temporarily injected `import services.account` into a scratch file under `clients/simulator/`
+and confirmed the test fails naming that file:line, then reverted (working tree clean
+afterward). `just lint` and `just services-build` green. `just check` fails per F1.
+
+Quality audit (step 3): no async-discipline, line-count, or type-hint issues — the added file
+is a 13-line sync test script. Addendum's outbox-map and stateful/stateless items don't apply
+(no service code touched).
+
+Consistency audit (step 4 / 4a): no stale-xrefs found; `development/design.md`'s "intentionally
+simplified" list and "Detailed architecture" section are unaffected (no data-flow change). No
+user-facing docs surface, matching the ticket's own Docs update section. `services/` (removed
+from `testpaths`) confirmed to hold no real test files (`git ls-files`/`find` show only a
+tracked `__init__.py` and gitignored `__pycache__`), so nothing is lost by dropping it.
+
+Impact sweep (step 8): `tickets/2-ready/EXC-015-…` depends on EXC-013 but only for its
+prerequisite gate; its own scope (`[tool.setuptools.packages.find]` dropping `services*`) is
+unaffected by this ticket's `testpaths` change. No assumption invalidated.
+
+disposition summary: 1 blocking (F1, routed to rework), 0 non-blocking.
+
+cost: estimated S, actual S
 
 ## History
 
@@ -125,3 +160,4 @@ No user-facing surface — internal test/config only.
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → REWORK: F1 blocking: new test file fails ruff format --check
