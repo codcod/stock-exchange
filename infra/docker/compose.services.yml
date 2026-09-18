@@ -141,11 +141,19 @@ services:
   # Tier 4: order management (reserves via Account service)
   # ---------------------------------------------------------------------------
 
+  order-management-migrate:
+    build:
+      context: ../..
+      dockerfile: platform/order_management/Dockerfile
+    command: ["-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+
   order-management:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile
-    command: python -m services.order_management
+      dockerfile: platform/order_management/Dockerfile
+    command: python -m order_management
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
       PORT: "8001"
@@ -168,6 +176,8 @@ services:
         condition: service_healthy
       notifications:
         condition: service_healthy
+      order-management-migrate:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Tier 5: matching engine (restores open orders from OMS on startup)

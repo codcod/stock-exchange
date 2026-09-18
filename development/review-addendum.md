@@ -67,8 +67,9 @@ step most likely to be silently skipped:
    nothing in `just lint` or `just test` runs mypy/pyright. A wrong or missing annotation is
    `class: design`, never blocking on its own.
 3. **The 200-line-per-file guideline is already soft-violated** in four files that predate this
-   addendum: `services/order_management/service.py` (205), `services/order_management/app.py`
-   (204), `platform/matching_engine/src/matching_engine/order_book.py` (246), `platform/account/src/account/app.py` (199). Do not
+   addendum: `platform/order_management/src/order_management/service.py` (216),
+   `platform/order_management/src/order_management/app.py` (205),
+   `platform/matching_engine/src/matching_engine/order_book.py` (246), `platform/account/src/account/app.py` (199). Do not
    file the existing overage as a finding. Flag only a branch that grows one of these further, or
    that adds a new file starting over 200 lines.
 4. **Async discipline is a correctness axis here, not style.** Every service module is
@@ -131,3 +132,9 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
   stale-xref F1 fixed inline (`## Review`, EXC-008). The `services/account/outbox_relay.py` entry
   in the same parenthetical is separately stale since EXC-007's move to `platform/account/`; left
   as-is and noted (F2) — pre-existing, not this branch's causation.
+- **v6** (2026-09-18) — EXC-010 repointed step 3 item 3's `order_management` entry from
+  `services/order_management/` to `platform/order_management/src/order_management/` after the
+  service's move into its own installable package, and corrected `app.py`'s recorded count from
+  the stale 204 to 205 — Task 5's mandated removal of the `ensure_tables` import and call
+  (dropping create-on-boot) shrank the file by 2 lines during this same move, so the addendum
+  now records the post-move count rather than the pre-move 207 the ticket's plan assumed.

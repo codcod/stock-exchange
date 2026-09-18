@@ -19,7 +19,7 @@ import os
 
 import httpx
 
-from services.order_management.outbox_repo import OutboxRepository
+from order_management.outbox_repo import OutboxRepository
 
 logger = logging.getLogger(__name__)
 

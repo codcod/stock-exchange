@@ -15,6 +15,7 @@ dependencies = [
     "account",
     "matching_engine",
     "risk_engine",
+    "order_management",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +34,7 @@ where = ["."]
 include = ["services*", "clients*"]
 
 [tool.uv.workspace]
-members = ["platform/base", "platform/gateway", "platform/market_data", "platform/account", "platform/matching_engine", "platform/risk_engine"]
+members = ["platform/base", "platform/gateway", "platform/market_data", "platform/account", "platform/matching_engine", "platform/risk_engine", "platform/order_management"]
 
 [tool.uv.sources]
 base = { workspace = true }
@@ -42,6 +43,7 @@ market_data = { workspace = true }
 account = { workspace = true }
 matching_engine = { workspace = true }
 risk_engine = { workspace = true }
+order_management = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["services", "platform"]
@@ -52,7 +54,7 @@ asyncio_mode = "auto"
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["services", "platform/base/src", "platform/gateway/src", "platform/market_data/src", "platform/account/src", "platform/matching_engine/src", "platform/risk_engine/src"]
+source = ["services", "platform/base/src", "platform/gateway/src", "platform/market_data/src", "platform/account/src", "platform/matching_engine/src", "platform/risk_engine/src", "platform/order_management/src"]
 omit = ["*/tests/*", "clients/*"]
 
 # optional config below

@@ -9,7 +9,7 @@ Notifications service can route them correctly.
 import json
 import uuid
 
-from services.order_management.outbox_relay import (
+from order_management.outbox_relay import (
     ENDPOINT_FOR_EVENT_TYPE,
     EVENT_DESTINATIONS,
 )

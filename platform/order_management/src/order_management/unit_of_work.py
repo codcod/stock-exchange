@@ -7,7 +7,7 @@ from typing import Self
 
 from base.unit_of_work import SqlAlchemyUnitOfWork
 
-from services.order_management.repository import OrderRepository
+from order_management.repository import OrderRepository
 
 
 class OrderManagementUnitOfWork(SqlAlchemyUnitOfWork):

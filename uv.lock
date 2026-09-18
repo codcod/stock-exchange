@@ -9,6 +9,7 @@ members = [
     "gateway",
     "market-data",
     "matching-engine",
+    "order-management",
     "risk-engine",
     "stock-exchange",
 ]
@@ -632,6 +633,23 @@ wheels = [
 ]
 
 [[package]]
+name = "order-management"
+version = "0.0.1"
+source = { editable = "platform/order_management" }
+dependencies = [
+    { name = "base" },
+    { name = "fastapi" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "base", editable = "platform/base" },
+    { name = "fastapi", specifier = ">=0.111" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },
+]
+
+[[package]]
 name = "packaging"
 version = "26.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1030,6 +1048,7 @@ dependencies = [
     { name = "httpx" },
     { name = "market-data" },
     { name = "matching-engine" },
+    { name = "order-management" },
     { name = "risk-engine" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "uvicorn", extra = ["standard"] },
@@ -1061,6 +1080,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "market-data", editable = "platform/market_data" },
     { name = "matching-engine", editable = "platform/matching_engine" },
+    { name = "order-management", editable = "platform/order_management" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },

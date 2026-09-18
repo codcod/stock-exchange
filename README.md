@@ -47,7 +47,6 @@ This repository is organized as a monorepo containing multiple services and shar
 
 ```text
 services/
-  order_management/ # Manages the lifecycle and routing of orders
   clearing/         # Handles post-trade settlement, updating cash and share balances
 platform/
   base/             # Shared `uv` workspace package (see platform/base/README.md): domain
@@ -61,6 +60,8 @@ platform/
                     # own installable package, own Alembic migration history
   risk_engine/      # Pre-trade checks (e.g., balance, position, price sanity); own installable
                     # package, own Alembic migration history
+  order_management/ # Manages the lifecycle and routing of orders; own installable package,
+                    # own Alembic migration history
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual

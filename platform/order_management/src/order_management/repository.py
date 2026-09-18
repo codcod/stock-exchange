@@ -10,7 +10,7 @@ from base.repository import AbstractRepository
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
-from services.order_management.tables import orders as orders_t
+from order_management.tables import orders as orders_t
 
 
 def _f(val) -> tp.Optional[float]:
