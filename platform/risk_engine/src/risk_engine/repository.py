@@ -9,7 +9,7 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from services.risk_engine.tables import instruments as instruments_t
+from risk_engine.tables import instruments as instruments_t
 
 
 def _f(val) -> tp.Optional[float]:

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "risk_engine"
+version = "0.0.1"
+description = "Risk Engine — pre-trade checks against instrument and account limits"
+requires-python = ">=3.11"
+dependencies = [
+    "base",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+]
+
+[tool.uv.sources]
+base = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/risk_engine"]

@@ -1,10 +1,8 @@
 """Table definitions for the Risk Engine service."""
 
-from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import Boolean, Column, Integer, MetaData, Numeric, String, Table
 
-metadata = MetaData()
-_SCHEMAS = ('risk_engine',)
+metadata = MetaData(schema='risk_engine')
 
 instruments = Table(
     'instruments',
@@ -17,7 +15,3 @@ instruments = Table(
     Column('last_price', Numeric(18, 6), nullable=True),
     schema='risk_engine',
 )
-
-
-async def ensure_tables(engine) -> None:
-    await _ensure_tables(engine, metadata, _SCHEMAS)

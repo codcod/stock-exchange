@@ -11,9 +11,9 @@ import pytest
 from base.domain.events import OrderFilled
 from base.domain.models import Order, OrderStatus, OrderType, Side
 from base.unit_of_work import AbstractUnitOfWork
+from risk_engine.engine import RiskResult
 
 from services.order_management.service import OrderManagementService
-from services.risk_engine.engine import RiskResult
 
 # ---------------------------------------------------------------------------
 # Stubs
