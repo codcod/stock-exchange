@@ -13,18 +13,18 @@ Last updated: 2026-09-18
 
 ## IN DEVELOPMENT
 
+### exchange (0/1)
+
+| id | title | depends-on |
+|---|---|---|
+
+## IN REVIEW
+
 ### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
 | EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | [EXC-004] |
-
-## IN REVIEW
-
-### exchange (0/1)
-
-| id | title | depends-on |
-|---|---|---|
 
 ## REWORK
 
