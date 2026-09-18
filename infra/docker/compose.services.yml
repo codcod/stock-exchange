@@ -96,11 +96,19 @@ services:
   # Tier 2: notifications (receives events from OMS and Matching Engine)
   # ---------------------------------------------------------------------------
 
+  notifications-migrate:
+    build:
+      context: ../..
+      dockerfile: platform/notifications/Dockerfile
+    command: ["-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+
   notifications:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile
-    command: python -m services.notifications
+      dockerfile: platform/notifications/Dockerfile
+    command: python -m notifications
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
       PORT: "8007"
@@ -112,6 +120,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    depends_on:
+      notifications-migrate:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Tier 3: risk engine (warms account cache from Account service on boot)

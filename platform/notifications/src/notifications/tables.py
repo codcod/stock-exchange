@@ -1,10 +1,8 @@
 """Table definitions for the Notifications service."""
 
-from base.db.tables import ensure_tables as _ensure_tables
 from sqlalchemy import Column, DateTime, MetaData, String, Table, Text
 
-metadata = MetaData()
-_SCHEMAS = ('notifications',)
+metadata = MetaData(schema='notifications')
 
 notifications = Table(
     'notifications',
@@ -16,7 +14,3 @@ notifications = Table(
     Column('created_at', DateTime(timezone=True), nullable=False),
     schema='notifications',
 )
-
-
-async def ensure_tables(engine) -> None:
-    await _ensure_tables(engine, metadata, _SCHEMAS)

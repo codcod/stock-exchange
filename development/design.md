@@ -16,7 +16,8 @@ risk checks, clearing) — not to build a production-grade, high-performance sys
 ```text
 clients/simulator      → generates synthetic order traffic for testing
 clients/tui/           → interactive terminal trading app (Textual)
-services/notifications → per-account event feed; WebSocket push + HTTP backfill
+platform/notifications/ → per-account event feed; WebSocket push + HTTP backfill (own
+                          installable package, own Alembic migration history)
 platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
 platform/gateway/      → entry point: auth, rate limiting, order routing (own installable package)
 platform/market_data/  → publishes prices, depth, and trade feed (own installable package)
@@ -282,7 +283,7 @@ All synchronous inter-service calls are performed over HTTP using `httpx`. Trade
 | Clearing | 8004 | Manages account balances and positions. | — | `accounts`, `positions`, `trades` |
 | MarketData | 8005 | Provides in-memory quote snapshots and trade history. | — | No |
 
-`platform/account/` (port 8006) and `services/notifications/` (port 8007) are implemented
+`platform/account/` (port 8006) and `platform/notifications/` (port 8007) are implemented
 but absent from the table above, which predates both — see "Architecture overview" for the
 current, authoritative service list.
 

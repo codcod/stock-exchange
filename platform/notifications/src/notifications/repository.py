@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from services.notifications.tables import notifications as notifications_t
+from notifications.tables import notifications as notifications_t
 
 
 class NotificationRepository:
