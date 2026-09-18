@@ -213,3 +213,4 @@ This ticket *is* the docs update — `README.md`, `development/design.md`, and
   landed since filing); corrected both, added the Implementation Plan.
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
+- 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
