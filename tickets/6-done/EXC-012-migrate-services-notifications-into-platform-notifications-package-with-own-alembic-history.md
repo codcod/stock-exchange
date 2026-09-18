@@ -322,3 +322,5 @@ cost: estimated M, actual M
 - 2026-09-17 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: no blocking findings; G1,F1,F2 note-and-close
+- 2026-09-18 — MERGED: PR #29, `151723e`, merged to `main` (merged by the user before this review ran)
