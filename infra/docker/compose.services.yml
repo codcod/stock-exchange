@@ -163,11 +163,19 @@ services:
   # Tier 5: matching engine (restores open orders from OMS on startup)
   # ---------------------------------------------------------------------------
 
+  matching-engine-migrate:
+    build:
+      context: ../..
+      dockerfile: platform/matching_engine/Dockerfile
+    command: ["-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+
   matching-engine:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile
-    command: python -m services.matching_engine
+      dockerfile: platform/matching_engine/Dockerfile
+    command: python -m matching_engine
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
       PORT: "8003"
@@ -187,6 +195,8 @@ services:
     depends_on:
       order-management:
         condition: service_healthy
+      matching-engine-migrate:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Tier 6: HTTP gateway (public entry point)

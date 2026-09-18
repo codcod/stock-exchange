@@ -33,9 +33,8 @@ from base.db.connection import get_engine
 from base.domain.api_schemas import OrderRequest
 from fastapi import FastAPI, Query
 
-from services.matching_engine.matching import MatchingEngine
-from services.matching_engine.outbox_relay import enqueue_events, run_relay
-from services.matching_engine.tables import ensure_tables
+from matching_engine.matching import MatchingEngine
+from matching_engine.outbox_relay import enqueue_events, run_relay
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +63,6 @@ async def lifespan(app: FastAPI):
     """
     _state.http = httpx.AsyncClient(timeout=10.0)
     _state.db = get_engine()
-    await ensure_tables(_state.db)
 
     try:
         oms_client = OrderManagementClient(_OMS_URL, _state.http)

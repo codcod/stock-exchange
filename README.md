@@ -47,7 +47,6 @@ This repository is organized as a monorepo containing multiple services and shar
 
 ```text
 services/
-  matching_engine/  # Core order book, price-time priority matching, and outbox event relay
   risk_engine/      # Pre-trade checks (e.g., balance, position, price sanity)
   order_management/ # Manages the lifecycle and routing of orders
   clearing/         # Handles post-trade settlement, updating cash and share balances
@@ -59,6 +58,8 @@ platform/
   market_data/      # Provides live quotes and trade history (in-memory), own installable package
   account/          # Cash/position ledger, reservations, settlement; own installable package,
                     # own Alembic migration history
+  matching_engine/  # Core order book, price-time priority matching, and outbox event relay;
+                    # own installable package, own Alembic migration history
 clients/
   simulator/        # A simple tool to generate synthetic order flow for testing purposes
   tui/              # An interactive terminal-based trading application built with Textual
