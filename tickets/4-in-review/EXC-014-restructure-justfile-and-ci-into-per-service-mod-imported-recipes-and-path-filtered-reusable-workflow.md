@@ -303,6 +303,23 @@ names.
 Disposition summary: 1 blocking (F1, test-gap) — ticket moves to `5-rework/` for a scoped fix on
 the same branch; no non-blocking findings.
 
+### Rework fix record — round 1 (commit f2bb446)
+
+Added `uv run ruff format --check .` as a second line in each of the 9 per-service `lint`
+recipes (`platform/<name>/justfile`) and `uv run ruff format --check clients scripts` as a
+second line in the root `justfile`'s `lint-repo` recipe — restoring the same `ruff check` +
+`ruff format --check` pairing the old `ci.yaml` lint job ran, via the exact commands
+`service-ci.yml` and `ci-repo.yml` already call. No workflow YAML changes needed since both
+call into `just <name> lint` / `just lint-repo`.
+
+Re-ran the acceptance test after the fix: `just <name> lint` green (including the new format
+check) for all 9 services, `just lint-repo` green, `just test-repo` green (1 passed), `just
+services-build` green, `just test` green (67 passed), `just lint` green.
+
+Branch tip noted before this round's fix commit (per rules §1, and after rebasing the branch
+onto main at pickup to clear a stale-ticket-status warning): `f861ba2`. Diff for the scoped
+re-review: `git diff f861ba2..f2bb446`.
+
 cost: estimated M, actual M
 
 ## History
@@ -312,3 +329,4 @@ cost: estimated M, actual M
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → REWORK: F1 blocking: ruff format --check dropped from CI
+- 2026-09-18 — REWORK → IN REVIEW: findings fixed

@@ -20,10 +20,11 @@ Last updated: 2026-09-18
 
 ## IN REVIEW
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | [EXC-005, EXC-006, EXC-007, EXC-008, EXC-009, EXC-010, EXC-011, EXC-012] |
 
 ## REWORK
 
@@ -31,7 +32,6 @@ Last updated: 2026-09-18
 
 | id | title | open findings |
 |---|---|---|
-| EXC-014 | Restructure justfile and CI into per-service mod-imported recipes and path-filtered reusable workflow | F1 blocking: ruff format --check dropped from CI |
 
 ## READY (impact order, per child)
 
