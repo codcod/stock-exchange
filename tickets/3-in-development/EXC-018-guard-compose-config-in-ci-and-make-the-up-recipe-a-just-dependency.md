@@ -178,3 +178,4 @@ docs reference the old `up` shell-out or the absence of a compose guard.
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — plan amended: EXC-014's review impact sweep patched Decision 1 and Task 2 to
   target `ci-repo.yml`'s `lint` job instead of the now-deleted `ci.yaml`
+- 2026-09-18 — READY → IN DEVELOPMENT: picked up
