@@ -12,7 +12,7 @@ networks:
 
 services:
   # ---------------------------------------------------------------------------
-  # Tier 1: no service dependencies — only Postgres
+  # Tier 1: no other-service dependencies — only Postgres
   # ---------------------------------------------------------------------------
 
   account-migrate:
