@@ -245,6 +245,7 @@ seed:
 [group('qa')]
 lint-repo:
     uv run ruff check clients scripts
+    uv run ruff format --check clients scripts
 
 # Test what's not covered by a per-service justfile (clients)
 [group('qa')]
