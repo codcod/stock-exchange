@@ -179,3 +179,14 @@ docs reference the old `up` shell-out or the absence of a compose guard.
 - 2026-09-18 — plan amended: EXC-014's review impact sweep patched Decision 1 and Task 2 to
   target `ci-repo.yml`'s `lint` job instead of the now-deleted `ci.yaml`
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
+- 2026-09-18 — implemented on `feat/EXC-018-guard-compose-config-in-ci-and-make-up-recipe-a-just-dependency`
+  (commit `cb2bb8d`): added `compose-check` to the `justfile`'s `[group('qa')]` block (checks
+  the infra-only, services-only, and merged two-file compose forms), wired it into
+  `ci-repo.yml`'s `lint` job as a step after `just lint-repo`, and changed `up` from a body that
+  shelled out `just infra-up` to `up: infra-up` so `just --dry-run up` now shows the `--wait`
+  gate. Acceptance test run: `just --dry-run up` prints `infra-up`'s commands (incl. `--wait`)
+  followed by the services-up line; `just compose-check` passes on the current compose files;
+  temporarily reintroducing a dangling `postgres` reference in `compose.services.yml` made
+  `just compose-check` fail non-zero with docker compose's own "depends on undefined service"
+  error, then reverted; `just lint`, `just lint-repo`, and `just test` (67 passed) all green.
+  Nothing deferred.
