@@ -151,3 +151,4 @@ No user-facing surface — this adds test coverage only, no behaviour or public 
 - 2026-09-18 — refined: re-verified Description against current `unit_of_work.py` (unchanged
   since filing); added the Implementation Plan.
 - 2026-09-18 — TO DO → READY: plan complete
+- 2026-09-18 — READY → IN DEVELOPMENT: picked up

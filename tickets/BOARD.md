@@ -13,10 +13,11 @@ Last updated: 2026-09-18
 
 ## IN DEVELOPMENT
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | [] |
 
 ## IN REVIEW
 
@@ -39,7 +40,6 @@ Last updated: 2026-09-18
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
-| EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | low | low | S | [] |  |
 
 ## TO DO (impact order, per child)
 
