@@ -352,3 +352,4 @@ upgrade head` creates `risk_engine` schema with `instruments` + `risk_engine.ale
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → DONE: no findings; acceptance green (live migration check accepted on static review — port 5432 collision with unrelated project)
+- 2026-09-18 — MERGED: PR #26 merged to `main` (`03f4fe0`).
