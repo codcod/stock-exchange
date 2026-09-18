@@ -156,6 +156,10 @@ cost: estimated S, actual S
 
 ### Rework fix record — round 1 (commit a33a02a)
 
+Note: the branch was tidied into one atomic commit before publish (§1's tidy fallback) —
+`a33a02a` no longer resolves; the equivalent change is folded into the merged
+`e5efc41`/`6e05679` (see History).
+
 Fixed F1: ran `uv run ruff format clients/tests/test_no_stale_imports.py` (single-quote
 project convention, `pyproject.toml`'s `[tool.ruff.format] quote-style = "single"`). `just
 check` (lint + fmt-check), `just services-build`, and `uv run pytest` (67 passed) all green
@@ -178,3 +182,4 @@ Final disposition summary: 1 blocking (F1, fixed in rework round 1), 0 non-block
 - 2026-09-18 — IN REVIEW → REWORK: F1 blocking: new test file fails ruff format --check
 - 2026-09-18 — REWORK → IN REVIEW: F1 fixed
 - 2026-09-18 — IN REVIEW → DONE: F1 fixed, scoped re-review clean
+- 2026-09-18 — MERGED: PR #30, commit 6e05679

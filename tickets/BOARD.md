@@ -70,7 +70,7 @@ Last updated: 2026-09-18
 | EXC-010 | Migrate services/order_management into platform/order_management package with own Alembic history | yes — MERGED: PR #27 merged to `main` (`9aa1744`). |
 | EXC-011 | Migrate services/clearing into platform/clearing package with own Alembic history | yes — MERGED: PR #28, `fa9ca757`, merged to `main` (merged by the user before this review ran) |
 | EXC-012 | Migrate services/notifications into platform/notifications package with own Alembic history | yes — MERGED: PR #29, `151723e`, merged to `main` (merged by the user before this review ran) |
-| EXC-013 | Update clients/ imports for platform/ package layout | no — publish-gated |
+| EXC-013 | Update clients/ imports for platform/ package layout | yes — MERGED: PR #30, commit 6e05679 |
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 
 ## DROPPED
