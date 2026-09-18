@@ -280,7 +280,30 @@ change needed — this ticket fulfills it, doesn't redescribe it). No other docs
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+**Reviewer independence (step 0):** the reviewing agent authored this branch in this same
+session, so the audits (steps 2–4a) were delegated to an independent sub-agent (fresh, no
+memory of writing the code, briefed adversarially). Its findings were re-verified by hand before
+recording, per step 0's "delegation buys independence, not accuracy."
+
+**In-tree stale-branch check (step 0a):** `pickle doctor` run before auditing — 0 errors, 0
+warnings, no stale-ticket-branch warning.
+
+**Implementation audit (step 2):** acceptance test re-run verbatim — `just --list` shows all
+nine mod groups; `just <name> test`/`just <name> lint` green for all nine; `just lint-repo` and
+`just test-repo` green; `.github/workflows/ci.yaml` absent, `service-ci.yml` + 9
+`ci-<service>.yml` + `ci-repo.yml` present (11 files); each `ci-<service>.yml`'s `paths:` block
+matches the spec. `just services-build`, `just test` (67 passed), `just lint` all green,
+unaffected by the mod imports. Every task in the Implementation Plan is done, in the files it
+names.
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | blocking | test-gap | — | The old `.github/workflows/ci.yaml` lint job ran both `ruff check .` and `ruff format --check .`. The new CI surface this ticket ships (`service-ci.yml`'s lint job, called by all 9 `ci-<service>.yml`, plus `ci-repo.yml`'s lint job) runs only `ruff check .` / `ruff check clients scripts` via the per-service `lint` recipes and the new `lint-repo` recipe — `ruff format --check` is invoked nowhere in CI anymore. This is exactly the failure mode `development/review-addendum.md` step 2 item 3 was written to prevent (after EXC-007 landed unformatted generated code that passed `just lint` but would have failed CI's format check): a PR with a pure formatting violation now goes green on every one of the 9 per-service workflows and on `ci-repo.yml`, and is only caught if a human happens to run `just check` locally, which nothing in CI enforces. | Repo-wide grep for `ruff format` under `.github/workflows/`, `platform/*/justfile`, and the new `lint-repo` recipe returns zero hits (only the pre-existing, now CI-orphaned root `justfile` `fmt-check`/`check` recipes still reference it). Empirical repro (independent reviewer): appended a formatting violation to `platform/account/src/account/__init__.py`; `just account lint` (the exact command `service-ci.yml`'s lint job runs) passed with "All checks passed!" while `uv run ruff format --check platform/account/src/account/__init__.py` failed with "Would reformat"; edit reverted, working tree confirmed clean. | Add a `ruff format --check .` step to every per-service `lint` recipe (9 files) and to the new `lint-repo` recipe, so `service-ci.yml`'s and `ci-repo.yml`'s lint jobs enforce formatting the same way the old `ci.yaml` did — restoring parity rather than adding a new mechanism. |
+
+Disposition summary: 1 blocking (F1, test-gap) — ticket moves to `5-rework/` for a scoped fix on
+the same branch; no non-blocking findings.
+
+cost: estimated M, actual M
 
 ## History
 
@@ -288,3 +311,4 @@ change needed — this ticket fulfills it, doesn't redescribe it). No other docs
 - 2026-09-18 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → REWORK: F1 blocking: ruff format --check dropped from CI
