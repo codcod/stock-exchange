@@ -211,3 +211,5 @@ cost: estimated S, actual S
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → DONE: review: 0 findings
+- 2026-09-18 — pushed `feat/EXC-017-fix-postgres-data-volume-mounted-at-a-path-that-is-not-pg18-pgdata`
+  and opened PR #33; not yet merged — merging is the human's
