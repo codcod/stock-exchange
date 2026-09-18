@@ -9,6 +9,7 @@ members = [
     "gateway",
     "market-data",
     "matching-engine",
+    "risk-engine",
     "stock-exchange",
 ]
 
@@ -904,6 +905,23 @@ wheels = [
 ]
 
 [[package]]
+name = "risk-engine"
+version = "0.0.1"
+source = { editable = "platform/risk_engine" }
+dependencies = [
+    { name = "base" },
+    { name = "fastapi" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "base", editable = "platform/base" },
+    { name = "fastapi", specifier = ">=0.111" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.15.13"
 source = { registry = "https://pypi.org/simple" }
@@ -1012,6 +1030,7 @@ dependencies = [
     { name = "httpx" },
     { name = "market-data" },
     { name = "matching-engine" },
+    { name = "risk-engine" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -1045,6 +1064,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "risk-engine", editable = "platform/risk_engine" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0" },
     { name = "textual", marker = "extra == 'tui'", specifier = ">=0.80" },

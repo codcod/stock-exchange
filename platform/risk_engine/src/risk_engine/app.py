@@ -31,9 +31,8 @@ from base.domain.api_schemas import (
 from base.domain.models import Account, Instrument
 from fastapi import FastAPI
 
-from services.risk_engine.engine import RiskEngine
-from services.risk_engine.repository import InstrumentRepository
-from services.risk_engine.tables import ensure_tables
+from risk_engine.engine import RiskEngine
+from risk_engine.repository import InstrumentRepository
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,6 @@ _state = _AppState()
 async def lifespan(app: FastAPI):
     _state.http = httpx.AsyncClient(timeout=10.0)
     db = get_engine()
-    await ensure_tables(db)
     _state.instrument_repo = InstrumentRepository(db)
     for instrument in await _state.instrument_repo.load_all():
         _engine_svc.register_instrument(instrument)

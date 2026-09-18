@@ -72,7 +72,7 @@ class RiskEngine:
         Imports CHECKS lazily to avoid the circular import that would arise
         from checks.py importing RiskResult from this module at load time.
         """
-        from services.risk_engine.checks import CHECKS
+        from risk_engine.checks import CHECKS
 
         for check_fn in CHECKS:
             result = check_fn(

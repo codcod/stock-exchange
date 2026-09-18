@@ -106,11 +106,19 @@ services:
   # Tier 3: risk engine (warms account cache from Account service on boot)
   # ---------------------------------------------------------------------------
 
+  risk-engine-migrate:
+    build:
+      context: ../..
+      dockerfile: platform/risk_engine/Dockerfile
+    command: ["-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+
   risk-engine:
     build:
       context: ../..
-      dockerfile: infra/docker/Dockerfile
-    command: python -m services.risk_engine
+      dockerfile: platform/risk_engine/Dockerfile
+    command: python -m risk_engine
     environment:
       DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
       ACCOUNT_URL: http://account:8006
@@ -126,6 +134,8 @@ services:
     depends_on:
       account:
         condition: service_healthy
+      risk-engine-migrate:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Tier 4: order management (reserves via Account service)
