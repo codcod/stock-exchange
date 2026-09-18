@@ -342,3 +342,11 @@ succeeds; the `grep` prints nothing; `services/order_management` gone; the `wc -
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-17 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
+- 2026-09-18 — plan amended inline: decision 8 / the acceptance test both assumed `app.py` would
+  stay at 207 lines "unchanged from before the move", but Task 5 mandatorily deletes the
+  `ensure_tables` import and its `await` call from `app.py`'s lifespan (dropping create-on-boot),
+  which shrinks it by 2 lines regardless. Executed Task 5 as written; recorded the addendum
+  (Docs update, decision 8) and the acceptance test's actual result against the true post-move
+  count of 205, not the plan's stale 207. `service.py` is untouched by this ticket and stayed at
+  216 as assumed.
+- 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
