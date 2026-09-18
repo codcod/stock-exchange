@@ -349,4 +349,24 @@ succeeds; the `grep` prints nothing; `services/order_management` gone; the `wc -
   (Docs update, decision 8) and the acceptance test's actual result against the true post-move
   count of 205, not the plan's stale 207. `service.py` is untouched by this ticket and stayed at
   216 as assumed.
+- 2026-09-18 — plan amended inline: EXC-009 (risk_engine) merged to `main` (PR #26) while this
+  ticket's implementation was in flight, on the same day and after this ticket's own
+  applicability-gate audit had confirmed EXC-009 was still unmerged. Rebased
+  `feat/EXC-010-...` onto the new `main` and resolved the resulting conflicts: `README.md` and
+  `development/design.md`'s structure/architecture lists now carry both `risk_engine` and
+  `order_management` platform entries; `platform/account/Dockerfile` and
+  `platform/matching_engine/Dockerfile`'s sibling-stub lists merged both additions; root
+  `pyproject.toml`'s workspace members/sources/coverage-source lists merged both entries and
+  `uv.lock` was regenerated via `uv sync`. Also added the now-missing reciprocal sibling stub in
+  each direction (decision 11): `platform/risk_engine/Dockerfile` gained the
+  `platform/order_management/pyproject.toml` COPY line and `platform/order_management/Dockerfile`
+  gained `platform/risk_engine/pyproject.toml`'s — neither ticket's own Task 4/8 could have added
+  the other's stub since each was written before the other's package existed on `main`.
+  Decision 9's conditional resolved to its **second branch**: EXC-009 having landed,
+  `.../order_management/tests/test_service.py`'s already-merged `from risk_engine.engine import
+  RiskResult` (added by EXC-009's own decision 8) is kept as-is; this ticket's Task 3 rewrite
+  only ever touched the `services.order_management` import on the line below it, so no import
+  rewrite of the risk_engine line was needed here — the merge conflict was purely file-content
+  overlap between the two branches, not a case requiring this ticket to itself repoint the
+  import. Re-ran the full acceptance test after the rebase; all steps still green.
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
