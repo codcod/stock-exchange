@@ -384,7 +384,7 @@ Destination base URLs are configured via env vars (`CLEARING_URL`, `ORDER_MANAGE
 
 ```text
 infra/docker/
-├── compose.infra.yml     # Postgres 17 (postgres-data volume, named 'exchange' network)
+├── compose.infra.yml     # Postgres 18 (postgres-data volume, named 'exchange' network)
 └── compose.services.yml  # Eight service containers + the account-migrate one-shot
 ```
 
