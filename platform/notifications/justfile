@@ -1,0 +1,12 @@
+[group('qa')]
+build:
+    uv build --package notifications
+
+[group('qa')]
+test:
+    uv run --package notifications pytest . || test $? -eq 5
+
+[group('qa')]
+lint:
+    uv run ruff check .
+    uv run ruff format --check .

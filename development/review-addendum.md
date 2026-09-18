@@ -46,12 +46,14 @@ step most likely to be silently skipped:
    downstream service by string; nothing type-checks that the named service actually exposes the
    `/events/...` route `ENDPOINT_FOR_EVENT_TYPE` points at. Confirm the destination service's
    `app.py` defines that route.
-3. **An acceptance test that stops at `just lint` does not cover CI.** `.github/workflows/ci.yaml`
-   runs `ruff check .` **and** `ruff format --check .`; `just lint` is only the first of the two.
-   A ticket whose acceptance test lists `just lint` without `just check` (or `just fmt-check`) can
-   go green locally and still land a red PR — generated files are the usual culprit, since
-   scaffolders such as `alembic revision` do not emit ruff-formatted output. Run `just check`
-   during the implementation audit, not only at step 9, and class a plan that omits it `test-gap`.
+3. **An acceptance test that stops at `just lint` does not cover CI.** Each per-service CI
+   workflow (`.github/workflows/ci-<service>.yml` via `service-ci.yml`, and `ci-repo.yml` for
+   `clients`/`scripts`; EXC-014) runs `ruff check .` **and** `ruff format --check .` in its lint
+   job; `just lint`/`just <service> lint`/`just lint-repo` is only the first of the two. A ticket
+   whose acceptance test lists `just lint` without `just check` (or `just fmt-check`) can go green
+   locally and still land a red PR — generated files are the usual culprit, since scaffolders
+   such as `alembic revision` do not emit ruff-formatted output. Run `just check` during the
+   implementation audit, not only at step 9, and class a plan that omits it `test-gap`.
 4. **Stateful/stateless is a hard split, not a convention.** `risk_engine`, `order_management`,
    `matching_engine`, `clearing`, `account`, `notifications` require `DATABASE_URL`; `gateway` and
    `market_data` do not. A ticket that adds persistence to `gateway` or `market_data` is

@@ -1,0 +1,12 @@
+[group('qa')]
+build:
+    uv build --package clearing
+
+[group('qa')]
+test:
+    uv run --package clearing pytest . || test $? -eq 5
+
+[group('qa')]
+lint:
+    uv run ruff check .
+    uv run ruff format --check .

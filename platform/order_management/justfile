@@ -1,0 +1,12 @@
+[group('qa')]
+build:
+    uv build --package order_management
+
+[group('qa')]
+test:
+    uv run --package order_management pytest . || test $? -eq 5
+
+[group('qa')]
+lint:
+    uv run ruff check .
+    uv run ruff format --check .

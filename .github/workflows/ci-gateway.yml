@@ -1,0 +1,14 @@
+name: CI (gateway)
+
+on:
+  push:
+    branches: [main]
+    paths: ["platform/gateway/**", "platform/base/**", "uv.lock"]
+  pull_request:
+    paths: ["platform/gateway/**", "platform/base/**", "uv.lock"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/service-ci.yml
+    with:
+      service: gateway

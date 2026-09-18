@@ -1,0 +1,14 @@
+name: CI (market_data)
+
+on:
+  push:
+    branches: [main]
+    paths: ["platform/market_data/**", "platform/base/**", "uv.lock"]
+  pull_request:
+    paths: ["platform/market_data/**", "platform/base/**", "uv.lock"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/service-ci.yml
+    with:
+      service: market_data

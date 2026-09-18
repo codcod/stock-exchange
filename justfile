@@ -1,5 +1,15 @@
 set dotenv-load := true
 
+mod base 'platform/base'
+mod gateway 'platform/gateway'
+mod market_data 'platform/market_data'
+mod account 'platform/account'
+mod matching_engine 'platform/matching_engine'
+mod risk_engine 'platform/risk_engine'
+mod order_management 'platform/order_management'
+mod clearing 'platform/clearing'
+mod notifications 'platform/notifications'
+
 db_url     := "postgresql+asyncpg://exchange:exchange@localhost:5432/exchange"
 infra      := "docker-compose -f infra/docker/compose.infra.yml"
 services   := "docker-compose -f infra/docker/compose.services.yml"
@@ -230,3 +240,14 @@ test-cov:
 [group('qa')]
 seed:
     GATEWAY_URL=http://localhost:8000 uv run python scripts/seed.py
+
+# Lint what's not covered by a per-service justfile (clients + scripts)
+[group('qa')]
+lint-repo:
+    uv run ruff check clients scripts
+    uv run ruff format --check clients scripts
+
+# Test what's not covered by a per-service justfile (clients)
+[group('qa')]
+test-repo:
+    uv run --extra dev python -m pytest clients
