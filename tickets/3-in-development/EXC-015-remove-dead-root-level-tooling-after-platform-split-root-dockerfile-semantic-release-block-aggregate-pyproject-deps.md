@@ -94,10 +94,16 @@ include = ["clients*"]
 `git rm services/__init__.py` (or `git rm -r services/` if anything else has landed under it
 by pickup time — re-check with `git ls-files services/` first).
 
+**Amended at pickup (2026-09-18, applicability audit finding):** `[tool.coverage.run]`'s
+`source` list also names the bare `services` directory (`source = ["services",
+"platform/base/src", ...]`) — not caught by the acceptance test's `services\*` grep since that
+pattern only matches the literal `services*` glob, not the bare word. Drop `"services"` from
+that `source` list in the same edit pass, since the file is already open.
+
 ### Acceptance test
 
 - `uv sync --extra dev` succeeds after the `pyproject.toml` edits.
-- `git ls-files services/` returns nothing; `git grep -n "semantic_release\|services\*"
+- `git ls-files services/` returns nothing; `git grep -n "semantic_release\|services\*\|\"services\""
   pyproject.toml` returns nothing.
 - The child's configured build/test/lint commands (`just services-build`, `just test`, `just
   lint`, or their post-EXC-014 per-service equivalents) stay green — confirms nothing still
@@ -132,3 +138,8 @@ fulfills that, it doesn't need to restate it.
 
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-18 — TO DO → READY: plan complete
+- 2026-09-18 — plan amended inline: applicability audit at pickup found `[tool.coverage.run]`
+  source list also names bare `services`, missed by the acceptance test's grep pattern;
+  folded a fix into Task 3 and widened the grep. Dependency gate re-verified independently
+  (git ancestry) — EXC-013/EXC-014 both merged to main; prerequisite is satisfied.
+- 2026-09-18 — READY → IN DEVELOPMENT: picked up
