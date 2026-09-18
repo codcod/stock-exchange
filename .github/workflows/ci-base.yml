@@ -1,0 +1,14 @@
+name: CI (base)
+
+on:
+  push:
+    branches: [main]
+    paths: ["platform/base/**", "uv.lock"]
+  pull_request:
+    paths: ["platform/base/**", "uv.lock"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/service-ci.yml
+    with:
+      service: base

@@ -1,0 +1,14 @@
+name: CI (risk_engine)
+
+on:
+  push:
+    branches: [main]
+    paths: ["platform/risk_engine/**", "platform/base/**", "uv.lock"]
+  pull_request:
+    paths: ["platform/risk_engine/**", "platform/base/**", "uv.lock"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/service-ci.yml
+    with:
+      service: risk_engine

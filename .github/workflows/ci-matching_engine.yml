@@ -1,0 +1,14 @@
+name: CI (matching_engine)
+
+on:
+  push:
+    branches: [main]
+    paths: ["platform/matching_engine/**", "platform/base/**", "uv.lock"]
+  pull_request:
+    paths: ["platform/matching_engine/**", "platform/base/**", "uv.lock"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/service-ci.yml
+    with:
+      service: matching_engine

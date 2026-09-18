@@ -1,0 +1,11 @@
+[group('qa')]
+build:
+    uv build --package matching_engine
+
+[group('qa')]
+test:
+    uv run --package matching_engine pytest . || test $? -eq 5
+
+[group('qa')]
+lint:
+    uv run ruff check .

@@ -1,0 +1,11 @@
+[group('qa')]
+build:
+    uv build --package gateway
+
+[group('qa')]
+test:
+    uv run --package gateway pytest . || test $? -eq 5
+
+[group('qa')]
+lint:
+    uv run ruff check .

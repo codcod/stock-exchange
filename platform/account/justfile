@@ -1,0 +1,11 @@
+[group('qa')]
+build:
+    uv build --package account
+
+[group('qa')]
+test:
+    uv run --package account pytest . || test $? -eq 5
+
+[group('qa')]
+lint:
+    uv run ruff check .

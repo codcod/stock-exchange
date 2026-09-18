@@ -1,0 +1,14 @@
+name: CI (order_management)
+
+on:
+  push:
+    branches: [main]
+    paths: ["platform/order_management/**", "platform/base/**", "uv.lock"]
+  pull_request:
+    paths: ["platform/order_management/**", "platform/base/**", "uv.lock"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/service-ci.yml
+    with:
+      service: order_management
