@@ -279,3 +279,4 @@ creates `clearing` schema with `trades` + `clearing.alembic_version`.
 - 2026-09-16 — created (TO DO). source: pickle ticket new
 - 2026-09-17 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
+- 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
