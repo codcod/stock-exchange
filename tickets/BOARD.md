@@ -20,11 +20,10 @@ Last updated: 2026-09-18
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | [EXC-004] |
 
 ## REWORK
 
@@ -71,6 +70,7 @@ Last updated: 2026-09-18
 | EXC-006 | Migrate services/market_data into platform/market_data package | yes — MERGED: PR #21, `49b6ebf` |
 | EXC-007 | Migrate services/account into platform/account package with own Alembic history | yes — merged: PR #22, `84992f7`, merged to `main` |
 | EXC-008 | Migrate services/matching_engine into platform/matching_engine package with own Alembic history | yes — MERGED: PR #25, `f5962e2`, merged to `main` |
+| EXC-009 | Migrate services/risk_engine into platform/risk_engine package with own Alembic history | no — publish-gated |
 | EXC-016 | Fix compose.services.yml depends_on referencing undefined postgres service | yes — merged to main (PR #23, deddc9a) |
 
 ## DROPPED

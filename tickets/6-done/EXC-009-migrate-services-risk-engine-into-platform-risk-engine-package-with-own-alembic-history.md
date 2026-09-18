@@ -301,7 +301,49 @@ upgrade head` creates `risk_engine` schema with `instruments` + `risk_engine.ale
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): independent — reviewing agent has no memory of
+  authoring commit `5f9851d` (fresh session), so no delegation needed.
+- [x] Implementation audit — acceptance test re-run, tasks & criteria verified (steps 1, 2).
+  `alembic history`: one revision, `<base> -> 053483c893bc (head), create risk_engine schema`.
+  Imports (`risk_engine.app/checks/engine/repository`): clean. `just check`: clean. `just test`:
+  66/66 passed, including `order_management`'s tests exercising the decision-8 cross-import fix
+  (`from risk_engine.engine import RiskResult`) resolving. `just services-build`: all 11 images
+  built, including `risk-engine` and `risk-engine-migrate`. `services/risk_engine` confirmed
+  gone; whole-tree `grep` for `services\.risk_engine` returns nothing. The acceptance test's live
+  `alembic upgrade head` against Postgres could **not** be run: port 5432 was held by an
+  unrelated project's (`monolith`) postgres container, and this project's own compose infra
+  could not bind it. User chose to accept the review on the static checks (migration file content
+  independently verified against decision 7: `CREATE SCHEMA IF NOT EXISTS risk_engine` +
+  `instruments` table matching `tables.py` verbatim) rather than free the port. Recorded as an
+  environment limitation, not a ticket defect.
+- [x] Quality audit (step 3): idiomatic, matches the EXC-005–EXC-008 pattern exactly (`env.py`,
+  Dockerfile shape, `pyproject.toml` shape, versioning docs) — diffed each against
+  `platform/matching_engine`'s equivalents, only the expected name/port substitutions differ.
+- [x] Consistency audit (step 4): all 12 confirmed design decisions verified against the actual
+  tree (schema-qualified `MetaData`, `ensure_tables()` removed, compose `depends_on` wiring, all
+  5 sibling Dockerfile stubs present, `justfile`'s `run-risk`, root `pyproject.toml` workspace/
+  deps/coverage entries). No drift found.
+- [x] Documentation audit (step 4a): `README.md` and `development/design.md` both updated,
+  `services/risk_engine` line removed and `platform/risk_engine/` line added in both; whole-tree
+  sweep for stale `services/risk_engine`/`services.risk_engine` references outside ticket
+  provenance text and other tickets' own historical prose found none. No docs-build tooling in
+  this project (plain markdown) — nothing to build.
+- [ ] Docs-readability pass: conscious skip — no docs-readability reviewer available in this
+  session.
+- [x] Findings recorded (step 5): **none**. Disposition summary: 0 findings (0 blocking, 0
+  non-blocking).
+  `cost: estimated M, actual M`
+- [x] Ticket moved to `tickets/6-done/`; `## History` appended (step 6).
+- [x] Other references reconciled (step 7): `README.md`, `development/design.md` already
+  reconciled by the branch itself; no other governing document references
+  `services/risk_engine`.
+- [x] Remaining-tickets impact sweep (step 8): checked `EXC-010` (READY), `EXC-013`, `EXC-014`,
+  `EXC-015`, `EXC-018` (TO DO) for invalidated assumptions. `EXC-010` decision 9 already
+  anticipates both landing orders for the cross-import fix and requires no change; the others
+  use dynamic Dockerfile discovery (`ls platform/*/Dockerfile | grep -v ...`) rather than
+  hardcoded lists, so `risk_engine`'s addition needs no patch.
+- [x] Summary + commit message & MR attributes presented for approval; remote-base check
+  pending at push time (step 9).
 
 ## History
 
@@ -309,3 +351,4 @@ upgrade head` creates `risk_engine` schema with `instruments` + `risk_engine.ale
 - 2026-09-17 — TO DO → READY: plan complete
 - 2026-09-18 — READY → IN DEVELOPMENT: picked up
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-18 — IN REVIEW → DONE: no findings; acceptance green (live migration check accepted on static review — port 5432 collision with unrelated project)
