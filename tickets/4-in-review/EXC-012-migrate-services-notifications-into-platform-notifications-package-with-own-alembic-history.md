@@ -280,7 +280,9 @@ creates `notifications` schema with `notifications` + `notifications.alembic_ver
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+| finding | class | disposition |
+|---|---|---|
+| Applicability-gate audit: `development/design.md`'s stale-reference line numbers had drifted to 19/285 (from the ticket's stated 23/281), cosmetic only — the Docs step's own `grep -n` finds the lines dynamically so execution was unaffected | doc-drift | note-and-close |
 
 ## History
 
