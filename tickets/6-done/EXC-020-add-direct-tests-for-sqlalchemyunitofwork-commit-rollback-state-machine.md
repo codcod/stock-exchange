@@ -184,4 +184,4 @@ cost: estimated S, actual S
 - 2026-09-18 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-18 — IN REVIEW → DONE: reviewed: 1 non-blocking finding (F1, test-gap), disposition note-and-close
 - 2026-09-18 — EXC-020 PR #36 opened
-- 2026-09-18 — EXC-020 merged (PR #36, f6dc2af)
+- 2026-09-18 — merged to main (PR #36, f6dc2af)
