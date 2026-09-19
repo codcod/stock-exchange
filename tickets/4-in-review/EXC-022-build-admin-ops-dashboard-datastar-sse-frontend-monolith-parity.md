@@ -400,3 +400,4 @@ swaps the backend framework, not this asset).
   same frontend stack and that exact layout.
 - 2026-09-19 — TO DO → READY: plan complete
 - 2026-09-19 — READY → IN DEVELOPMENT: picked up
+- 2026-09-19 — IN DEVELOPMENT → IN REVIEW: acceptance green
