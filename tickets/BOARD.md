@@ -46,6 +46,7 @@ Last updated: 2026-09-19
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-021 | Apply Event-Driven Architecture patterns (Cosmic Python Part II) to platform services | low-medium | medium-high | M-L | [] |  |
 
 ## DONE
 
