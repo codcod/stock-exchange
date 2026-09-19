@@ -20,11 +20,10 @@ Last updated: 2026-09-19
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-022 | Build admin ops dashboard (Datastar/SSE frontend, monolith-parity) | [] |
 
 ## REWORK
 
@@ -48,6 +47,7 @@ Last updated: 2026-09-19
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-021 | Apply Event-Driven Architecture patterns (Cosmic Python Part II) to platform services | low-medium | medium-high | M-L | [] |  |
+| EXC-023 | Add PACKAGING.md/RELEASING.md/CHANGELOG.md to platform/admin/ | low | low | S | [] |  |
 
 ## DONE
 
@@ -74,6 +74,7 @@ Last updated: 2026-09-19
 | EXC-018 | Guard compose config in CI and make the up recipe a just dependency | yes — MERGED: PR #34, merge commit `548b9a0` |
 | EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | yes — merged to main (PR #35, `36601cd`). |
 | EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | yes — merged to main (PR #36, f6dc2af) |
+| EXC-022 | Build admin ops dashboard (Datastar/SSE frontend, monolith-parity) | no — publish-gated |
 
 ## DROPPED
 

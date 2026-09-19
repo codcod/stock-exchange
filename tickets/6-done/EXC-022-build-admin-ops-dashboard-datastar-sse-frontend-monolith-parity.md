@@ -390,7 +390,79 @@ swaps the backend framework, not this asset).
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): **independent** — fresh session with no memory of
+  authoring this branch (conversation cleared before "validate ticket EXC-022" was issued); ran
+  the audits itself rather than delegating, per the protocol's "a reviewer with no hand in the
+  branch is already independent — nothing needs delegating."
+- [x] In-tree stale-branch check (step 0a): `pickle doctor` initially warned the worktree had
+  the ticket in `3-in-development` while `main` had it in `4-in-review` (a rebase this branch
+  needed to pick up). Rebased `feat/EXC-022-admin-ops-dashboard` onto `main`
+  (`8e672ad..d155a95` — the "IN DEVELOPMENT → IN REVIEW" board commit — replayed under
+  `3467e17`); `pickle doctor` then reported 0 errors, 0 warnings.
+- [x] Implementation audit (steps 1, 2): all 14 tasks verified against the actual tree.
+  `just services-build` built all 15 images clean, including `admin`. `just infra-up` +
+  `just services-up` brought the full stack up healthy. Ran `just sim` for ~65s to generate
+  live traffic, then walked the acceptance test's 7 steps: `/events` streamed real
+  `datastar-patch-signals`/`datastar-patch-elements` frames (funnel totals/rates, chart,
+  ticker bars, trade tape — all three sparklines and the chart rendering real, changing data);
+  all 8 service cards rendered on the Services tab with port, tag, UP/DOWN pill, 3 live stats,
+  and caption; the five instrumented services' `GET /metrics` each returned exactly the fields
+  Tasks 2–6 specify (`curl` verified against ports 8000/8002/8003/8005/8007); `admin` itself
+  returns 404 on `/metrics` (correct — it exposes none of its own); stopping
+  `market-data` mid-stream degraded its card to a `DOWN` pill with blanked stats without
+  breaking the `/events` connection for the other 7 cards, then it recovered cleanly on
+  restart. `index.html` wires exactly one `data-on-load="@get('/events', ...)"` connection —
+  no other polling. All 8 confirmed design decisions honoured (FastAPI backend, no
+  schema/migrations, shared `DATABASE_URL`, `read_model.py`'s per-service column redeclare,
+  stdlib `json` in `datastar.py`, one SSE connection feeding both views, per-connection history
+  with the carried-forward `# ponytail:` comment, minimal additive instrumentation with its own
+  `# ponytail:` comments on all five services).
+- [x] Quality audit (step 3): `just check` (`ruff check .` + `ruff format --check .`) clean.
+  `just test` — 90/90 passed, including the new `test_metrics.py`/`test_render.py`/
+  `test_datastar.py`. No service in this codebase unit-tests real DB-backed query code (every
+  existing `tests/` directory tests pure in-memory service logic against mocked/in-memory
+  repos) — `admin/metrics.py`'s SQL query functions having no unit tests matches that
+  established convention, not a gap; the live acceptance-test run is this project's
+  substitute, same as everywhere else. No blocking calls introduced on gateway's or
+  market_data's stateless event loop (the two `RateCounter`s are pure in-memory
+  `collections.deque`, no I/O). Neither `gateway` nor `market_data` gained persistence (the
+  addendum's stateful/stateless split holds).
+- [x] Consistency audit (step 4): outbox `EVENT_DESTINATIONS`/`ENDPOINT_FOR_EVENT_TYPE` maps
+  untouched (ticket adds no new events) — n/a. `read_model.py`'s redeclared columns checked
+  against each owning service's actual `tables.py` (`order_management.orders`/`outbox`,
+  `clearing.trades`, `account.accounts`/`reserved_shares`, `notifications.notifications`) —
+  all match. Three findings below (F1–F3).
+- [x] Documentation audit (step 4a): `development/design.md`'s "Architecture overview" gained
+  the `platform/admin/` line and the five `GET /metrics` one-clause notes; the
+  service-responsibilities prose note was extended to include `admin` at 8006→8008 following
+  the section's own existing correction pattern (not re-adding to the already-stale table, per
+  the addendum's step 2 guidance) rather than reopening it. Whole-tree sweep of the addendum's
+  enumerated shipped docs tree (`development/design.md`, `README.md`,
+  `platform/base/README.md`, each service's `PACKAGING.md`/`RELEASING.md`/`CHANGELOG.md`) found
+  one gap — F1 below. No docs build configured for this project (addendum step 1 — n/a).
+- [ ] Docs-readability pass (step 4b, optional): **skipped, consciously** — no docs-readability
+  reviewer is configured in this host environment.
+- [x] Findings recorded below with severity, class, and disposition (step 5).
+- [x] Ticket moved to `tickets/6-done/` (step 6) — no blocking findings.
+- [x] Other references updated (step 7): `development/design.md` reconciled (above); no other
+  ticket referenced EXC-022 by id.
+- [x] Remaining-tickets impact sweep (step 8): no ticket in `2-ready/` or `1-to-do/` lists
+  EXC-022 in `depends-on:` or references it in its Description. No patches needed.
+- [x] Summary + commit message & MR attributes presented for approval (step 9) — see below.
+
+### Findings
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+| F1 | non-blocking | docs-gap | new ticket (EXC-023) | `platform/admin/` ships none of the `PACKAGING.md`/`RELEASING.md`/`CHANGELOG.md` triple every other `platform/*` installable service package ships | `platform/admin/` has no such files; all 8 siblings do (e.g. `platform/clearing/{PACKAGING,RELEASING,CHANGELOG}.md`); addendum step 1 names this triple as part of the shipped docs tree | filed EXC-023, spawned-by EXC-022 |
+| F2 | non-blocking | design | noted | Two new files start over the addendum's 200-line-per-file guideline | `platform/admin/src/admin/app.py` (367 lines), `platform/admin/src/admin/metrics.py` (219 lines) | `_service_cards()` (app.py) and the service-card queries (metrics.py) are natural extraction points if this ever needs trimming; not worth doing now — the guideline is soft and already violated in 4 pre-existing files |
+| F3 | non-blocking | design | noted | `risk_engine/app.py`'s new `/metrics` route reaches into `RiskEngine._accounts` (private) with no prior precedent in that file for touching engine internals from outside the class — unlike `matching_engine/app.py`, which already reached into `_books` before this branch | `platform/risk_engine/src/risk_engine/app.py:87`; contrast `platform/matching_engine/src/matching_engine/app.py:178` (pre-existing) | a small public `RiskEngine` accessor (e.g. `account_count` property) would remove the reach-through; trivial enough to leave as-is |
+| F4 | non-blocking | design | noted | `read_model.py` declares `account.reserved_shares` but no function in the admin package ever queries it | `platform/admin/src/admin/read_model.py:54-60`; `grep -rn reserved_shares platform/admin/` matches only the declaration | dead code; drop the declaration if this package is ever swept for cleanup, not worth a ticket on its own |
+
+Disposition summary: 4 findings — 1 new ticket (F1 → EXC-023), 3 noted (F2, F3, F4). No blocking
+findings; no scope-splitting; no dropped findings.
+
+cost: estimated L, actual L
 
 ## History
 
@@ -401,3 +473,4 @@ swaps the backend framework, not this asset).
 - 2026-09-19 — TO DO → READY: plan complete
 - 2026-09-19 — READY → IN DEVELOPMENT: picked up
 - 2026-09-19 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-19 — IN REVIEW → DONE: review clean: 4 non-blocking findings (1 new ticket EXC-023, 3 noted); acceptance test green
