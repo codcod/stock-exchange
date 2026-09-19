@@ -1,0 +1,1 @@
+<tbody id="feed-body">{% for r in rows %}<tr><td class="mono">{{ r.ticker }}</td><td class="{{ r.side_class }}">{{ r.side }}</td><td class="mono tabular">{{ r.quantity }}</td><td class="mono tabular">{{ r.price }}</td><td><span class="pill {{ r.pill_class }}">{{ r.pill_label }}</span></td><td class="mono">{{ r.time }}</td></tr>{% endfor %}</tbody>

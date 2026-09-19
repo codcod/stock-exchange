@@ -94,6 +94,19 @@ async def health() -> dict:
     return {'status': 'ok'}
 
 
+@app.get('/metrics')
+async def metrics() -> dict:
+    """Active order-book count and total resting orders (admin dashboard)."""
+    books = _engine_svc._books.values()
+    resting_orders = sum(
+        len(level.orders)
+        for book in books
+        for side in (book.bids, book.asks)
+        for level in side
+    )
+    return {'active_books': len(_engine_svc._books), 'resting_orders': resting_orders}
+
+
 # ---------------------------------------------------------------------------
 # Order endpoints
 # ---------------------------------------------------------------------------

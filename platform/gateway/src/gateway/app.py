@@ -20,10 +20,12 @@ Environment variables:
 """
 
 import logging
+import time
 import uuid
 from contextlib import asynccontextmanager
 
 import httpx
+from base.metrics import RateCounter
 from base.request_context import request_id as _request_id_ctx
 from fastapi import FastAPI, Request, Response
 
@@ -31,6 +33,10 @@ from gateway import dependencies
 from gateway.routes import accounts, instruments, market_data, orders
 
 logger = logging.getLogger(__name__)
+
+_requests = RateCounter()
+_latencies_ms = RateCounter()
+_errors = RateCounter()
 
 
 @asynccontextmanager
@@ -56,11 +62,17 @@ async def correlation_id_middleware(request: Request, call_next) -> Response:
     rid = request.headers.get('X-Request-ID') or str(uuid.uuid4())
     token = _request_id_ctx.set(rid)
     logger.info('Request %s %s [request_id=%s]', request.method, request.url.path, rid)
+    started = time.monotonic()
     try:
         response = await call_next(request)
     finally:
         _request_id_ctx.reset(token)
     response.headers['X-Request-ID'] = rid
+    if request.url.path != '/health':
+        _requests.record()
+        _latencies_ms.record((time.monotonic() - started) * 1000)
+        if response.status_code >= 500:
+            _errors.record()
     return response
 
 
@@ -73,3 +85,19 @@ app.include_router(market_data.router, prefix='/market-data', tags=['Market Data
 @app.get('/health', tags=['Health'])
 async def health() -> dict:
     return {'status': 'ok'}
+
+
+@app.get('/metrics', tags=['Health'])
+async def metrics() -> dict:
+    """Trailing-60s request rate, latency percentiles, and error rate."""
+    requests_per_sec = _requests.rate_last(60)
+    errors_per_sec = _errors.rate_last(60)
+    latency = _latencies_ms.percentiles_last(60, [50, 95])
+    return {
+        'requests_per_sec': round(requests_per_sec, 1),
+        'latency_p50_ms': round(latency[50]) if latency[50] is not None else None,
+        'latency_p95_ms': round(latency[95]) if latency[95] is not None else None,
+        'error_rate': round(errors_per_sec / requests_per_sec, 4)
+        if requests_per_sec > 0
+        else 0.0,
+    }

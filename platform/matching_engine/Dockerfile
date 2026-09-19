@@ -23,6 +23,7 @@ COPY platform/risk_engine/pyproject.toml ./platform/risk_engine/pyproject.toml
 COPY platform/order_management/pyproject.toml ./platform/order_management/pyproject.toml
 COPY platform/clearing/pyproject.toml ./platform/clearing/pyproject.toml
 COPY platform/notifications/pyproject.toml ./platform/notifications/pyproject.toml
+COPY platform/admin/pyproject.toml ./platform/admin/pyproject.toml
 COPY platform/matching_engine/src ./platform/matching_engine/src
 # uv resolves the whole workspace declared in pyproject.toml, so every other member's
 # pyproject.toml must be present too, even though only matching_engine gets installed.

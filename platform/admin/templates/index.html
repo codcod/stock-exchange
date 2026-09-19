@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<script>
+document.documentElement.setAttribute('data-signals', JSON.stringify({
+  activeView: 'overview',
+  submittedTotal: 0, executedTotal: 0, filledTotal: 0,
+  submittedRate: 0, executedRate: 0, filledRate: 0,
+  backlog: 0, fillLatencyP50: null, fillLatencyP95: null,
+  rejectRate: 0, oldestRestingSeconds: 0,
+  clock: ''
+}));
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <h1>Exchange Console</h1>
+    <div class="sub">Order flow &middot; matching &middot; settlement &mdash; read-only</div>
+  </div>
+  <div class="live-pill"><span class="dot"></span><span data-text="'as of ' + $clock"></span></div>
+</div>
+
+<nav class="tabs">
+  <button class="tab" data-class="{active: $activeView == 'overview'}" data-on-click="$activeView = 'overview'">Overview</button>
+  <button class="tab" data-class="{active: $activeView == 'services'}" data-on-click="$activeView = 'services'">Services</button>
+</nav>
+
+<section id="view-overview" data-show="$activeView == 'overview'">
+  <div class="funnel-row">
+    <div class="hero-card">
+      <div class="hero-top">
+        <div class="hero-label"><span class="swatch" style="background:var(--submitted)"></span>Submitted</div>
+        <div class="hero-rate"><span data-text="$submittedRate"></span> ord/s</div>
+      </div>
+      <div class="hero-value tabular mono" data-text="$submittedTotal.toLocaleString('en-US')"></div>
+      <svg class="spark" id="spark-submitted" viewBox="0 0 240 32" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="hero-card">
+      <div class="hero-top">
+        <div class="hero-label"><span class="swatch" style="background:var(--executed)"></span>Trades executed</div>
+        <div class="hero-rate"><span data-text="$executedRate"></span> trd/s</div>
+      </div>
+      <div class="hero-value tabular mono" data-text="$executedTotal.toLocaleString('en-US')"></div>
+      <svg class="spark" id="spark-executed" viewBox="0 0 240 32" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="hero-card">
+      <div class="hero-top">
+        <div class="hero-label"><span class="swatch" style="background:var(--filled)"></span>Orders filled</div>
+        <div class="hero-rate"><span data-text="$filledRate"></span> ord/s</div>
+      </div>
+      <div class="hero-value tabular mono" data-text="$filledTotal.toLocaleString('en-US')"></div>
+      <svg class="spark" id="spark-filled" viewBox="0 0 240 32" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric-card">
+      <div class="metric-label">Open order backlog</div>
+      <div class="metric-value tabular mono" data-text="$backlog.toLocaleString('en-US')"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Fill latency p50 / p95</div>
+      <div class="metric-value tabular mono" data-text="($fillLatencyP50 === null ? '&mdash;' : $fillLatencyP50 + ' ms') + ' / ' + ($fillLatencyP95 === null ? '&mdash;' : $fillLatencyP95 + ' ms')"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Reject rate</div>
+      <div class="metric-value tabular mono" data-text="$rejectRate + '%'"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Oldest resting order</div>
+      <div class="metric-value tabular mono" data-text="$oldestRestingSeconds + 's'"></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-hd">
+        <h2>Throughput &middot; last 60s</h2>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-line" style="background:var(--submitted)"></span>Submitted</div>
+          <div class="legend-item"><span class="legend-line" style="background:var(--executed)"></span>Executed</div>
+          <div class="legend-item"><span class="legend-line" style="background:var(--filled)"></span>Filled</div>
+        </div>
+      </div>
+      <div class="chart-box" id="chart-box">
+        <svg id="chart" viewBox="0 0 560 200" preserveAspectRatio="none"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hd"><h2>Volume by ticker</h2></div>
+      <div id="tickers"></div>
+      <div class="legend" style="margin-top:14px">
+        <div class="legend-item"><span class="legend-line" style="background:var(--good)"></span>Buy volume</div>
+        <div class="legend-item"><span class="legend-line" style="background:var(--bad)"></span>Sell volume</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <h2>Trade tape</h2>
+      <span style="font-size:0.72rem;color:var(--text-muted)">most recent first</span>
+    </div>
+    <table class="feed">
+      <thead>
+        <tr><th>Ticker</th><th>Side</th><th>Qty</th><th>Price</th><th>Status</th><th>Time</th></tr>
+      </thead>
+      <tbody id="feed-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="view-services" data-show="$activeView == 'services'">
+  <div class="service-grid">
+    <div class="service-card" id="svc-gateway"></div>
+    <div class="service-card" id="svc-order-management"></div>
+    <div class="service-card" id="svc-risk-engine"></div>
+    <div class="service-card" id="svc-matching-engine"></div>
+    <div class="service-card" id="svc-clearing"></div>
+    <div class="service-card" id="svc-market-data"></div>
+    <div class="service-card" id="svc-account"></div>
+    <div class="service-card" id="svc-notifications"></div>
+  </div>
+</section>
+
+<footer class="note">platform/admin &middot; read-only over order_management / clearing / account / notifications schemas + 5 services' /metrics</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Chart hover crosshair + tooltip. Bound once, by delegation, on the static
+// `#chart-box` wrapper -- `#chart` itself is replaced wholesale on every SSE
+// tick (Datastar's default "outer" patch mode does a plain outerHTML swap,
+// not a diff/morph), so a listener attached directly to it would be lost
+// after the first tick.
+(function () {
+  var box = document.getElementById('chart-box');
+  var tooltip = document.getElementById('tooltip');
+  var colorVar = { submitted: '--submitted', executed: '--executed', filled: '--filled' };
+
+  box.addEventListener('mousemove', function (e) {
+    var svg = document.getElementById('chart');
+    if (!svg) return;
+    var series = JSON.parse(svg.dataset.series || '{}');
+    var stages = Object.keys(series);
+    if (!stages.length) return;
+    var n = series[stages[0]].length;
+    var step = parseFloat(svg.dataset.step);
+    var padL = parseFloat(svg.dataset.padL);
+
+    var rect = svg.getBoundingClientRect();
+    var scaleX = 560 / rect.width;
+    var localX = (e.clientX - rect.left) * scaleX;
+    var i = Math.max(0, Math.min(n - 1, Math.round((localX - padL) / step)));
+
+    var rows = stages.map(function (stage) {
+      var v = series[stage][i];
+      var color = getComputedStyle(document.body).getPropertyValue(colorVar[stage]);
+      return '<div class="t-row"><span class="t-sw" style="background:' + color + '"></span>' +
+        stage.charAt(0).toUpperCase() + stage.slice(1) +
+        '<span class="t-val">' + v.toFixed(1) + '/s</span></div>';
+    }).join('');
+    var secsAgo = (n - 1 - i) * 2;
+    tooltip.innerHTML = '<div class="t-time">' + (secsAgo === 0 ? 'now' : '-' + secsAgo + 's') + '</div>' + rows;
+    tooltip.style.opacity = 1;
+    var relX = (padL + i * step) / 560 * rect.width;
+    tooltip.style.left = Math.min(relX, rect.width - 130) + 'px';
+  });
+  box.addEventListener('mouseleave', function () { tooltip.style.opacity = 0; });
+})();
+</script>
+{% endblock %}

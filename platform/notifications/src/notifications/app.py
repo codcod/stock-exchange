@@ -33,6 +33,7 @@ from base.domain.api_schemas import (
     OrderRejectedEvent,
     TradeExecutedEvent,
 )
+from base.metrics import RateCounter
 from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 
 from notifications.repository import NotificationRepository
@@ -41,6 +42,7 @@ from notifications.service import NotificationService
 logger = logging.getLogger(__name__)
 
 _subscribers: tp.Dict[str, tp.Set[WebSocket]] = {}
+_backfill_requests = RateCounter()
 
 
 @dataclass
@@ -64,6 +66,15 @@ app = FastAPI(title='Notifications Service', version='0.1.0', lifespan=lifespan)
 @app.get('/health')
 async def health() -> dict:
     return {'status': 'ok'}
+
+
+@app.get('/metrics')
+async def metrics() -> dict:
+    """WS subscriber count and trailing-60s backfill request rate (admin dashboard)."""
+    return {
+        'ws_clients': sum(len(v) for v in _subscribers.values()),
+        'backfill_requests_per_sec': round(_backfill_requests.rate_last(60), 1),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +108,7 @@ async def get_notifications(
     limit: int = Query(50, ge=1, le=200),
 ) -> tp.List[dict]:
     """Return recent notifications for an account (HTTP backfill)."""
+    _backfill_requests.record()
     since_dt: tp.Optional[datetime] = None
     if since:
         since_dt = datetime.fromisoformat(since)

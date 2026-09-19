@@ -1,0 +1,1 @@
+<div id="tickers">{% for r in rows %}<div class="ticker-row"><div class="ticker-hd"><span class="sym">{{ r.ticker }}</span><span class="vol">{{ r.volume_fmt }}</span></div><div class="ticker-bar"><div class="buy" style="width:{{ r.buy_pct }}%"></div><div class="sell" style="width:{{ r.sell_pct }}%"></div></div></div>{% endfor %}</div>
