@@ -1,0 +1,12 @@
+<div class="service-card" id="{{ elem_id }}">
+  <div class="service-hd">
+    <div class="service-name"><strong>{{ name }}</strong><span class="service-port">:{{ port }}</span></div>
+    <span class="status-pill {{ status }}">{{ status_label }}</span>
+  </div>
+  <div class="service-role">{{ role }}</div>
+  <div class="service-stats">
+    {% for s in stats %}<div class="service-stat"><div class="label">{{ s.label }}</div><div class="value tabular mono">{{ s.value }}</div></div>
+    {% endfor %}
+  </div>
+  <div class="service-note">{% if warn %}<span class="warn-flag">&#9650;</span> {% endif %}{{ note }}</div>
+</div>

@@ -17,20 +17,27 @@ risk checks, clearing) — not to build a production-grade, high-performance sys
 clients/simulator      → generates synthetic order traffic for testing
 clients/tui/           → interactive terminal trading app (Textual)
 platform/notifications/ → per-account event feed; WebSocket push + HTTP backfill (own
-                          installable package, own Alembic migration history)
+                          installable package, own Alembic migration history; GET /metrics
+                          exposes WS client count and backfill request rate)
 platform/base/         → domain models, HTTP service clients, outbox event routing, db layer
-platform/gateway/      → entry point: auth, rate limiting, order routing (own installable package)
-platform/market_data/  → publishes prices, depth, and trade feed (own installable package)
+platform/gateway/      → entry point: auth, rate limiting, order routing (own installable
+                          package; GET /metrics exposes request rate/latency/error rate)
+platform/market_data/  → publishes prices, depth, and trade feed (own installable package;
+                          GET /metrics exposes tracked-ticker count and quote request rate)
 platform/account/      → source of truth for cash, positions, and reservations (own
                           installable package, own Alembic migration history)
 platform/matching_engine/ → order book + price-time priority matching (own
-                          installable package, own Alembic migration history)
+                          installable package, own Alembic migration history; GET /metrics
+                          exposes active order-book count and total resting orders)
 platform/risk_engine/  → pre-trade checks before orders reach the book (own
-                          installable package, own Alembic migration history)
+                          installable package, own Alembic migration history; GET /metrics
+                          exposes cached-account count and check rate)
 platform/order_management/ → order lifecycle and persistence (own installable package,
                           own Alembic migration history)
 platform/clearing/     → post-trade trade-record keeper (audit ledger only) (own
                           installable package, own Alembic migration history)
+platform/admin/        → read-only ops dashboard (Datastar/SSE frontend); own installable
+                          package, no schema/migrations of its own
 infra/                 → docker-compose files and helper scripts
 ```
 
@@ -285,9 +292,10 @@ All synchronous inter-service calls are performed over HTTP using `httpx`. Trade
 | Clearing | 8004 | Manages account balances and positions. | — | `accounts`, `positions`, `trades` |
 | MarketData | 8005 | Provides in-memory quote snapshots and trade history. | — | No |
 
-`platform/account/` (port 8006) and `platform/notifications/` (port 8007) are implemented
-but absent from the table above, which predates both — see "Architecture overview" for the
-current, authoritative service list.
+`platform/account/` (port 8006), `platform/notifications/` (port 8007), and
+`platform/admin/` (port 8008, read-only ops dashboard) are implemented but absent from the
+table above, which predates all three — see "Architecture overview" for the current,
+authoritative service list.
 
 ### HTTP gateway (`platform/gateway/`)
 

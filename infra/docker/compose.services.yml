@@ -269,3 +269,29 @@ services:
         condition: service_healthy
       account:
         condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Tier 7: admin (read-only ops dashboard — no schema, no migrations)
+  # ---------------------------------------------------------------------------
+
+  admin:
+    build:
+      context: ../..
+      dockerfile: platform/admin/Dockerfile
+    command: ["-m", "admin"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://exchange:exchange@postgres:5432/exchange
+      GATEWAY_URL: http://gateway:8000
+      MARKET_DATA_URL: http://market-data:8005
+      RISK_ENGINE_URL: http://risk-engine:8002
+      MATCHING_ENGINE_URL: http://matching-engine:8003
+      NOTIFICATIONS_URL: http://notifications:8007
+      PORT: "8008"
+    ports:
+      - "8008:8008"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8008/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

@@ -19,6 +19,7 @@ from dataclasses import dataclass
 
 from base.domain.api_schemas import MarketDataUpdateEvent, TradeExecutedEvent
 from base.domain.events import MarketDataUpdate, TradeExecuted
+from base.metrics import RateCounter
 from fastapi import FastAPI, HTTPException, Query
 
 from market_data.service import MarketDataService
@@ -30,6 +31,7 @@ class _AppState:
 
 
 _state = _AppState()
+_quote_requests = RateCounter()
 
 
 @asynccontextmanager
@@ -46,6 +48,15 @@ async def health() -> dict:
     return {'status': 'ok'}
 
 
+@app.get('/metrics')
+async def metrics() -> dict:
+    """Tracked-ticker count and trailing-60s quote request rate (admin dashboard)."""
+    return {
+        'tickers_tracked': len(_state.svc.all_tickers()),
+        'quote_requests_per_sec': round(_quote_requests.rate_last(60), 1),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Query endpoints
 # ---------------------------------------------------------------------------
@@ -60,6 +71,7 @@ async def list_tickers() -> tp.List[str]:
 @app.get('/quotes/{ticker}')
 async def get_quote(ticker: str) -> dict:
     """Return the current top-of-book quote for a given ticker."""
+    _quote_requests.record()
     quote = _state.svc.get_quote(ticker)
     if quote is None:
         raise HTTPException(status_code=404, detail='No quote data for ticker')

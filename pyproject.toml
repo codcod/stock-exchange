@@ -18,6 +18,7 @@ dependencies = [
     "order_management",
     "clearing",
     "notifications",
+    "admin",
 ]
 
 [project.optional-dependencies]
@@ -36,7 +37,7 @@ where = ["."]
 include = ["clients*"]
 
 [tool.uv.workspace]
-members = ["platform/base", "platform/gateway", "platform/market_data", "platform/account", "platform/matching_engine", "platform/risk_engine", "platform/order_management", "platform/clearing", "platform/notifications"]
+members = ["platform/base", "platform/gateway", "platform/market_data", "platform/account", "platform/matching_engine", "platform/risk_engine", "platform/order_management", "platform/clearing", "platform/notifications", "platform/admin"]
 
 [tool.uv.sources]
 base = { workspace = true }
@@ -48,6 +49,7 @@ risk_engine = { workspace = true }
 order_management = { workspace = true }
 clearing = { workspace = true }
 notifications = { workspace = true }
+admin = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["clients", "platform"]
@@ -58,7 +60,7 @@ asyncio_mode = "auto"
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["platform/base/src", "platform/gateway/src", "platform/market_data/src", "platform/account/src", "platform/matching_engine/src", "platform/risk_engine/src", "platform/order_management/src", "platform/clearing/src", "platform/notifications/src"]
+source = ["platform/base/src", "platform/gateway/src", "platform/market_data/src", "platform/account/src", "platform/matching_engine/src", "platform/risk_engine/src", "platform/order_management/src", "platform/clearing/src", "platform/notifications/src", "platform/admin/src"]
 omit = ["*/tests/*", "clients/*"]
 
 # optional config below

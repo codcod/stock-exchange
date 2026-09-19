@@ -29,6 +29,7 @@ from base.domain.api_schemas import (
     RegisterInstrumentRequest,
 )
 from base.domain.models import Account, Instrument
+from base.metrics import RateCounter
 from fastapi import FastAPI
 
 from risk_engine.engine import RiskEngine
@@ -39,6 +40,7 @@ logger = logging.getLogger(__name__)
 _ACCOUNT_URL = os.getenv('ACCOUNT_URL', 'http://localhost:8006')
 
 _engine_svc: RiskEngine = RiskEngine()
+_checks = RateCounter()
 
 
 @dataclass
@@ -76,6 +78,15 @@ app = FastAPI(title='Risk Engine', version='0.1.0', lifespan=lifespan)
 @app.get('/health')
 async def health() -> dict:
     return {'status': 'ok'}
+
+
+@app.get('/metrics')
+async def metrics() -> dict:
+    """Cached account count and trailing-60s check rate (admin dashboard)."""
+    return {
+        'cached_accounts': len(_engine_svc._accounts),
+        'checks_per_sec': round(_checks.rate_last(60), 1),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +153,7 @@ async def on_account_updated(req: AccountUpdatedEvent) -> dict:
 @app.post('/orders/check')
 async def check_order(req: OrderRequest) -> dict:
     """Run pre-trade risk checks on a new order."""
+    _checks.record()
     result = await _engine_svc.check(req.to_domain())
     return {'passed': result.passed, 'reason': result.reason}
 

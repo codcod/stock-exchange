@@ -25,6 +25,7 @@ COPY platform/market_data/pyproject.toml ./platform/market_data/pyproject.toml
 COPY platform/order_management/pyproject.toml ./platform/order_management/pyproject.toml
 COPY platform/clearing/pyproject.toml ./platform/clearing/pyproject.toml
 COPY platform/notifications/pyproject.toml ./platform/notifications/pyproject.toml
+COPY platform/admin/pyproject.toml ./platform/admin/pyproject.toml
 COPY platform/market_data/src ./platform/market_data/src
 
 RUN uv sync --locked --no-dev --no-editable --package market_data
