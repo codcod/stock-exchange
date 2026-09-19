@@ -399,3 +399,4 @@ swaps the backend framework, not this asset).
   modeled on monolith's platform/admin/, then asked to file this ticket to build it with the
   same frontend stack and that exact layout.
 - 2026-09-19 — TO DO → READY: plan complete
+- 2026-09-19 — READY → IN DEVELOPMENT: picked up
