@@ -474,3 +474,4 @@ cost: estimated L, actual L
 - 2026-09-19 — READY → IN DEVELOPMENT: picked up
 - 2026-09-19 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-19 — IN REVIEW → DONE: review clean: 4 non-blocking findings (1 new ticket EXC-023, 3 noted); acceptance test green
+- 2026-09-20 — MERGED: PR #39, merge commit `dc07da8`

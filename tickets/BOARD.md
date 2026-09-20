@@ -9,7 +9,7 @@ hand — edit the tickets. Hand-written planning notes live in [`NOTES.md`](NOTE
 **WIP limits (per child-project):**
 - `exchange`: `3-in-development/` ≤ 1 · `4-in-review/` ≤ 1
 
-Last updated: 2026-09-19
+Last updated: 2026-09-20
 
 ## IN DEVELOPMENT
 
@@ -74,7 +74,7 @@ Last updated: 2026-09-19
 | EXC-018 | Guard compose config in CI and make the up recipe a just dependency | yes — MERGED: PR #34, merge commit `548b9a0` |
 | EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | yes — merged to main (PR #35, `36601cd`). |
 | EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | yes — merged to main (PR #36, f6dc2af) |
-| EXC-022 | Build admin ops dashboard (Datastar/SSE frontend, monolith-parity) | no — publish-gated |
+| EXC-022 | Build admin ops dashboard (Datastar/SSE frontend, monolith-parity) | yes — MERGED: PR #39, merge commit `dc07da8` |
 
 ## DROPPED
 
