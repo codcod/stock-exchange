@@ -39,6 +39,7 @@ Last updated: 2026-09-20
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
+| EXC-023 | Add PACKAGING.md/RELEASING.md/CHANGELOG.md to platform/admin/ | low | low | S | [] |  |
 
 ## TO DO (impact order, per child)
 
@@ -47,7 +48,6 @@ Last updated: 2026-09-20
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-021 | Apply Event-Driven Architecture patterns (Cosmic Python Part II) to platform services | low-medium | medium-high | M-L | [] |  |
-| EXC-023 | Add PACKAGING.md/RELEASING.md/CHANGELOG.md to platform/admin/ | low | low | S | [] |  |
 
 ## DONE
 
