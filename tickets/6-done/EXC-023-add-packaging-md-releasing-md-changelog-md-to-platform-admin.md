@@ -202,3 +202,4 @@ cost: estimated S, actual S.
 - 2026-09-20 — READY → IN DEVELOPMENT: picked up
 - 2026-09-20 — IN DEVELOPMENT → IN REVIEW: acceptance green
 - 2026-09-20 — IN REVIEW → DONE: no findings; acceptance green
+- 2026-09-20 — MERGED: PR #40, `243c1ef`, into `main`
