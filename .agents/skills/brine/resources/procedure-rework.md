@@ -2,7 +2,14 @@
 
 When asked to rework ticket T-NNN (a review found blocking findings):
 
-1. The ticket must be in `5-rework/` — if not, stop and explain.
+Under `layout = "in-tree"`, before reading the ticket, resolve its current status from the base
+branch rather than trusting the worktree — `git ls-tree -r --name-only <base> -- tickets |
+grep -- "/T-NNN-"`, then `git show <base>:<that path>` — and, once any pre-existing
+`feat/T-NNN-*` branch for this ticket is checked out (a resumed pickup; a fresh one has no branch
+yet), run `pickle doctor` and resolve any stale-ticket-branch warning first.
+
+1. The ticket must be in `5-rework/` on the base branch (per the lookup above) — if not, stop and
+   explain.
 2. Read the ticket's `## Review` section: the **blocking findings are the entire scope**.
    Implement nothing else — any new work needs a new ticket.
 3. On the **same** `feat/T-NNN-<slug>` branch (in the target child's repo), fix only the listed
