@@ -20,11 +20,10 @@ Last updated: 2026-09-20
 
 ## IN REVIEW
 
-### exchange (1/1)
+### exchange (0/1)
 
 | id | title | depends-on |
 |---|---|---|
-| EXC-023 | Add PACKAGING.md/RELEASING.md/CHANGELOG.md to platform/admin/ | [] |
 
 ## REWORK
 
@@ -75,6 +74,7 @@ Last updated: 2026-09-20
 | EXC-019 | Correct stale service counts and dependency claims across docs and compose comments | yes — merged to main (PR #35, `36601cd`). |
 | EXC-020 | Add direct tests for SqlAlchemyUnitOfWork commit/rollback state machine | yes — merged to main (PR #36, f6dc2af) |
 | EXC-022 | Build admin ops dashboard (Datastar/SSE frontend, monolith-parity) | yes — MERGED: PR #39, merge commit `dc07da8` |
+| EXC-023 | Add PACKAGING.md/RELEASING.md/CHANGELOG.md to platform/admin/ | no — publish-gated |
 
 ## DROPPED
 

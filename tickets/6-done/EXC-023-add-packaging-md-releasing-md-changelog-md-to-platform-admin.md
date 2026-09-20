@@ -139,7 +139,61 @@ keeping `development/review-addendum.md`'s shipped-docs-tree definition in sync 
 
 ## Review
 
-<!-- empty until IN REVIEW -->
+- [x] Reviewer independence settled (step 0): this session began after a `/clear` with no
+  memory of authoring the branch — the next-best handoff step 0 names when a spawned
+  independent reviewer is unavailable. Audits (steps 2–4a) run directly by this reviewer on
+  that basis; none delegated.
+- [x] In-tree stale-branch check (step 0a): `pickle doctor` initially warned the checked-out
+  branch had the ticket in `3-in-development` while `main` had it in `4-in-review`; rebased
+  `feat/EXC-023-admin-packaging-docs` onto `main` and re-ran — `0 error(s), 0 warning(s)`.
+- [x] Implementation audit (steps 1, 2): all 4 tasks verified against the actual tree.
+  Acceptance test re-run verbatim, all 6 items pass: (1) all three
+  `platform/admin/{PACKAGING,RELEASING,CHANGELOG}.md` exist; (2) `grep -c "Alembic"
+  platform/admin/PACKAGING.md` → `0`; (3) `grep "Added `platform/admin/`"
+  platform/admin/CHANGELOG.md` matches, heading is `**Added**` not `**Changed**` (decision 2);
+  (4) `grep "admin-v" platform/admin/RELEASING.md` matches (`admin-vX.Y.Z`, decision 3); (5)
+  `development/review-addendum.md` step 4a item 2 now reads "nine services ... admin ... 27
+  files total"; (6) `just lint` clean, `just check` clean (`ruff check` + `ruff format
+  --check`, 148 files formatted), `just test` → 90 passed. `platform/admin/pyproject.toml`
+  version unchanged at `0.0.1` (decision 4, no bump needed). `git diff main...HEAD --stat`
+  shows exactly the 4 files the plan names, nothing else touched.
+- [x] Quality audit (step 3): docs-only change, no code; new files match the `gateway` template
+  (diffed line-for-line) with only package name / tag prefix / changelog heading substituted
+  per decisions 1–3.
+- [x] Consistency audit (step 4): no contradictions found between the new triple and its
+  `gateway` model, or between the addendum edit and the actual file count (27 files, 9
+  services, confirmed by `find platform -maxdepth 2 -name '{PACKAGING,RELEASING,CHANGELOG}.md'`).
+  `development/design.md`'s pre-existing note that `platform/admin/` is "absent from the
+  [service] table" is a known, self-documented gap unrelated to this ticket's scope (packaging
+  docs, not the architecture table) — left as-is.
+- [x] Documentation audit (step 4a): coverage — the ticket's own deliverable is the docs; no
+  gap. Whole-tree sweep — re-read `development/design.md`, `README.md`,
+  `platform/base/README.md` and the full 27-file `platform/*/{PACKAGING,RELEASING,CHANGELOG}.md`
+  set; addendum's revision history and version header both correctly bumped to v11. No docs
+  build configured for this project (addendum step 1) — n/a.
+- [ ] Docs-readability pass (step 4b, optional): no docs-readability reviewer available in this
+  environment — conscious skip.
+- [x] Findings recorded (step 5): none. See table and disposition summary below.
+- [x] Ticket moved to `tickets/6-done/` (step 6).
+- [x] Other references / governing documents (step 7): `development/review-addendum.md` was
+  itself Task 4 of this ticket's own plan (header, step 4a item 2, revision history) — already
+  reconciled by the branch under review, verified above. No other ticket or doc references
+  EXC-023 by id.
+- [x] Remaining-tickets impact sweep (step 8): `grep -rl "EXC-023" tickets/1-to-do
+  tickets/2-ready` — no hits. No dependent tickets to patch.
+- [x] Summary + commit message & MR attributes presented for approval; overarching bookkeeping
+  committed per policy; remote-base-not-behind check applies at push time (step 9).
+
+| id | severity | class | disposition | description | evidence | suggestion |
+|---|---|---|---|---|---|---|
+
+No findings — the branch matches its Implementation Plan exactly, including the two
+non-obvious decisions (no-Alembic omission, "Added" not "Extracted" wording) that are the
+easiest parts of this kind of ticket to get wrong.
+
+disposition summary: 0 findings.
+
+cost: estimated S, actual S.
 
 ## History
 
@@ -147,3 +201,4 @@ keeping `development/review-addendum.md`'s shipped-docs-tree definition in sync 
 - 2026-09-20 — TO DO → READY: plan complete
 - 2026-09-20 — READY → IN DEVELOPMENT: picked up
 - 2026-09-20 — IN DEVELOPMENT → IN REVIEW: acceptance green
+- 2026-09-20 — IN REVIEW → DONE: no findings; acceptance green
