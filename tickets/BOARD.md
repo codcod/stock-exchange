@@ -13,10 +13,11 @@ Last updated: 2026-09-20
 
 ## IN DEVELOPMENT
 
-### exchange (0/1)
+### exchange (1/1)
 
 | id | title | depends-on |
 |---|---|---|
+| EXC-023 | Add PACKAGING.md/RELEASING.md/CHANGELOG.md to platform/admin/ | [] |
 
 ## IN REVIEW
 
@@ -39,7 +40,6 @@ Last updated: 2026-09-20
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-002 | Add static type-checking (ty) to lint pipeline and CI | medium | low | M | [] |  |
-| EXC-023 | Add PACKAGING.md/RELEASING.md/CHANGELOG.md to platform/admin/ | low | low | S | [] |  |
 
 ## TO DO (impact order, per child)
 
