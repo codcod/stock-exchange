@@ -1,14 +1,15 @@
 # Review addendum — exchange project-specific rules
 
-**Version 10** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
+**Version 11** · written 2026-09-16 against `main` at `31e5603` (pickle install; no tickets
 filed yet), updated same day by EXC-003 (docs/architecture.md → development/design.md) and on
 2026-09-17 by EXC-007's review; v4–v7 each repointed a stale path left by a service's move into
 its own `platform/` package, v8 corrects the stale "entire shipped docs tree" claim (step 2)
 to list the full shipped tree and re-syncs this header to match the revision history below, v9
 repoints step 2 item 1's last remaining stale path (F2 — `services/account/outbox_relay.py`)
-now that a docs sweep caught it, and v10 corrects step 2 item 3's stale claim that all lint
+now that a docs sweep caught it, v10 corrects step 2 item 3's stale claim that all lint
 recipes are check-only (they now also run `ruff format --check .`) and step 4a item 2's
-"shipped docs tree" definition, which omitted every service's `RELEASING.md`/`CHANGELOG.md`.
+"shipped docs tree" definition, which omitted every service's `RELEASING.md`/`CHANGELOG.md`,
+and v11 adds `admin` to that same definition now that EXC-023 shipped its triple.
 
 Applies **on top of** the brine review protocol
 (`.agents/skills/brine/resources/review-protocol.md`), keyed to that procedure's step numbers.
@@ -101,9 +102,9 @@ step most likely to be silently skipped:
    limitation doesn't exist is `plan-wrong`.
 2. **Whole-tree docs sweep is small and exact here** — the shipped docs tree is
    `development/design.md`, `README.md`, `platform/base/README.md`, and each service's
-   `platform/*/PACKAGING.md`, `RELEASING.md` and `CHANGELOG.md` (currently eight services each —
-   `account`, `clearing`, `gateway`, `market_data`, `matching_engine`, `notifications`,
-   `order_management`, `risk_engine` — 24 files total). `docs/architecture.md` and
+   `platform/*/PACKAGING.md`, `RELEASING.md` and `CHANGELOG.md` (currently nine services each —
+   `account`, `admin`, `clearing`, `gateway`, `market_data`, `matching_engine`, `notifications`,
+   `order_management`, `risk_engine` — 27 files total). `docs/architecture.md` and
    `docs/lob_concepts_review.md` were folded into `development/design.md` and deleted by EXC-003;
    `README.md`, `platform/base/README.md` and the per-service `PACKAGING.md`/`RELEASING.md`/
    `CHANGELOG.md` triples were added by EXC-005 through EXC-012, after that fold. Read the whole
@@ -172,3 +173,6 @@ one-shot local gate and the closest thing this repo has to a CI dry run.
   `ruff format --check .` too (only the bare root `just lint` doesn't), and step 4a item 2's
   "shipped docs tree" list, which named each service's `PACKAGING.md` but omitted the
   `RELEASING.md`/`CHANGELOG.md` that ship alongside it.
+- **v11** (2026-09-20) — EXC-023 added `platform/admin/`'s `PACKAGING.md`/`RELEASING.md`/
+  `CHANGELOG.md` triple, so step 4a item 2's "shipped docs tree" definition now lists `admin`
+  and counts nine services / 27 files total instead of eight / 24.
