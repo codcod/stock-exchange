@@ -9,7 +9,7 @@ hand — edit the tickets. Hand-written planning notes live in [`NOTES.md`](NOTE
 **WIP limits (per child-project):**
 - `exchange`: `3-in-development/` ≤ 1 · `4-in-review/` ≤ 1
 
-Last updated: 2026-09-20
+Last updated: 2026-09-27
 
 ## IN DEVELOPMENT
 
@@ -47,6 +47,7 @@ Last updated: 2026-09-20
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
 | EXC-021 | Apply Event-Driven Architecture patterns (Cosmic Python Part II) to platform services | low-medium | medium-high | M-L | [] |  |
+| EXC-024 | Raise requires-python floor to 3.13 to match the syntax used and the versions tested | low | low | S | [] |  |
 
 ## DONE
 
