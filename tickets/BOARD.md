@@ -46,6 +46,7 @@ Last updated: 2026-09-27
 
 | id | title | impact | complexity | cost | depends-on | family |
 |---|---|---|---|---|---|---|
+| EXC-025 | Replace base's repository, unit-of-work and migration copies with monolith-base | medium | low | S | [EXC-024] |  |
 | EXC-021 | Apply Event-Driven Architecture patterns (Cosmic Python Part II) to platform services | low-medium | medium-high | M-L | [] |  |
 | EXC-024 | Raise requires-python floor to 3.13 to match the syntax used and the versions tested | low | low | S | [] |  |
 
